@@ -1,0 +1,74 @@
+import axios from 'axios'
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
+const API = `${BACKEND_URL}/api`
+
+const api = axios.create({
+  baseURL: API,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// Project APIs
+export const projectApi = {
+  getAll: () => api.get('/projects'),
+  getById: (id) => api.get(`/projects/${id}`),
+  create: (data) => api.post('/projects', data),
+  update: (id, data) => api.put(`/projects/${id}`, data),
+  delete: (id) => api.delete(`/projects/${id}`)
+}
+
+// Chapter APIs
+export const chapterApi = {
+  getByProject: (projectId) => api.get(`/chapters/project/${projectId}`),
+  getById: (id) => api.get(`/chapters/${id}`),
+  create: (data) => api.post('/chapters', data),
+  update: (id, data) => api.put(`/chapters/${id}`, data),
+  delete: (id) => api.delete(`/chapters/${id}`)
+}
+
+// Style Preset APIs
+export const stylePresetApi = {
+  getAll: () => api.get('/style-presets'),
+  getById: (id) => api.get(`/style-presets/${id}`),
+  create: (data) => api.post('/style-presets', data),
+  update: (id, data) => api.put(`/style-presets/${id}`, data),
+  delete: (id) => api.delete(`/style-presets/${id}`)
+}
+
+// Art Asset APIs
+export const artAssetApi = {
+  getByProject: (projectId) => api.get(`/art-assets/project/${projectId}`),
+  create: (data) => api.post('/art-assets', data),
+  delete: (id) => api.delete(`/art-assets/${id}`)
+}
+
+// Tone Profile APIs
+export const toneProfileApi = {
+  getByProject: (projectId) => api.get(`/tone-profiles/project/${projectId}`),
+  getByChapter: (chapterId) => api.get(`/tone-profiles/chapter/${chapterId}`)
+}
+
+// AI APIs
+export const aiApi = {
+  rewrite: (content, tone) => api.post('/ai/rewrite', { content, tone }),
+  summarize: (content) => api.post('/ai/summarize', { content }),
+  generateOutline: (projectSummary, targetChapterCount) => 
+    api.post('/ai/outline', { project_summary: projectSummary, target_chapter_count: targetChapterCount }),
+  analyzeWorkflow: (statusDescription) => 
+    api.post('/ai/workflow-analysis', { status_description: statusDescription }),
+  analyzeTone: (content, projectId, chapterId) => 
+    api.post('/ai/analyze-tone', { content, project_id: projectId, chapter_id: chapterId }),
+  generateArtPrompts: (projectId, chapterId, stylePreset, promptType, context) =>
+    api.post('/ai/art-prompts', { 
+      project_id: projectId, 
+      chapter_id: chapterId, 
+      style_preset: stylePreset, 
+      prompt_type: promptType,
+      context 
+    }),
+  askThad: (query, context) => api.post('/ai/ask-thad', { query, context })
+}
+
+export default api
