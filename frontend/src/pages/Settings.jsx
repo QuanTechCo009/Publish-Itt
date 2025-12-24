@@ -1,0 +1,328 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { stylePresetApi } from "@/lib/api";
+import { toast } from "sonner";
+import { 
+  Plus, 
+  Pencil, 
+  Trash2,
+  Palette,
+  Loader2,
+  Settings as SettingsIcon
+} from "lucide-react";
+
+export default function Settings() {
+  const [presets, setPresets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPreset, setEditingPreset] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    visual_style: "",
+    mood: "",
+    color_palette: ""
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    loadPresets();
+  }, []);
+
+  const loadPresets = async () => {
+    try {
+      const res = await stylePresetApi.getAll();
+      setPresets(res.data);
+    } catch (error) {
+      toast.error("Failed to load style presets");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenDialog = (preset = null) => {
+    if (preset) {
+      setEditingPreset(preset);
+      setFormData({
+        name: preset.name,
+        description: preset.description,
+        visual_style: preset.visual_style,
+        mood: preset.mood,
+        color_palette: preset.color_palette || ""
+      });
+    } else {
+      setEditingPreset(null);
+      setFormData({
+        name: "",
+        description: "",
+        visual_style: "",
+        mood: "",
+        color_palette: ""
+      });
+    }
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.description.trim()) {
+      toast.error("Name and description are required");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (editingPreset) {
+        await stylePresetApi.update(editingPreset.id, formData);
+        setPresets(presets.map(p => 
+          p.id === editingPreset.id ? { ...p, ...formData } : p
+        ));
+        toast.success("Preset updated!");
+      } else {
+        const res = await stylePresetApi.create(formData);
+        setPresets([...presets, res.data]);
+        toast.success("Preset created!");
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to save preset");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (presetId) => {
+    if (!window.confirm("Are you sure you want to delete this style preset?")) return;
+    
+    try {
+      await stylePresetApi.delete(presetId);
+      setPresets(presets.filter(p => p.id !== presetId));
+      toast.success("Preset deleted");
+    } catch (error) {
+      toast.error("Failed to delete preset");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 lg:p-12 max-w-4xl mx-auto animate-fade-in" data-testid="settings-page">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-serif font-medium tracking-tight">
+            Settings
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Manage your style presets and preferences
+          </p>
+        </div>
+      </div>
+
+      {/* Style Presets */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-serif flex items-center gap-2">
+            <Palette className="h-5 w-5 text-accent" />
+            Style Presets
+          </CardTitle>
+          <Button
+            onClick={() => handleOpenDialog()}
+            size="sm"
+            className="rounded-sm"
+            data-testid="add-preset-btn"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Preset
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            Style presets define the visual direction for your art prompts. Create presets for different series, moods, or artistic styles.
+          </p>
+          
+          <ScrollArea className="h-[400px]">
+            {presets.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                <Palette className="h-12 w-12 mb-4 opacity-50" />
+                <p className="text-sm text-center mb-4">
+                  No style presets yet. Create one to use in the Art Studio.
+                </p>
+                <Button onClick={() => handleOpenDialog()} variant="outline" className="rounded-sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Preset
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {presets.map((preset) => (
+                  <div 
+                    key={preset.id} 
+                    className="p-4 border border-border rounded-sm hover:border-accent/50 transition-colors"
+                    data-testid={`preset-${preset.id}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{preset.name}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {preset.description}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <span className="text-xs px-2 py-1 bg-muted rounded">
+                            Style: {preset.visual_style}
+                          </span>
+                          <span className="text-xs px-2 py-1 bg-muted rounded">
+                            Mood: {preset.mood}
+                          </span>
+                          {preset.color_palette && (
+                            <span className="text-xs px-2 py-1 bg-muted rounded">
+                              Colors: {preset.color_palette}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 ml-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(preset)}
+                          className="h-8 w-8"
+                          data-testid={`edit-preset-${preset.id}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(preset.id)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          data-testid={`delete-preset-${preset.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* Preset Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md" data-testid="preset-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-serif">
+              {editingPreset ? "Edit Style Preset" : "Create Style Preset"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Bigfoot Adventure"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="rounded-sm"
+                  data-testid="preset-name-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description *</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe this visual style..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="rounded-sm resize-none"
+                  rows={2}
+                  data-testid="preset-description-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="visual_style">Visual Style *</Label>
+                <Input
+                  id="visual_style"
+                  placeholder="e.g., Soft watercolor, storybook illustration"
+                  value={formData.visual_style}
+                  onChange={(e) => setFormData({ ...formData, visual_style: e.target.value })}
+                  className="rounded-sm"
+                  data-testid="preset-style-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mood">Mood *</Label>
+                <Input
+                  id="mood"
+                  placeholder="e.g., Warm, cozy, adventurous"
+                  value={formData.mood}
+                  onChange={(e) => setFormData({ ...formData, mood: e.target.value })}
+                  className="rounded-sm"
+                  data-testid="preset-mood-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="color_palette">Color Palette (optional)</Label>
+                <Input
+                  id="color_palette"
+                  placeholder="e.g., Earth tones, forest greens, warm browns"
+                  value={formData.color_palette}
+                  onChange={(e) => setFormData({ ...formData, color_palette: e.target.value })}
+                  className="rounded-sm"
+                  data-testid="preset-colors-input"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                className="rounded-sm"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={saving}
+                className="rounded-sm"
+                data-testid="save-preset-btn"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  editingPreset ? "Update Preset" : "Create Preset"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
