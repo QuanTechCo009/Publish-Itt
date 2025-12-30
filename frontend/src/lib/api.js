@@ -71,4 +71,22 @@ export const aiApi = {
   askThad: (query, context) => api.post('/ai/ask-thad', { query, context })
 }
 
+// Market Intelligence APIs
+export const marketApi = {
+  generateBookIdeas: (universe, count = 10) => 
+    api.post('/ai/market/book-ideas', { universe, count }),
+  analyzeMarket: (genre, ageGroup) => 
+    api.post('/ai/market/analysis', { genre, age_group: ageGroup }),
+  customerResearch: (bookIdea) => 
+    api.post('/ai/market/customer-research', { book_idea: bookIdea }),
+  generateMarketOutline: (bookIdea, chapterCount = 12) => 
+    api.post('/ai/market/outline', { book_idea: bookIdea, chapter_count: chapterCount }),
+  generateManuscriptDraft: (bookIdea, wordCount = 30000) => 
+    api.post('/ai/market/manuscript-draft', { book_idea: bookIdea, word_count: wordCount }),
+  generateBookDescription: (bookTitle, bookSummary) => 
+    api.post('/ai/market/book-description', { book_title: bookTitle, book_summary: bookSummary }),
+  analyzeSales: (salesData) => 
+    api.post('/ai/market/sales-analysis', { sales_data: salesData })
+}
+
 export default api
