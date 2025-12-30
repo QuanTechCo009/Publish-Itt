@@ -207,6 +207,30 @@ class BookDescriptionRequest(BaseModel):
 class SalesAnalysisRequest(BaseModel):
     sales_data: str
 
+# Import Analysis Request Models
+class ImportAnalysisRequest(BaseModel):
+    content: str
+    filename: Optional[str] = None
+    project_id: Optional[str] = None
+    chapter_id: Optional[str] = None
+
+class ImportActionRequest(BaseModel):
+    action: str  # autoformat, remove_notes, store_notes, convert_notes, split_chapters, lantern_path, full_qa, extract_summaries, extract_characters, extract_glossary
+    content: str
+    project_id: Optional[str] = None
+    chapter_id: Optional[str] = None
+
+class ImportAnalysisResponse(BaseModel):
+    analysis: str
+    structure_issues: List[str]
+    notes_detected: List[str]
+    style_issues: List[str]
+    formatting_issues: List[str]
+    lore_issues: List[str]
+    word_count: int
+    estimated_reading_level: str
+    recommended_actions: List[str]
+
 # ============== SYSTEM PROMPTS ==============
 
 GLOBAL_SYSTEM_PROMPT = """You are Thaddaeus ("Thad"), the creative intelligence inside Mick's in-house Author OS. 
