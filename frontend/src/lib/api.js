@@ -28,6 +28,28 @@ export const chapterApi = {
   delete: (id) => api.delete(`/chapters/${id}`)
 }
 
+// Manuscript Upload APIs
+export const uploadApi = {
+  uploadManuscript: (file, projectId, chapterTitle = null) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('project_id', projectId)
+    if (chapterTitle) {
+      formData.append('chapter_title', chapterTitle)
+    }
+    return api.post('/manuscripts/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  previewManuscript: (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/manuscripts/upload-preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
+}
+
 // Style Preset APIs
 export const stylePresetApi = {
   getAll: () => api.get('/style-presets'),
