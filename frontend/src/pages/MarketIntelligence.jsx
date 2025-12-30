@@ -266,12 +266,12 @@ export default function MarketIntelligence() {
                 </div>
                 <div className="space-y-2">
                   <Label>Target Age Group (optional)</Label>
-                  <Select value={ageGroup} onValueChange={setAgeGroup}>
+                  <Select value={ageGroup || "all"} onValueChange={(v) => setAgeGroup(v === "all" ? "" : v)}>
                     <SelectTrigger className="rounded-sm" data-testid="age-group-select">
                       <SelectValue placeholder="All ages" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All ages</SelectItem>
+                      <SelectItem value="all">All ages</SelectItem>
                       <SelectItem value="3-5 years">3-5 years (Early Readers)</SelectItem>
                       <SelectItem value="6-8 years">6-8 years (Beginning Readers)</SelectItem>
                       <SelectItem value="8-12 years">8-12 years (Middle Grade)</SelectItem>
