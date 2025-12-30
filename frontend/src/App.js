@@ -7,6 +7,7 @@ import ManuscriptWorkspace from "@/pages/ManuscriptWorkspace";
 import WorkflowWorkspace from "@/pages/WorkflowWorkspace";
 import ToneStyleWorkspace from "@/pages/ToneStyleWorkspace";
 import ArtStudio from "@/pages/ArtStudio";
+import MarketIntelligence from "@/pages/MarketIntelligence";
 import Settings from "@/pages/Settings";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
             <Route path="workflow/:projectId?" element={<WorkflowWorkspace />} />
             <Route path="tone/:projectId?" element={<ToneStyleWorkspace />} />
             <Route path="art/:projectId?" element={<ArtStudio />} />
+            <Route path="market" element={<MarketIntelligence />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
