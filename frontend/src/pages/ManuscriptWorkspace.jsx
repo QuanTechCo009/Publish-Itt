@@ -734,9 +734,50 @@ export default function ManuscriptWorkspace() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                <FileText className="h-12 w-12 mb-4" />
-                <p>Select or create a chapter to start writing</p>
+              /* Empty state with drag-and-drop zone */
+              <div 
+                className={cn(
+                  "flex flex-col items-center justify-center h-full transition-colors",
+                  isDragging 
+                    ? "bg-accent/10 border-2 border-dashed border-accent" 
+                    : "text-muted-foreground"
+                )}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                data-testid="drop-zone"
+              >
+                {isDragging ? (
+                  <>
+                    <FileUp className="h-16 w-16 mb-4 text-accent animate-bounce" />
+                    <p className="text-lg font-medium text-accent">Drop your manuscript here</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Supported: .txt, .docx, .pdf, .md
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <FileText className="h-12 w-12 mb-4" />
+                    <p className="mb-4">Select or create a chapter to start writing</p>
+                    <div className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-border rounded-lg">
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                      <p className="text-sm font-medium">Drag & drop a manuscript file here</p>
+                      <p className="text-xs text-muted-foreground">or</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="rounded-sm"
+                        data-testid="browse-files-btn"
+                      >
+                        Browse Files
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Supports .txt, .docx, .pdf, .md
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
