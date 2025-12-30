@@ -111,4 +111,22 @@ export const marketApi = {
     api.post('/ai/market/sales-analysis', { sales_data: salesData })
 }
 
+// Import Analysis APIs
+export const importAnalysisApi = {
+  analyze: (content, filename, projectId, chapterId) =>
+    api.post('/ai/import/analyze', { 
+      content, 
+      filename, 
+      project_id: projectId, 
+      chapter_id: chapterId 
+    }),
+  executeAction: (action, content, projectId, chapterId) =>
+    api.post('/ai/import/action', { 
+      action, 
+      content, 
+      project_id: projectId, 
+      chapter_id: chapterId 
+    })
+}
+
 export default api
