@@ -361,6 +361,96 @@ export default function ManuscriptWorkspace() {
     }
   };
 
+  // Upload Functions
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      await handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileInputChange = async (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileSelect = async (file) => {
+    const allowedTypes = ['.txt', '.docx', '.pdf', '.md'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(ext)) {
+      toast.error(`Unsupported file type. Allowed: ${allowedTypes.join(', ')}`);
+      return;
+    }
+    
+    setUploadedFile(file);
+    setUploadChapterTitle(file.name.replace(/\.[^/.]+$/, ""));
+    setUploading(true);
+    
+    try {
+      const res = await uploadApi.previewManuscript(file);
+      setUploadPreview(res.data);
+      setUploadDialogOpen(true);
+    } catch (error) {
+      toast.error("Failed to preview file: " + (error.response?.data?.detail || error.message));
+      setUploadedFile(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUploadConfirm = async () => {
+    if (!uploadedFile || !selectedProject) return;
+    
+    setUploading(true);
+    try {
+      const res = await uploadApi.uploadManuscript(
+        uploadedFile,
+        selectedProject.id,
+        uploadChapterTitle || uploadedFile.name.replace(/\.[^/.]+$/, "")
+      );
+      
+      if (res.data.chapter_id) {
+        await loadChapters(selectedProject.id);
+        // Select the new chapter
+        const newChapter = await chapterApi.getById(res.data.chapter_id);
+        setSelectedChapter(newChapter.data);
+        toast.success(`Imported "${uploadChapterTitle}" (${res.data.word_count.toLocaleString()} words)`);
+      }
+      
+      handleUploadClose();
+    } catch (error) {
+      toast.error("Failed to import manuscript: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUploadClose = () => {
+    setUploadDialogOpen(false);
+    setUploadedFile(null);
+    setUploadPreview(null);
+    setUploadChapterTitle("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
