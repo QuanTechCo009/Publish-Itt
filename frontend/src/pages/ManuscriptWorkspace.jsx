@@ -407,27 +407,14 @@ export default function ManuscriptWorkspace() {
         </div>
 
         {!sidebarCollapsed && (
-          /* ManuscriptPanel Container */
+          /* ManuscriptPanel Container - All manuscript UI contained here */
           <div 
-            className="flex flex-col gap-3 p-4 w-full overflow-hidden"
+            className="flex flex-col gap-3 p-4 w-full overflow-hidden flex-1"
             data-testid="manuscript-panel"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              padding: '16px',
-              width: '100%',
-              overflow: 'hidden'
-            }}
           >
-            {/* Scrollable Chapter List */}
+            {/* Scrollable Manuscript/Chapter List */}
             <div 
-              className="overflow-y-auto pr-2"
-              style={{
-                maxHeight: '400px',
-                overflowY: 'auto',
-                paddingRight: '8px'
-              }}
+              className="overflow-y-auto pr-2 max-h-[400px]"
               data-testid="chapter-list-container"
             >
               <div className="space-y-1">
@@ -458,17 +445,13 @@ export default function ManuscriptWorkspace() {
               </div>
             </div>
 
-            {/* ManuscriptPanel Buttons - All below the list */}
-            <div 
-              className="flex flex-col gap-2 border-t border-border pt-3"
-              style={{ width: '100%' }}
-            >
+            {/* Manuscript Buttons - All inside ManuscriptPanel, below list */}
+            <div className="flex flex-col gap-2 border-t border-border pt-3 w-full">
               <Button 
                 variant="outline" 
                 className="w-full rounded-sm justify-start" 
                 size="sm"
                 onClick={() => setNewChapterOpen(true)}
-                style={{ width: '100%', alignSelf: 'stretch' }}
                 data-testid="add-chapter-btn"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -481,7 +464,6 @@ export default function ManuscriptWorkspace() {
                 size="sm"
                 onClick={handleDuplicateChapter}
                 disabled={!selectedChapter}
-                style={{ width: '100%', alignSelf: 'stretch' }}
                 data-testid="duplicate-chapter-btn"
               >
                 <Copy className="h-4 w-4 mr-2" />
@@ -494,7 +476,6 @@ export default function ManuscriptWorkspace() {
                 size="sm"
                 onClick={openRenameDialog}
                 disabled={!selectedChapter}
-                style={{ width: '100%', alignSelf: 'stretch' }}
                 data-testid="rename-chapter-btn"
               >
                 <Pencil className="h-4 w-4 mr-2" />
@@ -507,21 +488,20 @@ export default function ManuscriptWorkspace() {
                 size="sm"
                 onClick={() => setDeleteChapterOpen(true)}
                 disabled={!selectedChapter}
-                style={{ width: '100%', alignSelf: 'stretch' }}
                 data-testid="delete-chapter-btn"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Chapter
               </Button>
               
-              <div className="border-t border-border pt-2 mt-1">
+              {/* Delete Manuscript Button */}
+              <div className="border-t border-border pt-2 mt-1 w-full">
                 <Button 
                   variant="destructive" 
                   className="w-full rounded-sm justify-start" 
                   size="sm"
                   onClick={() => setDeleteManuscriptOpen(true)}
                   disabled={!selectedProject}
-                  style={{ width: '100%', alignSelf: 'stretch' }}
                   data-testid="delete-manuscript-btn"
                 >
                   <BookX className="h-4 w-4 mr-2" />
