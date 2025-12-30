@@ -152,11 +152,12 @@ export default function Dashboard() {
           {projects.map((project, index) => (
             <Card 
               key={project.id} 
-              className="card-hover cursor-pointer animate-slide-in"
+              className="card-hover cursor-pointer animate-slide-in overflow-hidden"
               style={{ animationDelay: `${index * 0.1}s` }}
               onClick={() => navigate(`/manuscript/${project.id}`)}
               data-testid={`project-card-${project.id}`}
             >
+              {/* Project Card Content - All children contained within */}
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -177,7 +178,8 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col gap-4">
+                {/* Project Info */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     {project.universe || "No universe"}
@@ -187,6 +189,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 
+                {/* Progress Section */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">Progress</span>
@@ -198,7 +201,12 @@ export default function Dashboard() {
                   />
                 </div>
 
-                <div className="flex items-center gap-1 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                {/* Quick Actions Panel - Child of Card, contained within bounds */}
+                <div 
+                  className="flex flex-wrap items-center gap-1 pt-3 border-t border-border w-full"
+                  onClick={(e) => e.stopPropagation()}
+                  data-testid={`project-actions-${project.id}`}
+                >
                   <QuickAction 
                     icon={FileText} 
                     label="Manuscript"
@@ -221,7 +229,8 @@ export default function Dashboard() {
                   />
                 </div>
 
-                <p className="text-xs text-muted-foreground pt-1">
+                {/* Updated timestamp */}
+                <p className="text-xs text-muted-foreground">
                   Updated {formatDate(project.updated_at)}
                 </p>
               </CardContent>
