@@ -859,6 +859,23 @@ export default function ManuscriptWorkspace() {
                     <ListOrdered className="h-4 w-4 mr-2" />
                     Generate Book Outline
                   </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start rounded-sm bg-accent/10 hover:bg-accent/20 text-accent"
+                    size="sm"
+                    onClick={() => {
+                      if (editor && selectedChapter) {
+                        setImportedContent(editor.getText());
+                        setImportedFilename(selectedChapter.title);
+                        setImportAnalysisOpen(true);
+                      }
+                    }}
+                    disabled={!selectedChapter || !editor?.getText()}
+                    data-testid="analyze-chapter-btn"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Analyze Chapter
+                  </Button>
                 </div>
 
                 <ScrollArea className="flex-1 p-3">
