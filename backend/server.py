@@ -714,6 +714,261 @@ Additional context:
     response = await get_ai_response(GLOBAL_SYSTEM_PROMPT, prompt)
     return AIResponse(response=response, module="general")
 
+# ============== MARKET INTELLIGENCE ENDPOINTS ==============
+
+@api_router.post("/ai/market/book-ideas", response_model=AIResponse)
+async def generate_book_ideas(request: BookIdeasRequest):
+    prompt = f"""Generate {request.count} unique book topic ideas with strong market potential.
+
+For each idea, include:
+- **Title idea**: A compelling, market-ready title
+- **One-sentence hook**: The pitch that would appear on the back cover
+- **Why this topic has opportunity**: Market reasoning (gap, trend, demand)
+- **Target reader age**: Specific age range
+
+Universe: {request.universe}
+
+Rules:
+- All suggestions must align with the {request.universe} universe when applicable
+- Maintain the emotional palette (warm, curious, empowering)
+- Focus on financial literacy concepts that resonate with children
+- Consider what parents and educators are actively seeking
+- Balance creativity with commercial viability
+
+Format each idea clearly numbered 1-{request.count}."""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
+@api_router.post("/ai/market/analysis", response_model=AIResponse)
+async def analyze_market(request: MarketAnalysisRequest):
+    age_context = f" for {request.age_group}" if request.age_group else ""
+    prompt = f"""Analyze the current market for {request.genre} books{age_context}.
+
+Provide a comprehensive analysis including:
+
+## Market Gaps
+- What topics are underserved?
+- What formats are missing?
+- What age groups lack good options?
+
+## Underserved Themes
+- Financial concepts not well covered
+- Emotional angles being missed
+- Cultural perspectives lacking representation
+
+## Emerging Opportunities
+- Rising trends in children's publishing
+- New distribution channels
+- Educational market shifts
+- Parent/teacher demand signals
+
+## Competitive Angles
+- How to differentiate from existing books
+- Unique positioning strategies
+- Brand-building opportunities
+
+## Summary & Recommendations
+Provide 3 specific book directions with:
+- Concept summary
+- Target audience
+- Key differentiator
+- Market timing rationale"""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
+@api_router.post("/ai/market/customer-research", response_model=AIResponse)
+async def generate_customer_research(request: CustomerResearchRequest):
+    prompt = f"""Create a customer research report for the following book idea:
+
+**Book Idea:** {request.book_idea}
+
+Provide detailed insights on:
+
+## What Readers Want
+- Core desires and expectations
+- Format preferences
+- Length expectations
+- Visual element preferences
+
+## Common Frustrations
+- What existing books get wrong
+- Pain points with current options
+- Unmet needs in the market
+
+## Desired Outcomes
+- What parents want kids to learn
+- What teachers need for curriculum
+- What kids want to feel after reading
+
+## Emotional Triggers
+- What motivates purchase decisions
+- Fear-based triggers (what parents worry about)
+- Aspiration-based triggers (what parents hope for)
+- Joy-based triggers (what makes kids excited)
+
+## Market Positioning Suggestions
+- Recommended positioning statement
+- Key differentiators to emphasize
+- Messaging angles that resonate
+- Price point considerations"""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
+@api_router.post("/ai/market/outline", response_model=AIResponse)
+async def generate_market_outline(request: MarketOutlineRequest):
+    prompt = f"""Create a chapter-by-chapter outline for this book idea:
+
+**Book Idea:** {request.book_idea}
+**Target Chapters:** {request.chapter_count}
+
+Use the Lantern Path structure (guiding the reader through discovery).
+
+For each chapter, include:
+
+### Chapter [Number]: [Title]
+- **Purpose**: What this chapter accomplishes in the journey
+- **Emotional Beat**: The feeling the reader should experience
+- **Financial Literacy Concept**: The key lesson embedded in the story
+- **Market Appeal Note**: Why this chapter will resonate with buyers
+
+Additional requirements:
+- Build emotional momentum across chapters
+- Ensure educational clarity without being preachy
+- Include parent/teacher discussion opportunities
+- Create natural cliffhangers or curiosity hooks
+- Balance entertainment with learning
+
+End with a summary of:
+- Overall story arc
+- Key learning outcomes
+- Why this structure will sell"""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
+@api_router.post("/ai/market/manuscript-draft", response_model=AIResponse)
+async def generate_manuscript_draft(request: ManuscriptDraftRequest):
+    prompt = f"""Generate a full draft manuscript outline for a {request.word_count:,}-word book based on:
+
+**Book Idea:** {request.book_idea}
+
+Create a detailed outline including:
+
+## Book Overview
+- Title suggestion
+- Subtitle suggestion
+- Target word count per chapter
+- Target reader age
+
+## Chapter-by-Chapter Breakdown
+
+For each chapter provide:
+### Chapter [Number]: [Title] (~[word count] words)
+
+**Summary**: 2-3 sentence overview
+
+**Key Scenes**:
+- Scene 1: [description]
+- Scene 2: [description]
+- Scene 3: [description]
+
+**Emotional Arc**: Beginning feeling → Middle tension → End resolution
+
+**Educational Beat**: The financial literacy concept woven in
+
+**Market Alignment Note**: How this serves reader expectations
+
+## Overall Structure Notes
+- Pacing recommendations
+- Illustration opportunity moments
+- Discussion question hooks
+- Series potential indicators
+
+NOTE: This is an outline only. Do NOT generate the full {request.word_count:,} words unless explicitly asked."""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
+@api_router.post("/ai/market/book-description", response_model=AIResponse)
+async def generate_book_description(request: BookDescriptionRequest):
+    prompt = f"""Write a compelling book description for:
+
+**Title:** {request.book_title}
+**Summary:** {request.book_summary}
+
+Create a sales-optimized description including:
+
+## The Hook (Opening Line)
+- Attention-grabbing first sentence
+- Creates immediate curiosity
+
+## The Emotional Promise
+- What transformation awaits the reader
+- The journey they'll experience
+
+## What Kids Will Learn
+- 3-5 key takeaways
+- Framed as exciting discoveries, not lessons
+
+## Why Parents & Teachers Will Love It
+- Educational value
+- Discussion opportunities
+- Curriculum alignment
+- Values reinforcement
+
+## The Call to Action
+- Compelling reason to buy now
+- Perfect for [occasions/uses]
+
+Tone: warm, mythic, empowering
+Length: 150-250 words total
+Format: Ready for Amazon/sales page"""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
+@api_router.post("/ai/market/sales-analysis", response_model=AIResponse)
+async def analyze_sales_data(request: SalesAnalysisRequest):
+    prompt = f"""Analyze the following sales data and provide strategic insights:
+
+**Sales Data:**
+{request.sales_data}
+
+Provide:
+
+## Performance Summary
+- Overall sales performance
+- Best and worst performing titles/periods
+- Revenue highlights
+
+## Trends
+- Seasonal patterns
+- Growth or decline indicators
+- Channel performance
+- Format preferences
+
+## Opportunities
+- Untapped markets
+- Pricing optimization potential
+- Bundle or series opportunities
+- Marketing angles to explore
+
+## Recommendations for Next Book
+- Topic direction based on what's selling
+- Format recommendations
+- Timing suggestions
+- Pricing strategy
+- Marketing focus areas
+
+## Action Items
+Prioritized list of 5 specific actions to take based on this data."""
+
+    response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="market_intelligence")
+
 # ============== STATUS ENDPOINTS ==============
 
 @api_router.get("/")
