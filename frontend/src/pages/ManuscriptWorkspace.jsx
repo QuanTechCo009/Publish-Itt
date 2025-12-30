@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { projectApi, chapterApi, aiApi } from "@/lib/api";
+import { projectApi, chapterApi, aiApi, uploadApi } from "@/lib/api";
 import { cn, formatWordCount } from "@/lib/utils";
 import { toast } from "sonner";
 import { 
@@ -58,6 +58,9 @@ import {
   Trash2,
   Copy,
   Pencil,
+  Upload,
+  FileUp,
+  X,
   BookX
 } from "lucide-react";
 
