@@ -21,7 +21,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { projectApi, chapterApi, aiApi } from "@/lib/api";
 import { cn, formatWordCount } from "@/lib/utils";
@@ -44,7 +55,10 @@ import {
   Heading2,
   Undo,
   Redo,
-  Trash2
+  Trash2,
+  Copy,
+  Pencil,
+  BookX
 } from "lucide-react";
 
 export default function ManuscriptWorkspace() {
@@ -69,6 +83,10 @@ export default function ManuscriptWorkspace() {
   const [newChapterTitle, setNewChapterTitle] = useState("");
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [outlineCount, setOutlineCount] = useState(10);
+  const [renameChapterOpen, setRenameChapterOpen] = useState(false);
+  const [renameChapterTitle, setRenameChapterTitle] = useState("");
+  const [deleteManuscriptOpen, setDeleteManuscriptOpen] = useState(false);
+  const [deleteChapterOpen, setDeleteChapterOpen] = useState(false);
 
   // Editor setup
   const editor = useEditor({
@@ -198,16 +216,86 @@ export default function ManuscriptWorkspace() {
 
   const handleDeleteChapter = async () => {
     if (!selectedChapter) return;
-    if (!window.confirm("Are you sure you want to delete this chapter?")) return;
     
     try {
       await chapterApi.delete(selectedChapter.id);
       const newChapters = chapters.filter(c => c.id !== selectedChapter.id);
       setChapters(newChapters);
       setSelectedChapter(newChapters.length > 0 ? newChapters[0] : null);
+      setDeleteChapterOpen(false);
       toast.success("Chapter deleted");
     } catch (error) {
       toast.error("Failed to delete chapter");
+    }
+  };
+
+  const handleDuplicateChapter = async () => {
+    if (!selectedChapter || !selectedProject) return;
+    
+    try {
+      const res = await chapterApi.create({
+        project_id: selectedProject.id,
+        chapter_number: chapters.length + 1,
+        title: `${selectedChapter.title} (Copy)`,
+        content: selectedChapter.content,
+        status: "draft"
+      });
+      setChapters([...chapters, res.data]);
+      setSelectedChapter(res.data);
+      toast.success("Chapter duplicated!");
+    } catch (error) {
+      toast.error("Failed to duplicate chapter");
+    }
+  };
+
+  const handleRenameChapter = async () => {
+    if (!selectedChapter || !renameChapterTitle.trim()) return;
+    
+    try {
+      await chapterApi.update(selectedChapter.id, { title: renameChapterTitle });
+      setChapters(chapters.map(c => 
+        c.id === selectedChapter.id ? { ...c, title: renameChapterTitle } : c
+      ));
+      setSelectedChapter({ ...selectedChapter, title: renameChapterTitle });
+      setRenameChapterOpen(false);
+      setRenameChapterTitle("");
+      toast.success("Chapter renamed!");
+    } catch (error) {
+      toast.error("Failed to rename chapter");
+    }
+  };
+
+  // Delete Manuscript (Project) Action
+  const handleDeleteManuscript = async () => {
+    if (!selectedProject) return;
+    
+    try {
+      await projectApi.delete(selectedProject.id);
+      const newProjects = projects.filter(p => p.id !== selectedProject.id);
+      setProjects(newProjects);
+      setDeleteManuscriptOpen(false);
+      
+      if (newProjects.length > 0) {
+        setSelectedProject(newProjects[0]);
+        loadChapters(newProjects[0].id);
+        navigate(`/manuscript/${newProjects[0].id}`);
+      } else {
+        setSelectedProject(null);
+        setChapters([]);
+        setSelectedChapter(null);
+        navigate("/");
+      }
+      
+      toast.success("Manuscript deleted successfully.");
+    } catch (error) {
+      toast.error("Failed to delete manuscript");
+    }
+  };
+
+  const openRenameDialog = () => {
+    if (selectedChapter) {
+      setRenameChapterTitle(selectedChapter.title);
+      setRenameChapterOpen(true);
     }
   };
 
@@ -284,11 +372,11 @@ export default function ManuscriptWorkspace() {
 
   return (
     <div className="flex h-full" data-testid="manuscript-workspace">
-      {/* Chapter Sidebar */}
+      {/* ManuscriptPanel - Chapter Sidebar */}
       <aside 
         className={cn(
           "flex flex-col bg-card border-r border-border sidebar-transition",
-          sidebarCollapsed ? "w-12" : "w-64"
+          sidebarCollapsed ? "w-12" : "w-72"
         )}
       >
         <div className="flex items-center justify-between p-3 border-b border-border">
@@ -312,49 +400,136 @@ export default function ManuscriptWorkspace() {
             size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className="shrink-0"
+            data-testid="toggle-sidebar-btn"
           >
             {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
 
         {!sidebarCollapsed && (
-          <>
-            <ScrollArea className="flex-1">
-              <div className="p-2 space-y-1">
-                {chapters.map((chapter) => (
-                  <button
-                    key={chapter.id}
-                    onClick={() => setSelectedChapter(chapter)}
-                    className={cn(
-                      "w-full text-left px-3 py-2 rounded-sm text-sm transition-colors",
-                      selectedChapter?.id === chapter.id
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-muted"
-                    )}
-                    data-testid={`chapter-${chapter.id}`}
-                  >
-                    <span className="font-mono text-xs text-muted-foreground mr-2">
-                      {chapter.chapter_number}.
-                    </span>
-                    {chapter.title}
-                  </button>
-                ))}
+          /* ManuscriptPanel Container */
+          <div 
+            className="flex flex-col gap-3 p-4 w-full overflow-hidden"
+            data-testid="manuscript-panel"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              padding: '16px',
+              width: '100%',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Scrollable Chapter List */}
+            <div 
+              className="overflow-y-auto pr-2"
+              style={{
+                maxHeight: '400px',
+                overflowY: 'auto',
+                paddingRight: '8px'
+              }}
+              data-testid="chapter-list-container"
+            >
+              <div className="space-y-1">
+                {chapters.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No chapters yet
+                  </p>
+                ) : (
+                  chapters.map((chapter) => (
+                    <button
+                      key={chapter.id}
+                      onClick={() => setSelectedChapter(chapter)}
+                      className={cn(
+                        "w-full text-left px-3 py-2 rounded-sm text-sm transition-colors",
+                        selectedChapter?.id === chapter.id
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-muted"
+                      )}
+                      data-testid={`chapter-${chapter.id}`}
+                    >
+                      <span className="font-mono text-xs text-muted-foreground mr-2">
+                        {chapter.chapter_number}.
+                      </span>
+                      {chapter.title}
+                    </button>
+                  ))
+                )}
               </div>
-            </ScrollArea>
-            
-            <div className="p-2 border-t border-border">
+            </div>
+
+            {/* ManuscriptPanel Buttons - All below the list */}
+            <div 
+              className="flex flex-col gap-2 border-t border-border pt-3"
+              style={{ width: '100%' }}
+            >
               <Button 
                 variant="outline" 
-                className="w-full rounded-sm" 
+                className="w-full rounded-sm justify-start" 
                 size="sm"
                 onClick={() => setNewChapterOpen(true)}
+                style={{ width: '100%', alignSelf: 'stretch' }}
                 data-testid="add-chapter-btn"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Chapter
+                Create Chapter
               </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full rounded-sm justify-start" 
+                size="sm"
+                onClick={handleDuplicateChapter}
+                disabled={!selectedChapter}
+                style={{ width: '100%', alignSelf: 'stretch' }}
+                data-testid="duplicate-chapter-btn"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicate Chapter
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full rounded-sm justify-start" 
+                size="sm"
+                onClick={openRenameDialog}
+                disabled={!selectedChapter}
+                style={{ width: '100%', alignSelf: 'stretch' }}
+                data-testid="rename-chapter-btn"
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Rename Chapter
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full rounded-sm justify-start text-destructive hover:text-destructive" 
+                size="sm"
+                onClick={() => setDeleteChapterOpen(true)}
+                disabled={!selectedChapter}
+                style={{ width: '100%', alignSelf: 'stretch' }}
+                data-testid="delete-chapter-btn"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Chapter
+              </Button>
+              
+              <div className="border-t border-border pt-2 mt-1">
+                <Button 
+                  variant="destructive" 
+                  className="w-full rounded-sm justify-start" 
+                  size="sm"
+                  onClick={() => setDeleteManuscriptOpen(true)}
+                  disabled={!selectedProject}
+                  style={{ width: '100%', alignSelf: 'stretch' }}
+                  data-testid="delete-manuscript-btn"
+                >
+                  <BookX className="h-4 w-4 mr-2" />
+                  Delete Manuscript
+                </Button>
+              </div>
             </div>
-          </>
+          </div>
         )}
       </aside>
 
@@ -414,16 +589,6 @@ export default function ManuscriptWorkspace() {
             <span className="text-xs text-muted-foreground font-mono">
               {editor?.storage.characterCount?.words() || 0} words
             </span>
-            {selectedChapter && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleDeleteChapter}
-                className="text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
             <Button
               variant="outline"
               size="sm"
@@ -553,6 +718,9 @@ export default function ManuscriptWorkspace() {
         <DialogContent data-testid="new-chapter-dialog">
           <DialogHeader>
             <DialogTitle className="font-serif">Add New Chapter</DialogTitle>
+            <DialogDescription>
+              Create a new chapter for your manuscript.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label htmlFor="chapterTitle">Chapter Title</Label>
@@ -576,11 +744,45 @@ export default function ManuscriptWorkspace() {
         </DialogContent>
       </Dialog>
 
+      {/* Rename Chapter Dialog */}
+      <Dialog open={renameChapterOpen} onOpenChange={setRenameChapterOpen}>
+        <DialogContent data-testid="rename-chapter-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Rename Chapter</DialogTitle>
+            <DialogDescription>
+              Enter a new name for this chapter.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="renameChapterTitle">Chapter Title</Label>
+            <Input
+              id="renameChapterTitle"
+              value={renameChapterTitle}
+              onChange={(e) => setRenameChapterTitle(e.target.value)}
+              placeholder="Enter new chapter title"
+              className="mt-2 rounded-sm"
+              data-testid="rename-chapter-title-input"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameChapterOpen(false)} className="rounded-sm">
+              Cancel
+            </Button>
+            <Button onClick={handleRenameChapter} className="rounded-sm" data-testid="rename-chapter-submit">
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Outline Dialog */}
       <Dialog open={outlineOpen} onOpenChange={setOutlineOpen}>
         <DialogContent data-testid="outline-dialog">
           <DialogHeader>
             <DialogTitle className="font-serif">Generate Book Outline</DialogTitle>
+            <DialogDescription>
+              AI will generate a chapter-by-chapter outline based on your project summary.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Label htmlFor="chapterCount">Number of Chapters</Label>
@@ -605,6 +807,50 @@ export default function ManuscriptWorkspace() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Chapter Confirmation Dialog */}
+      <AlertDialog open={deleteChapterOpen} onOpenChange={setDeleteChapterOpen}>
+        <AlertDialogContent data-testid="delete-chapter-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this chapter?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The chapter "{selectedChapter?.title}" will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteChapter} 
+              className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="confirm-delete-chapter-btn"
+            >
+              Delete Chapter
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Manuscript Confirmation Dialog */}
+      <AlertDialog open={deleteManuscriptOpen} onOpenChange={setDeleteManuscriptOpen}>
+        <AlertDialogContent data-testid="delete-manuscript-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this manuscript?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The manuscript "{selectedProject?.title}" and all its chapters will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteManuscript} 
+              className="rounded-sm bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="confirm-delete-manuscript-btn"
+            >
+              Delete Manuscript
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
