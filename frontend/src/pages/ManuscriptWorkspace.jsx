@@ -67,6 +67,7 @@ import {
 export default function ManuscriptWorkspace() {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -90,6 +91,14 @@ export default function ManuscriptWorkspace() {
   const [renameChapterTitle, setRenameChapterTitle] = useState("");
   const [deleteManuscriptOpen, setDeleteManuscriptOpen] = useState(false);
   const [deleteChapterOpen, setDeleteChapterOpen] = useState(false);
+  
+  // Upload state
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [uploadChapterTitle, setUploadChapterTitle] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Editor setup
   const editor = useEditor({
