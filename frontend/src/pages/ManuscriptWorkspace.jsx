@@ -37,6 +37,7 @@ import { Label } from "@/components/ui/label";
 import { projectApi, chapterApi, aiApi, uploadApi } from "@/lib/api";
 import { cn, formatWordCount } from "@/lib/utils";
 import { toast } from "sonner";
+import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
 import { 
   Plus, 
   Save,
@@ -61,7 +62,8 @@ import {
   Upload,
   FileUp,
   X,
-  BookX
+  BookX,
+  Sparkles
 } from "lucide-react";
 
 export default function ManuscriptWorkspace() {
