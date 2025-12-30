@@ -438,13 +438,27 @@ export default function ManuscriptWorkspace() {
         const newChapter = await chapterApi.getById(res.data.chapter_id);
         setSelectedChapter(newChapter.data);
         toast.success(`Imported "${uploadChapterTitle}" (${res.data.word_count.toLocaleString()} words)`);
+        
+        // Trigger Import Analysis
+        setImportedContent(uploadPreview?.full_content || res.data.content);
+        setImportedFilename(uploadedFile.name);
+        handleUploadClose();
+        setImportAnalysisOpen(true);
+      } else {
+        handleUploadClose();
       }
-      
-      handleUploadClose();
     } catch (error) {
       toast.error("Failed to import manuscript: " + (error.response?.data?.detail || error.message));
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleImportActionComplete = (actionId, result) => {
+    // Handle specific actions if needed
+    if (actionId === "autoformat" && selectedChapter && editor) {
+      // Could apply the formatted content back to the editor
+      toast.success("You can review the formatted content in the results");
     }
   };
 
