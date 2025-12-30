@@ -1111,6 +1111,17 @@ export default function ManuscriptWorkspace() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import Analysis Dialog */}
+      <ImportAnalysisDialog
+        open={importAnalysisOpen}
+        onOpenChange={setImportAnalysisOpen}
+        content={importedContent}
+        filename={importedFilename}
+        projectId={selectedProject?.id}
+        chapterId={selectedChapter?.id}
+        onActionComplete={handleImportActionComplete}
+      />
     </div>
   );
 }
