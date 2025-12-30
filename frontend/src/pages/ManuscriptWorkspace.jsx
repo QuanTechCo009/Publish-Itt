@@ -958,6 +958,97 @@ export default function ManuscriptWorkspace() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upload/Import Manuscript Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={handleUploadClose}>
+        <DialogContent className="sm:max-w-2xl" data-testid="upload-manuscript-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-serif flex items-center gap-2">
+              <FileUp className="h-5 w-5" />
+              Import Manuscript
+            </DialogTitle>
+            <DialogDescription>
+              Preview and import your external manuscript as a new chapter.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {uploadPreview && (
+            <div className="space-y-4 py-4">
+              {/* File Info */}
+              <div className="flex items-center justify-between p-3 bg-muted rounded-sm">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">{uploadPreview.filename}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {uploadPreview.file_type.toUpperCase()} • {uploadPreview.word_count.toLocaleString()} words
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleUploadClose}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Chapter Title Input */}
+              <div className="space-y-2">
+                <Label htmlFor="uploadChapterTitle">Chapter Title</Label>
+                <Input
+                  id="uploadChapterTitle"
+                  value={uploadChapterTitle}
+                  onChange={(e) => setUploadChapterTitle(e.target.value)}
+                  placeholder="Enter chapter title"
+                  className="rounded-sm"
+                  data-testid="upload-chapter-title-input"
+                />
+              </div>
+              
+              {/* Preview */}
+              <div className="space-y-2">
+                <Label>Content Preview</Label>
+                <ScrollArea className="h-[200px] border border-border rounded-sm p-3">
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {uploadPreview.preview}
+                  </p>
+                </ScrollArea>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={handleUploadClose}
+              className="rounded-sm"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUploadConfirm}
+              disabled={uploading || !uploadChapterTitle.trim()}
+              className="rounded-sm"
+              data-testid="confirm-upload-btn"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import as Chapter
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
