@@ -560,6 +560,31 @@ export default function ManuscriptWorkspace() {
                 Create Chapter
               </Button>
               
+              {/* Upload/Import Button */}
+              <Button 
+                variant="outline" 
+                className="w-full rounded-sm justify-start" 
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!selectedProject || uploading}
+                data-testid="upload-manuscript-btn"
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-2" />
+                )}
+                Import Manuscript
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.docx,.pdf,.md"
+                onChange={handleFileInputChange}
+                className="hidden"
+                data-testid="file-input"
+              />
+              
               <Button 
                 variant="outline" 
                 className="w-full rounded-sm justify-start" 
