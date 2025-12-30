@@ -1204,6 +1204,250 @@ Prioritized list of 5 specific actions to take based on this data."""
     response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
     return AIResponse(response=response, module="market_intelligence")
 
+# ============== IMPORT ANALYSIS ENDPOINTS ==============
+
+@api_router.post("/ai/import/analyze")
+async def analyze_imported_manuscript(request: ImportAnalysisRequest):
+    """Analyze an imported manuscript and provide comprehensive insights"""
+    
+    word_count = len(request.content.split())
+    
+    prompt = f"""Analyze this imported manuscript and provide a comprehensive analysis.
+
+**Manuscript Content:**
+{request.content[:15000]}{"..." if len(request.content) > 15000 else ""}
+
+**Word Count:** {word_count}
+**Filename:** {request.filename or "Unknown"}
+
+Perform the following analysis and provide results in a structured format:
+
+## 1. STRUCTURE ANALYSIS
+- Detect chapters, headings, sections, and scene breaks
+- Identify inconsistent formatting
+- Identify missing or duplicated chapter numbers
+- Identify any structural gaps
+
+## 2. NOTE & COMMENT DETECTION
+- Detect inline notes, comments, annotations, or bracketed author reminders like [TODO], [NOTE], (Author note:), etc.
+- List each one found
+- Categorize them as: to remove, to store separately, or to convert into metadata
+
+## 3. STYLE & TONE ANALYSIS
+- Describe the overall tone
+- Estimate reading level (grade level)
+- Assess pacing (fast, slow, dense, airy)
+- Note any character voice inconsistencies
+
+## 4. FORMATTING ANALYSIS
+- Identify inconsistent spacing or indentation
+- Identify broken paragraphs or missing line breaks
+- Identify formatting artifacts from Word/Google Docs
+
+## 5. LORE & UNIVERSE CHECK
+- Note any potential lore drift from the Bigfoot Financial Adventures universe
+- Note any tone drift from the brand (warm, curious, empowering)
+- Flag any out-of-universe elements
+
+## 6. SUMMARY
+Provide a friendly summary of:
+- What was detected
+- What needs attention
+- What can be automated
+
+Be encouraging and helpful, not critical."""
+
+    analysis_response = await get_ai_response(IMPORT_ANALYSIS_SYSTEM_PROMPT, prompt)
+    
+    # Basic detection for structured response
+    structure_issues = []
+    notes_detected = []
+    style_issues = []
+    formatting_issues = []
+    lore_issues = []
+    
+    # Simple detection of common patterns
+    import re
+    
+    # Detect notes/comments
+    note_patterns = [
+        r'\[TODO[^\]]*\]',
+        r'\[NOTE[^\]]*\]',
+        r'\[FIXME[^\]]*\]',
+        r'\(Author note:[^)]*\)',
+        r'\{\{[^}]*\}\}',
+        r'<!--[^>]*-->',
+    ]
+    for pattern in note_patterns:
+        matches = re.findall(pattern, request.content, re.IGNORECASE)
+        notes_detected.extend(matches)
+    
+    # Estimate reading level based on average sentence and word length
+    sentences = re.split(r'[.!?]+', request.content)
+    avg_words_per_sentence = word_count / max(len(sentences), 1)
+    
+    if avg_words_per_sentence < 10:
+        reading_level = "Early Reader (K-2nd grade)"
+    elif avg_words_per_sentence < 15:
+        reading_level = "Elementary (3rd-5th grade)"
+    elif avg_words_per_sentence < 20:
+        reading_level = "Middle Grade (6th-8th grade)"
+    else:
+        reading_level = "Young Adult/Adult"
+    
+    # Recommended actions based on analysis
+    recommended_actions = ["full_qa"]
+    if len(notes_detected) > 0:
+        recommended_actions.extend(["remove_notes", "store_notes"])
+    if "chapter" in request.content.lower() or "Chapter" in request.content:
+        recommended_actions.append("split_chapters")
+    recommended_actions.extend(["autoformat", "extract_summaries"])
+    
+    return {
+        "analysis": analysis_response,
+        "structure_issues": structure_issues,
+        "notes_detected": notes_detected[:20],  # Limit to first 20
+        "style_issues": style_issues,
+        "formatting_issues": formatting_issues,
+        "lore_issues": lore_issues,
+        "word_count": word_count,
+        "estimated_reading_level": reading_level,
+        "recommended_actions": list(set(recommended_actions))
+    }
+
+@api_router.post("/ai/import/action", response_model=AIResponse)
+async def execute_import_action(request: ImportActionRequest):
+    """Execute a specific action on imported manuscript content"""
+    
+    action_prompts = {
+        "autoformat": """Auto-format this manuscript by:
+- Normalizing spacing and indentation
+- Fixing paragraph breaks
+- Standardizing chapter headings
+- Removing formatting artifacts
+- Applying consistent style rules
+
+Return the cleaned, formatted manuscript text.
+
+Manuscript:
+{content}""",
+
+        "remove_notes": """Remove all inline notes, comments, bracketed reminders, and annotations from this manuscript.
+Look for patterns like [TODO], [NOTE], (Author note:), {{comments}}, <!-- comments -->, etc.
+Return a clean version of the text.
+
+Manuscript:
+{content}""",
+
+        "store_notes": """Extract all notes, comments, and annotations from this manuscript.
+For each note found, provide:
+- note_text: The actual note content
+- location_reference: Where it was found (approximate position or nearby text)
+- category: What type of note it is (todo, reminder, revision note, etc.)
+
+Format as a list.
+
+Manuscript:
+{content}""",
+
+        "convert_notes": """Extract all notes from this manuscript and convert them into chapter-level metadata.
+Organize into:
+- chapter_notes: General notes about the chapter
+- revision_notes: Notes about changes needed
+- author_intent: Notes about what the author was trying to achieve
+
+Manuscript:
+{content}""",
+
+        "split_chapters": """Analyze this manuscript and identify natural chapter breaks.
+Look for:
+- Explicit chapter headings (Chapter 1, Chapter One, etc.)
+- Scene breaks (*** or ---)
+- Natural narrative breaks
+
+For each chapter, provide:
+- chapter_number
+- chapter_title (if found, or suggest one)
+- starting_text (first 100 characters)
+
+Manuscript:
+{content}""",
+
+        "lantern_path": """Analyze this manuscript using the Lantern Path structure.
+For each chapter or section, identify these beats:
+1. Spark - The hook that draws the reader in
+2. Exploration - Where the journey unfolds
+3. Lantern Moment - The key insight or revelation
+4. Application - How the lesson is applied
+5. Resolution - How things wrap up
+
+Identify any missing beats and suggest improvements.
+
+Manuscript:
+{content}""",
+
+        "full_qa": """Run a comprehensive QA check on this manuscript:
+
+1. **Tone Analysis**: Is the tone consistent? Does it match the warm, encouraging Bigfoot Financial Adventures brand?
+
+2. **Lore Check**: Are there any elements that seem out of place for a children's financial literacy story?
+
+3. **Character Consistency**: Do characters behave consistently throughout?
+
+4. **Educational Clarity**: Are financial concepts explained clearly for young readers?
+
+5. **Structural Completeness**: Are there any gaps in the narrative?
+
+6. **Pacing Issues**: Does the story flow well? Any sections too fast or slow?
+
+7. **Reading Level**: Is the language appropriate for 3rd-5th graders?
+
+Provide:
+- Issues found (categorized)
+- Suggested fixes for each issue
+- Overall Readiness Score (0-100)
+
+Manuscript:
+{content}""",
+
+        "extract_summaries": """Generate a 2-3 sentence summary for each chapter or major section in this manuscript.
+Format as:
+Chapter [number]: [title if available]
+Summary: [2-3 sentence summary]
+
+Manuscript:
+{content}""",
+
+        "extract_characters": """Extract all character names and roles from this manuscript.
+For each character, provide:
+- name: Character's name
+- role: Their role in the story (protagonist, mentor, friend, etc.)
+- description: Brief description based on the text
+- first_appearance: Where they first appear
+
+Manuscript:
+{content}""",
+
+        "extract_glossary": """Extract all unique terms, locations, symbols, and concepts from this manuscript that might need explanation for young readers.
+For each term, provide:
+- term: The word or phrase
+- category: (location, concept, symbol, character, financial term, etc.)
+- definition: A child-friendly explanation
+
+Focus especially on financial literacy terms.
+
+Manuscript:
+{content}"""
+    }
+    
+    if request.action not in action_prompts:
+        raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
+    
+    prompt = action_prompts[request.action].format(content=request.content[:20000])
+    
+    response = await get_ai_response(IMPORT_ANALYSIS_SYSTEM_PROMPT, prompt)
+    return AIResponse(response=response, module="import_analysis")
+
 # ============== STATUS ENDPOINTS ==============
 
 @api_router.get("/")
