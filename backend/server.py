@@ -468,6 +468,179 @@ async def delete_chapter(chapter_id: str):
     await db.chapters.delete_one({"id": chapter_id})
     return {"message": "Chapter deleted successfully"}
 
+# ============== MANUSCRIPT UPLOAD ENDPOINTS ==============
+
+def extract_text_from_txt(content: bytes) -> str:
+    """Extract text from a .txt file"""
+    try:
+        return content.decode('utf-8')
+    except UnicodeDecodeError:
+        return content.decode('latin-1')
+
+def extract_text_from_docx(content: bytes) -> str:
+    """Extract text from a .docx file"""
+    doc = DocxDocument(io.BytesIO(content))
+    paragraphs = [para.text for para in doc.paragraphs]
+    return '\n\n'.join(paragraphs)
+
+def extract_text_from_pdf(content: bytes) -> str:
+    """Extract text from a .pdf file"""
+    reader = PdfReader(io.BytesIO(content))
+    text_parts = []
+    for page in reader.pages:
+        text = page.extract_text()
+        if text:
+            text_parts.append(text)
+    return '\n\n'.join(text_parts)
+
+def extract_text_from_md(content: bytes) -> str:
+    """Extract text from a .md file"""
+    try:
+        return content.decode('utf-8')
+    except UnicodeDecodeError:
+        return content.decode('latin-1')
+
+class UploadResponse(BaseModel):
+    success: bool
+    message: str
+    filename: str
+    content: str
+    word_count: int
+    chapter_id: Optional[str] = None
+
+@api_router.post("/manuscripts/upload", response_model=UploadResponse)
+async def upload_manuscript(
+    file: UploadFile = File(...),
+    project_id: str = Form(...),
+    chapter_title: Optional[str] = Form(None)
+):
+    """Upload a manuscript file and optionally create a chapter from it"""
+    
+    # Validate file type
+    allowed_extensions = {'.txt', '.docx', '.pdf', '.md'}
+    filename = file.filename or "uploaded_file"
+    file_ext = Path(filename).suffix.lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file type: {file_ext}. Allowed: {', '.join(allowed_extensions)}"
+        )
+    
+    # Read file content
+    content = await file.read()
+    
+    # Extract text based on file type
+    try:
+        if file_ext == '.txt':
+            text = extract_text_from_txt(content)
+        elif file_ext == '.docx':
+            text = extract_text_from_docx(content)
+        elif file_ext == '.pdf':
+            text = extract_text_from_pdf(content)
+        elif file_ext == '.md':
+            text = extract_text_from_md(content)
+        else:
+            text = ""
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+    
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="No text content found in the file")
+    
+    # Calculate word count
+    word_count = len(text.split())
+    
+    # Verify project exists
+    project = await db.projects.find_one({"id": project_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Create chapter if requested
+    chapter_id = None
+    if chapter_title:
+        # Get next chapter number
+        existing_chapters = await db.chapters.count_documents({"project_id": project_id})
+        
+        chapter_obj = Chapter(
+            project_id=project_id,
+            chapter_number=existing_chapters + 1,
+            title=chapter_title,
+            content=f"<p>{text.replace(chr(10), '</p><p>')}</p>",
+            status="draft"
+        )
+        doc = chapter_obj.model_dump()
+        await db.chapters.insert_one(doc)
+        chapter_id = chapter_obj.id
+        
+        # Update project word count
+        await db.projects.update_one(
+            {"id": project_id},
+            {
+                "$inc": {"word_count": word_count},
+                "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+            }
+        )
+    
+    return UploadResponse(
+        success=True,
+        message=f"Successfully processed {filename}",
+        filename=filename,
+        content=text,
+        word_count=word_count,
+        chapter_id=chapter_id
+    )
+
+@api_router.post("/manuscripts/upload-preview")
+async def preview_manuscript_upload(file: UploadFile = File(...)):
+    """Preview a manuscript file without creating a chapter"""
+    
+    # Validate file type
+    allowed_extensions = {'.txt', '.docx', '.pdf', '.md'}
+    filename = file.filename or "uploaded_file"
+    file_ext = Path(filename).suffix.lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file type: {file_ext}. Allowed: {', '.join(allowed_extensions)}"
+        )
+    
+    # Read file content
+    content = await file.read()
+    
+    # Extract text based on file type
+    try:
+        if file_ext == '.txt':
+            text = extract_text_from_txt(content)
+        elif file_ext == '.docx':
+            text = extract_text_from_docx(content)
+        elif file_ext == '.pdf':
+            text = extract_text_from_pdf(content)
+        elif file_ext == '.md':
+            text = extract_text_from_md(content)
+        else:
+            text = ""
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+    
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="No text content found in the file")
+    
+    word_count = len(text.split())
+    
+    # Return preview (first 2000 chars)
+    preview = text[:2000] + ("..." if len(text) > 2000 else "")
+    
+    return {
+        "success": True,
+        "filename": filename,
+        "file_type": file_ext,
+        "word_count": word_count,
+        "preview": preview,
+        "full_content": text
+    }
+
 # ============== STYLE PRESET ENDPOINTS ==============
 
 @api_router.post("/style-presets", response_model=StylePreset)
