@@ -10,6 +10,7 @@ import {
   GitBranch,
   Palette,
   ImageIcon,
+  TrendingUp,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +25,7 @@ const navItems = [
   { icon: GitBranch, label: "Workflow", path: "/workflow" },
   { icon: Palette, label: "Tone & Style", path: "/tone" },
   { icon: ImageIcon, label: "Art Studio", path: "/art" },
+  { icon: TrendingUp, label: "Market Intel", path: "/market" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
