@@ -101,6 +101,11 @@ export default function ManuscriptWorkspace() {
   const [uploadChapterTitle, setUploadChapterTitle] = useState("");
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Import Analysis state
+  const [importAnalysisOpen, setImportAnalysisOpen] = useState(false);
+  const [importedContent, setImportedContent] = useState("");
+  const [importedFilename, setImportedFilename] = useState("");
 
   // Editor setup
   const editor = useEditor({
