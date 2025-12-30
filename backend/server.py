@@ -175,6 +175,33 @@ class AIResponse(BaseModel):
     response: str
     module: str
 
+# Market Intelligence Request Models
+class BookIdeasRequest(BaseModel):
+    universe: str = "Bigfoot Financial Adventures"
+    count: int = 10
+
+class MarketAnalysisRequest(BaseModel):
+    genre: str = "children's financial literacy"
+    age_group: Optional[str] = None
+
+class CustomerResearchRequest(BaseModel):
+    book_idea: str
+
+class MarketOutlineRequest(BaseModel):
+    book_idea: str
+    chapter_count: int = 12
+
+class ManuscriptDraftRequest(BaseModel):
+    book_idea: str
+    word_count: int = 30000
+
+class BookDescriptionRequest(BaseModel):
+    book_title: str
+    book_summary: str
+
+class SalesAnalysisRequest(BaseModel):
+    sales_data: str
+
 # ============== SYSTEM PROMPTS ==============
 
 GLOBAL_SYSTEM_PROMPT = """You are Thaddaeus ("Thad"), the creative intelligence inside Mick's in-house Author OS. 
