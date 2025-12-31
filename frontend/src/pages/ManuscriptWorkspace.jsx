@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -34,8 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
-import { projectApi, chapterApi, aiApi, uploadApi } from "@/lib/api";
+import { projectApi, chapterApi, aiApi, uploadApi, versionsApi } from "@/lib/api";
 import { cn, formatWordCount } from "@/lib/utils";
 import { toast } from "sonner";
 import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
@@ -69,8 +70,13 @@ import {
   Sparkles,
   History,
   StickyNote,
-  BookOpen
+  BookOpen,
+  Clock,
+  GitBranch
 } from "lucide-react";
+
+// Auto-save interval in milliseconds (10 minutes)
+const AUTO_VERSION_INTERVAL = 10 * 60 * 1000;
 
 export default function ManuscriptWorkspace() {
   const { projectId } = useParams();
