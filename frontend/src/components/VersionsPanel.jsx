@@ -195,6 +195,40 @@ export default function VersionsPanel({
         </Button>
       </div>
 
+      {/* Compare Mode Toggle */}
+      {versions.length >= 2 && (
+        <div className="flex items-center justify-between p-2 bg-muted/50 rounded-sm">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="compareMode"
+              checked={compareMode}
+              onCheckedChange={setCompareMode}
+              data-testid="compare-mode-toggle"
+            />
+            <label 
+              htmlFor="compareMode" 
+              className="text-xs font-medium cursor-pointer flex items-center gap-1"
+            >
+              <GitCompare className="h-3.5 w-3.5" />
+              Compare Mode
+            </label>
+          </div>
+          {compareMode && (
+            <Button
+              size="sm"
+              variant={selectedForCompare.length === 2 ? "default" : "outline"}
+              onClick={handleCompareVersions}
+              disabled={selectedForCompare.length !== 2}
+              className="h-7 text-xs rounded-sm"
+              data-testid="compare-versions-btn"
+            >
+              <GitCompare className="h-3 w-3 mr-1" />
+              Compare ({selectedForCompare.length}/2)
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Versions List */}
       {loading ? (
         <div className="flex items-center justify-center h-24">
@@ -213,44 +247,70 @@ export default function VersionsPanel({
       ) : (
         <ScrollArea className="h-[300px]">
           <div className="space-y-2 pr-2">
-            {versions.map((version, index) => (
-              <Card 
-                key={version.id} 
-                className="card-hover cursor-pointer"
-                onClick={() => {
-                  setSelectedVersion(version);
-                  setViewDialogOpen(true);
-                }}
-                data-testid={`version-item-${version.id}`}
-              >
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {version.label || `Version ${versions.length - index}`}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{formatDate(version.created_at)}</span>
+            {versions.map((version, index) => {
+              const isSelectedForCompare = selectedForCompare.some(v => v.id === version.id);
+              const selectionIndex = selectedForCompare.findIndex(v => v.id === version.id);
+              
+              return (
+                <Card 
+                  key={version.id} 
+                  className={cn(
+                    "card-hover cursor-pointer transition-all",
+                    compareMode && isSelectedForCompare && "ring-2 ring-accent border-accent"
+                  )}
+                  onClick={() => {
+                    if (compareMode) {
+                      toggleVersionForCompare(version);
+                    } else {
+                      setSelectedVersion(version);
+                      setViewDialogOpen(true);
+                    }
+                  }}
+                  data-testid={`version-item-${version.id}`}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {compareMode && (
+                          <div className={cn(
+                            "flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold shrink-0",
+                            isSelectedForCompare 
+                              ? "bg-accent text-accent-foreground" 
+                              : "bg-muted text-muted-foreground"
+                          )}>
+                            {isSelectedForCompare ? selectionIndex + 1 : ""}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {version.label || `Version ${versions.length - index}`}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatDate(version.created_at)}</span>
+                          </div>
+                        </div>
                       </div>
+                      {!compareMode && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedVersion(version);
+                            setDeleteDialogOpen(true);
+                          }}
+                          data-testid={`delete-version-${version.id}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedVersion(version);
-                        setDeleteDialogOpen(true);
-                      }}
-                      data-testid={`delete-version-${version.id}`}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </ScrollArea>
       )}
