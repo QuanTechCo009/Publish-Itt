@@ -864,6 +864,31 @@ export default function ManuscriptWorkspace() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Auto-version indicator */}
+            <div className="flex items-center gap-2 px-2 py-1 rounded-sm bg-muted/50" data-testid="auto-version-indicator">
+              <div className="flex items-center gap-1.5">
+                {autoVersionSaving ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                ) : (
+                  <Clock className={cn(
+                    "h-3.5 w-3.5",
+                    autoVersionEnabled ? "text-accent" : "text-muted-foreground"
+                  )} />
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {autoVersionSaving ? "Saving version..." : "Auto-version"}
+                </span>
+              </div>
+              <Switch
+                checked={autoVersionEnabled}
+                onCheckedChange={setAutoVersionEnabled}
+                className="scale-75"
+                data-testid="auto-version-toggle"
+              />
+            </div>
+            
+            <div className="w-px h-6 bg-border" />
+            
             {saving && <span className="text-xs text-muted-foreground">Saving...</span>}
             <span className="text-xs text-muted-foreground font-mono">
               {editor?.storage.characterCount?.words() || 0} words
