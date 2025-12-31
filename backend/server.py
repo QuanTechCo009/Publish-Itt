@@ -69,6 +69,13 @@ class ManuscriptBase(BaseModel):
     raw_content: str = ""
     processed_content: str = ""
     version_id_current: Optional[str] = None
+    # Extended fields from Project model for unified structure
+    series_name: Optional[str] = None
+    universe: Optional[str] = None
+    type: str = "novel"
+    status: str = "draft"
+    word_count: int = 0
+    summary: Optional[str] = None
 
 class ManuscriptCreate(ManuscriptBase):
     pass
@@ -78,12 +85,19 @@ class ManuscriptUpdate(BaseModel):
     raw_content: Optional[str] = None
     processed_content: Optional[str] = None
     version_id_current: Optional[str] = None
+    series_name: Optional[str] = None
+    universe: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None
+    word_count: Optional[int] = None
+    summary: Optional[str] = None
 
 class Manuscript(ManuscriptBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    source_project_id: Optional[str] = None  # For migration tracking
 
 # ============== VERSION COLLECTION ==============
 class VersionBase(BaseModel):
@@ -671,6 +685,62 @@ async def delete_version(version_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Version not found")
     return {"message": "Version deleted successfully"}
+
+# ============== DATA MIGRATION ENDPOINT ==============
+
+@api_router.post("/migrate/projects-to-manuscripts")
+async def migrate_projects_to_manuscripts():
+    """Migrate existing projects to manuscripts collection"""
+    projects = await db.projects.find({}, {"_id": 0}).to_list(1000)
+    migrated_count = 0
+    
+    for project in projects:
+        # Check if already migrated
+        existing = await db.manuscripts_collection.find_one({"source_project_id": project["id"]})
+        if existing:
+            continue
+        
+        # Create manuscript from project
+        manuscript = Manuscript(
+            title=project.get("title", "Untitled"),
+            raw_content="",
+            processed_content="",
+            version_id_current=None
+        )
+        manuscript_doc = manuscript.model_dump()
+        manuscript_doc["source_project_id"] = project["id"]  # Track migration
+        manuscript_doc["series_name"] = project.get("series_name")
+        manuscript_doc["universe"] = project.get("universe")
+        manuscript_doc["type"] = project.get("type", "novel")
+        manuscript_doc["status"] = project.get("status", "draft")
+        manuscript_doc["word_count"] = project.get("word_count", 0)
+        manuscript_doc["summary"] = project.get("summary")
+        
+        await db.manuscripts_collection.insert_one(manuscript_doc)
+        
+        # Update chapters to reference new manuscript
+        await db.chapters.update_many(
+            {"project_id": project["id"]},
+            {"$set": {"manuscript_id": manuscript.id}}
+        )
+        
+        migrated_count += 1
+    
+    return {
+        "success": True,
+        "message": f"Migrated {migrated_count} projects to manuscripts",
+        "total_projects": len(projects),
+        "migrated": migrated_count
+    }
+
+@api_router.get("/manuscripts-collection/{manuscript_id}/chapters", response_model=List[Chapter])
+async def get_chapters_by_manuscript(manuscript_id: str):
+    """Get all chapters for a specific manuscript"""
+    chapters = await db.chapters.find(
+        {"manuscript_id": manuscript_id}, 
+        {"_id": 0}
+    ).sort("chapter_number", 1).to_list(1000)
+    return chapters
 
 # ============== NOTES COLLECTION ENDPOINTS ==============
 
