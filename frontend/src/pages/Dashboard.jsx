@@ -267,19 +267,80 @@ export default function Dashboard() {
 
       {/* Projects Grid */}
       {projects.length === 0 ? (
-        <Card className="border-dashed border-2">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="font-serif text-xl mb-2">No projects yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Start your first book to begin your writing journey
-            </p>
-            <Button onClick={() => setDialogOpen(true)} className="rounded-sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Project
-            </Button>
-          </CardContent>
-        </Card>
+        <div 
+          className={cn(
+            "transition-colors",
+            isDragging && "bg-accent/5"
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <Card className={cn(
+            "border-dashed border-2",
+            isDragging && "border-accent bg-accent/5"
+          )}>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              {isDragging ? (
+                <>
+                  <FileUp className="h-16 w-16 text-accent mb-4 animate-bounce" />
+                  <h3 className="font-serif text-xl mb-2 text-accent">Drop your manuscript here</h3>
+                  <p className="text-muted-foreground">
+                    Supported: .txt, .docx, .pdf, .md
+                  </p>
+                </>
+              ) : (
+                <>
+                  <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="font-serif text-xl mb-2">No projects yet</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Start your first book to begin your writing journey
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+                    <Button onClick={() => setDialogOpen(true)} className="rounded-sm" data-testid="create-first-project-btn">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Project
+                    </Button>
+                    <span className="text-muted-foreground text-sm">or</span>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="rounded-sm"
+                      data-testid="import-first-project-btn"
+                    >
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      Import Existing Manuscript
+                    </Button>
+                  </div>
+                  
+                  {/* Drag & Drop Zone */}
+                  <div className="w-full max-w-md p-6 border-2 border-dashed border-border rounded-lg text-center">
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-sm font-medium mb-1">Drag & drop a manuscript file here</p>
+                    <p className="text-xs text-muted-foreground">
+                      Supports .txt, .docx, .pdf, .md
+                    </p>
+                  </div>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.docx,.pdf,.md"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                    data-testid="dashboard-file-input"
+                  />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project, index) => (
