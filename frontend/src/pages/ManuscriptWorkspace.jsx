@@ -178,8 +178,96 @@ export default function ManuscriptWorkspace() {
   useEffect(() => {
     if (selectedChapter && editor) {
       editor.commands.setContent(selectedChapter.content || "");
+      // Reset auto-version tracking when chapter changes
+      lastContentRef.current = selectedChapter.content || "";
+      setEditingStartTime(null);
+      setLastVersionTime(null);
     }
   }, [selectedChapter, editor]);
+
+  // Auto-version logic: Save a version snapshot after 10 minutes of editing
+  useEffect(() => {
+    if (!autoVersionEnabled || !selectedChapter || !editor) return;
+
+    const checkAndSaveVersion = async () => {
+      const currentContent = editor.getHTML();
+      const hasContentChanged = currentContent !== lastContentRef.current;
+      
+      if (!hasContentChanged) {
+        // No changes, reset editing timer
+        setEditingStartTime(null);
+        return;
+      }
+
+      // Start tracking editing time if not already
+      if (!editingStartTime) {
+        setEditingStartTime(Date.now());
+        return;
+      }
+
+      // Check if 10 minutes have passed since editing started
+      const timeSinceEditStart = Date.now() - editingStartTime;
+      if (timeSinceEditStart >= AUTO_VERSION_INTERVAL) {
+        // Also check if we haven't saved a version recently
+        if (lastVersionTime && (Date.now() - lastVersionTime) < AUTO_VERSION_INTERVAL) {
+          return;
+        }
+
+        // Save auto-version
+        setAutoVersionSaving(true);
+        try {
+          const timestamp = new Date().toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+          await versionsApi.create({
+            parent_type: "chapter",
+            parent_id: selectedChapter.id,
+            content_snapshot: currentContent,
+            label: `Auto-save (${timestamp})`,
+            created_by: "auto"
+          });
+          
+          // Update tracking
+          lastContentRef.current = currentContent;
+          setLastVersionTime(Date.now());
+          setEditingStartTime(null);
+          
+          toast.success("Auto-saved version snapshot", {
+            description: "Your work has been preserved",
+            icon: <GitBranch className="h-4 w-4" />,
+          });
+        } catch (error) {
+          console.error("Auto-version save failed:", error);
+        } finally {
+          setAutoVersionSaving(false);
+        }
+      }
+    };
+
+    // Check every minute
+    const interval = setInterval(checkAndSaveVersion, 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [autoVersionEnabled, selectedChapter, editor, editingStartTime, lastVersionTime]);
+
+  // Track content changes to detect editing
+  useEffect(() => {
+    if (!editor || !selectedChapter || !autoVersionEnabled) return;
+
+    const handleUpdate = () => {
+      const currentContent = editor.getHTML();
+      if (currentContent !== lastContentRef.current && !editingStartTime) {
+        setEditingStartTime(Date.now());
+      }
+    };
+
+    editor.on('update', handleUpdate);
+    return () => editor.off('update', handleUpdate);
+  }, [editor, selectedChapter, autoVersionEnabled, editingStartTime]);
 
   const loadProjects = async () => {
     try {
