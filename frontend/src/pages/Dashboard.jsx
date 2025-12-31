@@ -42,6 +42,7 @@ import {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -53,6 +54,21 @@ export default function Dashboard() {
     summary: ""
   });
   const [creating, setCreating] = useState(false);
+  
+  // Upload state
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [importProjectTitle, setImportProjectTitle] = useState("");
+  const [importChapterTitle, setImportChapterTitle] = useState("");
+  
+  // Import Analysis state
+  const [importAnalysisOpen, setImportAnalysisOpen] = useState(false);
+  const [importedContent, setImportedContent] = useState("");
+  const [importedFilename, setImportedFilename] = useState("");
+  const [newProjectId, setNewProjectId] = useState(null);
 
   useEffect(() => {
     loadProjects();
@@ -66,6 +82,123 @@ export default function Dashboard() {
       toast.error("Failed to load projects");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Upload handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      await handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileInputChange = async (e) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileSelect = async (file) => {
+    const allowedTypes = ['.txt', '.docx', '.pdf', '.md'];
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!allowedTypes.includes(ext)) {
+      toast.error(`Unsupported file type. Allowed: ${allowedTypes.join(', ')}`);
+      return;
+    }
+    
+    setUploadedFile(file);
+    const baseName = file.name.replace(/\.[^/.]+$/, "");
+    setImportProjectTitle(baseName);
+    setImportChapterTitle(baseName);
+    setUploading(true);
+    
+    try {
+      const res = await uploadApi.previewManuscript(file);
+      setUploadPreview(res.data);
+      setUploadDialogOpen(true);
+    } catch (error) {
+      toast.error("Failed to preview file: " + (error.response?.data?.detail || error.message));
+      setUploadedFile(null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUploadConfirm = async () => {
+    if (!uploadedFile || !importProjectTitle.trim()) {
+      toast.error("Please enter a project title");
+      return;
+    }
+    
+    setUploading(true);
+    try {
+      // First create a new project
+      const projectRes = await projectApi.create({
+        title: importProjectTitle,
+        type: "novel",
+        status: "draft",
+        summary: `Imported from ${uploadedFile.name}`
+      });
+      
+      const projectId = projectRes.data.id;
+      setNewProjectId(projectId);
+      
+      // Then upload the manuscript as a chapter
+      const uploadRes = await uploadApi.uploadManuscript(
+        uploadedFile,
+        projectId,
+        importChapterTitle || importProjectTitle
+      );
+      
+      // Reload projects
+      await loadProjects();
+      
+      toast.success(`Created project and imported "${importChapterTitle}" (${uploadRes.data.word_count.toLocaleString()} words)`);
+      
+      // Trigger Import Analysis
+      setImportedContent(uploadPreview?.full_content || uploadRes.data.content);
+      setImportedFilename(uploadedFile.name);
+      handleUploadClose();
+      setImportAnalysisOpen(true);
+      
+    } catch (error) {
+      toast.error("Failed to import: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUploadClose = () => {
+    setUploadDialogOpen(false);
+    setUploadedFile(null);
+    setUploadPreview(null);
+    setImportProjectTitle("");
+    setImportChapterTitle("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleImportActionComplete = (actionId, result) => {
+    // Navigate to the manuscript workspace after analysis
+    if (newProjectId) {
+      navigate(`/manuscript/${newProjectId}`);
     }
   };
 
