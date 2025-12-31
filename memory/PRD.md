@@ -97,6 +97,14 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Stats display (words added, removed, unchanged)
 - [x] Automatic detection of older/newer versions
 
+### Phase 7: Auto-Version Snapshots ✅ (Dec 31, 2025)
+- [x] Auto-version toggle in editor toolbar
+- [x] Automatic version snapshot after 10 minutes of editing
+- [x] Visual indicator showing auto-version status
+- [x] Toast notification when auto-save occurs
+- [x] Auto-labeled versions with "Auto-save (timestamp)"
+- [x] Content change detection to track editing activity
+
 ## API Endpoints
 
 ### Projects
