@@ -137,7 +137,8 @@ export const manuscriptsApi = {
   getById: (id) => api.get(`/manuscripts-collection/${id}`),
   create: (data) => api.post('/manuscripts-collection', data),
   update: (id, data) => api.put(`/manuscripts-collection/${id}`, data),
-  delete: (id) => api.delete(`/manuscripts-collection/${id}`)
+  delete: (id) => api.delete(`/manuscripts-collection/${id}`),
+  getChapters: (id) => api.get(`/manuscripts-collection/${id}/chapters`)
 }
 
 // Versions Collection
