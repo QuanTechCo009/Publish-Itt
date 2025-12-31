@@ -118,6 +118,14 @@ export default function ManuscriptWorkspace() {
   const [importAnalysisOpen, setImportAnalysisOpen] = useState(false);
   const [importedContent, setImportedContent] = useState("");
   const [importedFilename, setImportedFilename] = useState("");
+  
+  // Auto-version state
+  const [autoVersionEnabled, setAutoVersionEnabled] = useState(true);
+  const [lastVersionTime, setLastVersionTime] = useState(null);
+  const [editingStartTime, setEditingStartTime] = useState(null);
+  const [autoVersionSaving, setAutoVersionSaving] = useState(false);
+  const lastContentRef = useRef("");
+  const versionsPanelRef = useRef(null);
 
   // Editor setup
   const editor = useEditor({
