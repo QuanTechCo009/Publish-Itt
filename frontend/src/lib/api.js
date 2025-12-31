@@ -158,6 +158,11 @@ export const notesApi = {
   delete: (id) => api.delete(`/notes/${id}`)
 }
 
+// Migration API
+export const migrationApi = {
+  migrateProjectsToManuscripts: () => api.post('/migrate/projects-to-manuscripts')
+}
+
 // Import Manuscript Action
 export const actionsApi = {
   importManuscript: (file, title = null) => {
