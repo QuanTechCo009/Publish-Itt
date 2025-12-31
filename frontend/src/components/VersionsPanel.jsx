@@ -426,6 +426,19 @@ export default function VersionsPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Version Compare Dialog */}
+      <VersionCompareDialog
+        open={compareDialogOpen}
+        onOpenChange={(open) => {
+          setCompareDialogOpen(open);
+          if (!open) {
+            setCompareMode(false);
+          }
+        }}
+        version1={selectedForCompare[0]}
+        version2={selectedForCompare[1]}
+      />
     </div>
   );
 }
