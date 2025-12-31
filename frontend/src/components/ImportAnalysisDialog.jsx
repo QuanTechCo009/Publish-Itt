@@ -298,23 +298,63 @@ export default function ImportAnalysisDialog({
             {actionResult && (
               <ScrollArea className="flex-1">
                 <div className="space-y-4 pr-4">
+                  {/* Action Header */}
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
                     <span className="font-medium">
                       {ACTION_OPTIONS.find(a => a.id === actionResult.action)?.label || actionResult.action}
                     </span>
                   </div>
+                  
                   <Separator />
+                  
+                  {/* Action Result Content */}
                   <div className="ai-response prose prose-sm max-w-none whitespace-pre-wrap" data-testid="action-result">
                     {actionResult.response}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setActionResult(null)}
-                    className="rounded-sm"
-                  >
-                    Back to Actions
-                  </Button>
+                  
+                  <Separator />
+                  
+                  {/* Implement or Ignore Options */}
+                  <div className="sticky bottom-0 bg-background pt-2 pb-1">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Would you like to implement these changes or ignore them?
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <Button 
+                        onClick={handleImplement}
+                        disabled={implementing}
+                        className="flex-1 rounded-sm bg-green-600 hover:bg-green-700"
+                        data-testid="implement-action-btn"
+                      >
+                        {implementing ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4 mr-2" />
+                        )}
+                        Implement Changes
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={handleIgnore}
+                        disabled={implementing}
+                        className="flex-1 rounded-sm"
+                        data-testid="ignore-action-btn"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Ignore
+                      </Button>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setActionResult(null)}
+                      className="w-full mt-2 rounded-sm text-muted-foreground"
+                      disabled={implementing}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to Actions
+                    </Button>
+                  </div>
                 </div>
               </ScrollArea>
             )}
