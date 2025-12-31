@@ -589,6 +589,196 @@ async def delete_chapter(chapter_id: str):
     await db.chapters.delete_one({"id": chapter_id})
     return {"message": "Chapter deleted successfully"}
 
+# ============== MANUSCRIPTS COLLECTION ENDPOINTS ==============
+
+@api_router.post("/manuscripts-collection", response_model=Manuscript)
+async def create_manuscript_record(manuscript: ManuscriptCreate):
+    """Create a new manuscript record in the Manuscripts collection"""
+    manuscript_obj = Manuscript(**manuscript.model_dump())
+    doc = manuscript_obj.model_dump()
+    await db.manuscripts_collection.insert_one(doc)
+    return manuscript_obj
+
+@api_router.get("/manuscripts-collection", response_model=List[Manuscript])
+async def get_all_manuscripts():
+    """Get all manuscripts from the collection"""
+    manuscripts = await db.manuscripts_collection.find({}, {"_id": 0}).to_list(1000)
+    return manuscripts
+
+@api_router.get("/manuscripts-collection/{manuscript_id}", response_model=Manuscript)
+async def get_manuscript_record(manuscript_id: str):
+    """Get a specific manuscript by ID"""
+    manuscript = await db.manuscripts_collection.find_one({"id": manuscript_id}, {"_id": 0})
+    if not manuscript:
+        raise HTTPException(status_code=404, detail="Manuscript not found")
+    return manuscript
+
+@api_router.put("/manuscripts-collection/{manuscript_id}", response_model=Manuscript)
+async def update_manuscript_record(manuscript_id: str, update: ManuscriptUpdate):
+    """Update a manuscript record"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.manuscripts_collection.update_one(
+        {"id": manuscript_id},
+        {"$set": update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Manuscript not found")
+    
+    manuscript = await db.manuscripts_collection.find_one({"id": manuscript_id}, {"_id": 0})
+    return manuscript
+
+@api_router.delete("/manuscripts-collection/{manuscript_id}")
+async def delete_manuscript_record(manuscript_id: str):
+    """Delete a manuscript record"""
+    result = await db.manuscripts_collection.delete_one({"id": manuscript_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Manuscript not found")
+    return {"message": "Manuscript deleted successfully"}
+
+# ============== VERSIONS COLLECTION ENDPOINTS ==============
+
+@api_router.post("/versions", response_model=Version)
+async def create_version(version: VersionCreate):
+    """Create a new version snapshot"""
+    version_obj = Version(**version.model_dump())
+    doc = version_obj.model_dump()
+    await db.versions.insert_one(doc)
+    return version_obj
+
+@api_router.get("/versions/parent/{parent_type}/{parent_id}", response_model=List[Version])
+async def get_versions_by_parent(parent_type: str, parent_id: str):
+    """Get all versions for a specific parent (manuscript or chapter)"""
+    versions = await db.versions.find(
+        {"parent_type": parent_type, "parent_id": parent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return versions
+
+@api_router.get("/versions/{version_id}", response_model=Version)
+async def get_version(version_id: str):
+    """Get a specific version by ID"""
+    version = await db.versions.find_one({"id": version_id}, {"_id": 0})
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    return version
+
+@api_router.delete("/versions/{version_id}")
+async def delete_version(version_id: str):
+    """Delete a version"""
+    result = await db.versions.delete_one({"id": version_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Version not found")
+    return {"message": "Version deleted successfully"}
+
+# ============== NOTES COLLECTION ENDPOINTS ==============
+
+@api_router.post("/notes", response_model=Note)
+async def create_note(note: NoteCreate):
+    """Create a new note"""
+    note_obj = Note(**note.model_dump())
+    doc = note_obj.model_dump()
+    await db.notes.insert_one(doc)
+    return note_obj
+
+@api_router.get("/notes/parent/{parent_type}/{parent_id}", response_model=List[Note])
+async def get_notes_by_parent(parent_type: str, parent_id: str):
+    """Get all notes for a specific parent (manuscript or chapter)"""
+    notes = await db.notes.find(
+        {"parent_type": parent_type, "parent_id": parent_id}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    return notes
+
+@api_router.get("/notes/{note_id}", response_model=Note)
+async def get_note(note_id: str):
+    """Get a specific note by ID"""
+    note = await db.notes.find_one({"id": note_id}, {"_id": 0})
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return note
+
+@api_router.put("/notes/{note_id}", response_model=Note)
+async def update_note(note_id: str, update: NoteUpdate):
+    """Update a note"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    
+    result = await db.notes.update_one({"id": note_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    note = await db.notes.find_one({"id": note_id}, {"_id": 0})
+    return note
+
+@api_router.delete("/notes/{note_id}")
+async def delete_note(note_id: str):
+    """Delete a note"""
+    result = await db.notes.delete_one({"id": note_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"message": "Note deleted successfully"}
+
+# ============== IMPORT MANUSCRIPT ACTION ==============
+
+@api_router.post("/actions/import-manuscript")
+async def action_import_manuscript(
+    file: UploadFile = File(...),
+    title: Optional[str] = Form(None)
+):
+    """
+    Import Manuscript Action
+    Accepts a file upload and stores it in Manuscripts.raw_content
+    """
+    # Validate file type
+    allowed_extensions = {'.txt', '.docx', '.pdf', '.md'}
+    filename = file.filename or "uploaded_file"
+    file_ext = Path(filename).suffix.lower()
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file type: {file_ext}. Allowed: {', '.join(allowed_extensions)}"
+        )
+    
+    # Read and extract content
+    content = await file.read()
+    
+    try:
+        if file_ext == '.txt':
+            text = extract_text_from_txt(content)
+        elif file_ext == '.docx':
+            text = extract_text_from_docx(content)
+        elif file_ext == '.pdf':
+            text = extract_text_from_pdf(content)
+        elif file_ext == '.md':
+            text = extract_text_from_md(content)
+        else:
+            text = ""
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+    
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="No text content found in the file")
+    
+    # Create manuscript record
+    manuscript_title = title or filename.replace(file_ext, "")
+    manuscript_obj = Manuscript(
+        title=manuscript_title,
+        raw_content=text,
+        processed_content=""
+    )
+    doc = manuscript_obj.model_dump()
+    await db.manuscripts_collection.insert_one(doc)
+    
+    return {
+        "success": True,
+        "message": f"Manuscript '{manuscript_title}' imported successfully",
+        "manuscript_id": manuscript_obj.id,
+        "word_count": len(text.split()),
+        "filename": filename
+    }
+
 # ============== MANUSCRIPT UPLOAD ENDPOINTS ==============
 
 def extract_text_from_txt(content: bytes) -> str:
