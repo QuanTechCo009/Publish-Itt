@@ -538,131 +538,174 @@ export default function ManuscriptWorkspace() {
         {!sidebarCollapsed && (
           /* ManuscriptPanel Container - All manuscript UI contained here */
           <div 
-            className="flex flex-col gap-3 p-4 w-full overflow-hidden flex-1"
+            className="flex flex-col w-full overflow-hidden flex-1"
             data-testid="manuscript-panel"
           >
-            {/* Scrollable Manuscript/Chapter List */}
-            <div 
-              className="overflow-y-auto pr-2 max-h-[400px]"
-              data-testid="chapter-list-container"
-            >
-              <div className="space-y-1">
-                {chapters.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No chapters yet
-                  </p>
-                ) : (
-                  chapters.map((chapter) => (
-                    <button
-                      key={chapter.id}
-                      onClick={() => setSelectedChapter(chapter)}
-                      className={cn(
-                        "w-full text-left px-3 py-2 rounded-sm text-sm transition-colors",
-                        selectedChapter?.id === chapter.id
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-muted"
-                      )}
-                      data-testid={`chapter-${chapter.id}`}
-                    >
-                      <span className="font-mono text-xs text-muted-foreground mr-2">
-                        {chapter.chapter_number}.
-                      </span>
-                      {chapter.title}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Manuscript Buttons - All inside ManuscriptPanel, below list */}
-            <div className="flex flex-col gap-2 border-t border-border pt-3 w-full">
-              <Button 
-                variant="outline" 
-                className="w-full rounded-sm justify-start" 
-                size="sm"
-                onClick={() => setNewChapterOpen(true)}
-                data-testid="add-chapter-btn"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create Chapter
-              </Button>
+            <Tabs defaultValue="chapters" className="flex-1 flex flex-col">
+              <TabsList className="w-full grid grid-cols-3 mx-3 mt-3 rounded-sm" data-testid="sidebar-tabs">
+                <TabsTrigger value="chapters" className="text-xs rounded-sm" data-testid="chapters-tab">
+                  <BookOpen className="h-3.5 w-3.5 mr-1" />
+                  Chapters
+                </TabsTrigger>
+                <TabsTrigger value="versions" className="text-xs rounded-sm" data-testid="versions-tab">
+                  <History className="h-3.5 w-3.5 mr-1" />
+                  Versions
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="text-xs rounded-sm" data-testid="notes-tab">
+                  <StickyNote className="h-3.5 w-3.5 mr-1" />
+                  Notes
+                </TabsTrigger>
+              </TabsList>
               
-              {/* Upload/Import Button */}
-              <Button 
-                variant="outline" 
-                className="w-full rounded-sm justify-start" 
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={!selectedProject || uploading}
-                data-testid="upload-manuscript-btn"
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
-                Import Manuscript
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.docx,.pdf,.md"
-                onChange={handleFileInputChange}
-                className="hidden"
-                data-testid="file-input"
-              />
-              
-              <Button 
-                variant="outline" 
-                className="w-full rounded-sm justify-start" 
-                size="sm"
-                onClick={handleDuplicateChapter}
-                disabled={!selectedChapter}
-                data-testid="duplicate-chapter-btn"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate Chapter
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full rounded-sm justify-start" 
-                size="sm"
-                onClick={openRenameDialog}
-                disabled={!selectedChapter}
-                data-testid="rename-chapter-btn"
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Rename Chapter
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="w-full rounded-sm justify-start text-destructive hover:text-destructive" 
-                size="sm"
-                onClick={() => setDeleteChapterOpen(true)}
-                disabled={!selectedChapter}
-                data-testid="delete-chapter-btn"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Chapter
-              </Button>
-              
-              {/* Delete Manuscript Button */}
-              <div className="border-t border-border pt-2 mt-1 w-full">
-                <Button 
-                  variant="destructive" 
-                  className="w-full rounded-sm justify-start" 
-                  size="sm"
-                  onClick={() => setDeleteManuscriptOpen(true)}
-                  disabled={!selectedProject}
-                  data-testid="delete-manuscript-btn"
+              {/* Chapters Tab */}
+              <TabsContent value="chapters" className="flex-1 flex flex-col gap-3 p-4 mt-0 overflow-hidden">
+                {/* Scrollable Manuscript/Chapter List */}
+                <div 
+                  className="overflow-y-auto pr-2 max-h-[400px]"
+                  data-testid="chapter-list-container"
                 >
-                  <BookX className="h-4 w-4 mr-2" />
-                  Delete Manuscript
-                </Button>
-              </div>
-            </div>
+                  <div className="space-y-1">
+                    {chapters.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No chapters yet
+                      </p>
+                    ) : (
+                      chapters.map((chapter) => (
+                        <button
+                          key={chapter.id}
+                          onClick={() => setSelectedChapter(chapter)}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-sm text-sm transition-colors",
+                            selectedChapter?.id === chapter.id
+                              ? "bg-accent text-accent-foreground"
+                              : "hover:bg-muted"
+                          )}
+                          data-testid={`chapter-${chapter.id}`}
+                        >
+                          <span className="font-mono text-xs text-muted-foreground mr-2">
+                            {chapter.chapter_number}.
+                          </span>
+                          {chapter.title}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Manuscript Buttons - All inside ManuscriptPanel, below list */}
+                <div className="flex flex-col gap-2 border-t border-border pt-3 w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-sm justify-start" 
+                    size="sm"
+                    onClick={() => setNewChapterOpen(true)}
+                    data-testid="add-chapter-btn"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Chapter
+                  </Button>
+                  
+                  {/* Upload/Import Button */}
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-sm justify-start" 
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!selectedProject || uploading}
+                    data-testid="upload-manuscript-btn"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    Import Manuscript
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.docx,.pdf,.md"
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                    data-testid="file-input"
+                  />
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-sm justify-start" 
+                    size="sm"
+                    onClick={handleDuplicateChapter}
+                    disabled={!selectedChapter}
+                    data-testid="duplicate-chapter-btn"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Duplicate Chapter
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-sm justify-start" 
+                    size="sm"
+                    onClick={openRenameDialog}
+                    disabled={!selectedChapter}
+                    data-testid="rename-chapter-btn"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Rename Chapter
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full rounded-sm justify-start text-destructive hover:text-destructive" 
+                    size="sm"
+                    onClick={() => setDeleteChapterOpen(true)}
+                    disabled={!selectedChapter}
+                    data-testid="delete-chapter-btn"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Chapter
+                  </Button>
+                  
+                  {/* Delete Manuscript Button */}
+                  <div className="border-t border-border pt-2 mt-1 w-full">
+                    <Button 
+                      variant="destructive" 
+                      className="w-full rounded-sm justify-start" 
+                      size="sm"
+                      onClick={() => setDeleteManuscriptOpen(true)}
+                      disabled={!selectedProject}
+                      data-testid="delete-manuscript-btn"
+                    >
+                      <BookX className="h-4 w-4 mr-2" />
+                      Delete Manuscript
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Versions Tab */}
+              <TabsContent value="versions" className="flex-1 p-4 mt-0 overflow-auto">
+                <VersionsPanel 
+                  parentType="chapter"
+                  parentId={selectedChapter?.id}
+                  currentContent={editor?.getHTML() || ""}
+                  onRestoreVersion={(content) => {
+                    if (editor) {
+                      editor.commands.setContent(content);
+                      toast.success("Version restored");
+                    }
+                  }}
+                />
+              </TabsContent>
+
+              {/* Notes Tab */}
+              <TabsContent value="notes" className="flex-1 p-4 mt-0 overflow-auto">
+                <NotesPanel 
+                  parentType="chapter"
+                  parentId={selectedChapter?.id}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         )}
       </aside>
