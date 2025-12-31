@@ -129,4 +129,46 @@ export const importAnalysisApi = {
     })
 }
 
+// ============== DATA COLLECTIONS APIs ==============
+
+// Manuscripts Collection
+export const manuscriptsApi = {
+  getAll: () => api.get('/manuscripts-collection'),
+  getById: (id) => api.get(`/manuscripts-collection/${id}`),
+  create: (data) => api.post('/manuscripts-collection', data),
+  update: (id, data) => api.put(`/manuscripts-collection/${id}`, data),
+  delete: (id) => api.delete(`/manuscripts-collection/${id}`)
+}
+
+// Versions Collection
+export const versionsApi = {
+  getByParent: (parentType, parentId) => api.get(`/versions/parent/${parentType}/${parentId}`),
+  getById: (id) => api.get(`/versions/${id}`),
+  create: (data) => api.post('/versions', data),
+  delete: (id) => api.delete(`/versions/${id}`)
+}
+
+// Notes Collection
+export const notesApi = {
+  getByParent: (parentType, parentId) => api.get(`/notes/parent/${parentType}/${parentId}`),
+  getById: (id) => api.get(`/notes/${id}`),
+  create: (data) => api.post('/notes', data),
+  update: (id, data) => api.put(`/notes/${id}`, data),
+  delete: (id) => api.delete(`/notes/${id}`)
+}
+
+// Import Manuscript Action
+export const actionsApi = {
+  importManuscript: (file, title = null) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (title) {
+      formData.append('title', title)
+    }
+    return api.post('/actions/import-manuscript', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
+}
+
 export default api
