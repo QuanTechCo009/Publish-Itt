@@ -1,15 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,15 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { projectApi } from "@/lib/api";
-import { 
-  statusColors, 
-  workflowStages, 
-  formatDate, 
-  formatWordCount,
-  calculateProgress 
-} from "@/lib/utils";
+import { projectApi, uploadApi } from "@/lib/api";
+import { cn, statusColors, formatDate, formatWordCount, calculateProgress } from "@/lib/utils";
 import { toast } from "sonner";
+import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
 import { 
   Plus, 
   FileText, 
@@ -37,7 +34,10 @@ import {
   Palette, 
   ImageIcon,
   BookOpen,
-  Loader2
+  Loader2,
+  Upload,
+  FileUp,
+  X
 } from "lucide-react";
 
 export default function Dashboard() {
