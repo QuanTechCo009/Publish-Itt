@@ -88,6 +88,15 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Note types (comment, todo, revision, author_intent)
 - [x] Note CRUD with edit and delete
 
+### Phase 6: Version Comparison ✅ (Dec 31, 2025)
+- [x] Compare Mode toggle in Versions panel
+- [x] Multi-version selection (select 2 versions)
+- [x] Side-by-side diff view
+- [x] Unified diff view
+- [x] Word-level change highlighting (added/removed/unchanged)
+- [x] Stats display (words added, removed, unchanged)
+- [x] Automatic detection of older/newer versions
+
 ## API Endpoints
 
 ### Projects
