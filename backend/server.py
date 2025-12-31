@@ -63,13 +63,75 @@ class Project(ProjectBase):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ============== MANUSCRIPT COLLECTION ==============
+class ManuscriptBase(BaseModel):
+    title: str
+    raw_content: str = ""
+    processed_content: str = ""
+    version_id_current: Optional[str] = None
+
+class ManuscriptCreate(ManuscriptBase):
+    pass
+
+class ManuscriptUpdate(BaseModel):
+    title: Optional[str] = None
+    raw_content: Optional[str] = None
+    processed_content: Optional[str] = None
+    version_id_current: Optional[str] = None
+
+class Manuscript(ManuscriptBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ============== VERSION COLLECTION ==============
+class VersionBase(BaseModel):
+    parent_type: str  # 'manuscript' or 'chapter'
+    parent_id: str
+    content_snapshot: str = ""
+    label: str = ""
+    created_by: str = ""
+
+class VersionCreate(VersionBase):
+    pass
+
+class Version(VersionBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+# ============== NOTES COLLECTION ==============
+class NoteBase(BaseModel):
+    parent_type: str  # 'manuscript' or 'chapter'
+    parent_id: str
+    note_text: str = ""
+    location_reference: str = ""
+    note_type: str = ""  # 'todo', 'comment', 'revision', 'author_intent'
+
+class NoteCreate(NoteBase):
+    pass
+
+class NoteUpdate(BaseModel):
+    note_text: Optional[str] = None
+    location_reference: Optional[str] = None
+    note_type: Optional[str] = None
+
+class Note(NoteBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # Chapter Models
 class ChapterBase(BaseModel):
     project_id: str
+    manuscript_id: Optional[str] = None
     chapter_number: int
     title: str
     content: str = ""
+    summary: str = ""
     status: str = "draft"
+    version_id_current: Optional[str] = None
 
 class ChapterCreate(ChapterBase):
     pass
@@ -78,7 +140,9 @@ class ChapterUpdate(BaseModel):
     chapter_number: Optional[int] = None
     title: Optional[str] = None
     content: Optional[str] = None
+    summary: Optional[str] = None
     status: Optional[str] = None
+    version_id_current: Optional[str] = None
 
 class Chapter(ChapterBase):
     model_config = ConfigDict(extra="ignore")
