@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -38,6 +39,8 @@ import { projectApi, chapterApi, aiApi, uploadApi } from "@/lib/api";
 import { cn, formatWordCount } from "@/lib/utils";
 import { toast } from "sonner";
 import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
+import VersionsPanel from "@/components/VersionsPanel";
+import NotesPanel from "@/components/NotesPanel";
 import { 
   Plus, 
   Save,
@@ -63,7 +66,10 @@ import {
   FileUp,
   X,
   BookX,
-  Sparkles
+  Sparkles,
+  History,
+  StickyNote,
+  BookOpen
 } from "lucide-react";
 
 export default function ManuscriptWorkspace() {
