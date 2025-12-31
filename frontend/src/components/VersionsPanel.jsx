@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { versionsApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import VersionCompareDialog from "./VersionCompareDialog";
 import { 
   Plus, 
   History, 
@@ -34,7 +36,8 @@ import {
   Loader2,
   GitBranch,
   Clock,
-  RotateCcw
+  RotateCcw,
+  GitCompare
 } from "lucide-react";
 
 export default function VersionsPanel({ 
@@ -48,15 +51,27 @@ export default function VersionsPanel({
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [newVersionLabel, setNewVersionLabel] = useState("");
   const [creating, setCreating] = useState(false);
+  
+  // Compare mode state
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedForCompare, setSelectedForCompare] = useState([]);
 
   useEffect(() => {
     if (parentId) {
       loadVersions();
     }
   }, [parentType, parentId]);
+
+  // Reset compare selection when compare mode changes
+  useEffect(() => {
+    if (!compareMode) {
+      setSelectedForCompare([]);
+    }
+  }, [compareMode]);
 
   const loadVersions = async () => {
     if (!parentId) return;
@@ -68,6 +83,26 @@ export default function VersionsPanel({
       console.error("Failed to load versions:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleVersionForCompare = (version) => {
+    setSelectedForCompare(prev => {
+      const isSelected = prev.some(v => v.id === version.id);
+      if (isSelected) {
+        return prev.filter(v => v.id !== version.id);
+      }
+      if (prev.length >= 2) {
+        // Replace the oldest selection
+        return [prev[1], version];
+      }
+      return [...prev, version];
+    });
+  };
+
+  const handleCompareVersions = () => {
+    if (selectedForCompare.length === 2) {
+      setCompareDialogOpen(true);
     }
   };
 
