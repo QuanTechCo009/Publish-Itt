@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { importAnalysisApi } from "@/lib/api";
+import { importAnalysisApi, chapterApi } from "@/lib/api";
 import { toast } from "sonner";
 import { 
   Loader2, 
@@ -27,7 +27,10 @@ import {
   BookOpen,
   Users,
   BookMarked,
-  X
+  X,
+  Check,
+  XCircle,
+  ArrowLeft
 } from "lucide-react";
 
 const ACTION_OPTIONS = [
