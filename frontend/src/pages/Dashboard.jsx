@@ -532,6 +532,120 @@ export default function Dashboard() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Import Manuscript Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={handleUploadClose}>
+        <DialogContent className="sm:max-w-2xl" data-testid="import-project-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-serif flex items-center gap-2 text-2xl">
+              <FileUp className="h-6 w-6" />
+              Import Manuscript
+            </DialogTitle>
+            <DialogDescription>
+              Create a new project from your imported manuscript.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {uploadPreview && (
+            <div className="space-y-4 py-4">
+              {/* File Info */}
+              <div className="flex items-center justify-between p-3 bg-muted rounded-sm">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">{uploadPreview.filename}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {uploadPreview.file_type.toUpperCase()} • {uploadPreview.word_count.toLocaleString()} words
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleUploadClose}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Project Title Input */}
+              <div className="space-y-2">
+                <Label htmlFor="importProjectTitle">Project Title *</Label>
+                <Input
+                  id="importProjectTitle"
+                  value={importProjectTitle}
+                  onChange={(e) => setImportProjectTitle(e.target.value)}
+                  placeholder="Enter project title"
+                  className="rounded-sm"
+                  data-testid="import-project-title-input"
+                />
+              </div>
+              
+              {/* Chapter Title Input */}
+              <div className="space-y-2">
+                <Label htmlFor="importChapterTitle">Chapter Title</Label>
+                <Input
+                  id="importChapterTitle"
+                  value={importChapterTitle}
+                  onChange={(e) => setImportChapterTitle(e.target.value)}
+                  placeholder="Enter chapter title"
+                  className="rounded-sm"
+                  data-testid="import-chapter-title-input"
+                />
+              </div>
+              
+              {/* Preview */}
+              <div className="space-y-2">
+                <Label>Content Preview</Label>
+                <ScrollArea className="h-[150px] border border-border rounded-sm p-3">
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {uploadPreview.preview}
+                  </p>
+                </ScrollArea>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={handleUploadClose}
+              className="rounded-sm"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUploadConfirm}
+              disabled={uploading || !importProjectTitle.trim()}
+              className="rounded-sm"
+              data-testid="confirm-import-project-btn"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Create Project & Import
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Analysis Dialog */}
+      <ImportAnalysisDialog
+        open={importAnalysisOpen}
+        onOpenChange={setImportAnalysisOpen}
+        content={importedContent}
+        filename={importedFilename}
+        projectId={newProjectId}
+        onActionComplete={handleImportActionComplete}
+      />
     </div>
   );
 }
