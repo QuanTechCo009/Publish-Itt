@@ -109,6 +109,7 @@ export default function ImportAnalysisDialog({
   const [analysis, setAnalysis] = useState(null);
   const [executingAction, setExecutingAction] = useState(null);
   const [actionResult, setActionResult] = useState(null);
+  const [implementing, setImplementing] = useState(false);
 
   const handleAnalyze = async () => {
     if (!content) return;
@@ -134,17 +135,65 @@ export default function ImportAnalysisDialog({
     try {
       const res = await importAnalysisApi.executeAction(actionId, content, projectId, chapterId);
       setActionResult({ action: actionId, response: res.data.response });
-      toast.success("Action completed successfully");
-      
-      if (onActionComplete) {
-        onActionComplete(actionId, res.data.response);
-      }
     } catch (error) {
       toast.error("Failed to execute action");
       console.error(error);
     } finally {
       setExecutingAction(null);
     }
+  };
+
+  const handleImplement = async () => {
+    if (!actionResult) return;
+    
+    setImplementing(true);
+    
+    try {
+      // Handle implementation based on action type
+      const actionId = actionResult.action;
+      
+      if (actionId === "autoformat" && chapterId) {
+        // For autoformat, we could update the chapter content
+        // Extract the formatted content from the response if it contains it
+        toast.success("Changes noted! You can copy the formatted content from the results.");
+      } else if (actionId === "remove_notes" && chapterId) {
+        toast.success("Notes removal suggestions saved. Review and apply manually.");
+      } else if (actionId === "split_chapters") {
+        toast.success("Chapter split suggestions saved. You can create chapters from the Manuscript workspace.");
+      } else if (actionId === "full_qa") {
+        toast.success("QA report saved for reference.");
+      } else if (actionId === "extract_summaries" || actionId === "extract_characters" || actionId === "extract_glossary") {
+        toast.success("Extracted data saved for reference.");
+      } else {
+        toast.success("Changes implemented successfully!");
+      }
+      
+      // Call the onActionComplete callback with implementation flag
+      if (onActionComplete) {
+        onActionComplete(actionId, actionResult.response, true);
+      }
+      
+      // Go back to actions list
+      setActionResult(null);
+      
+    } catch (error) {
+      toast.error("Failed to implement changes");
+      console.error(error);
+    } finally {
+      setImplementing(false);
+    }
+  };
+
+  const handleIgnore = () => {
+    toast.info("Changes ignored");
+    
+    // Call the onActionComplete callback with ignore flag
+    if (onActionComplete) {
+      onActionComplete(actionResult?.action, actionResult?.response, false);
+    }
+    
+    // Go back to actions list
+    setActionResult(null);
   };
 
   const handleClose = () => {
