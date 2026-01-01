@@ -1184,26 +1184,32 @@ export default function ManuscriptWorkspace() {
                     </Button>
                   </div>
 
-                  <ScrollArea className="flex-1 p-3">
-                    {aiLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                  <ScrollArea className="flex-1 min-h-0">
+                    <div className="p-3">
+                      {aiLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-accent" />
+                        </div>
+                      ) : aiResponse ? (
+                        <div className="ai-response text-sm whitespace-pre-wrap" data-testid="ai-response">
+                          {aiResponse}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          AI suggestions will appear here
+                        </p>
+                      )}
                     </div>
-                  ) : aiResponse ? (
-                    <div className="ai-response text-sm whitespace-pre-wrap" data-testid="ai-response">
-                      {aiResponse}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      AI suggestions will appear here
-                    </p>
-                  )}
-                </ScrollArea>
+                  </ScrollArea>
               </TabsContent>
 
               {/* Stats Tab Content */}
-              <TabsContent value="stats" className="flex-1 p-3 mt-0 overflow-auto">
-                <WritingStatsPanel />
+              <TabsContent value="stats" className="flex-1 mt-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-3">
+                    <WritingStatsPanel />
+                  </div>
+                </ScrollArea>
               </TabsContent>
             </Tabs>
             )}
