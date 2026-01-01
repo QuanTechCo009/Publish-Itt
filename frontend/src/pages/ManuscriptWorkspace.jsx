@@ -885,6 +885,36 @@ export default function ManuscriptWorkspace() {
                   parentId={selectedChapter?.id}
                 />
               </TabsContent>
+
+              {/* Analyzer Tab */}
+              <TabsContent value="analyzer" className="flex-1 p-4 mt-0 overflow-auto">
+                <AnalyzerPanel 
+                  content={editor?.getText() || ""}
+                  chapterId={selectedChapter?.id}
+                  projectId={selectedProject?.id}
+                  onApplyChange={(newContent) => {
+                    if (editor) {
+                      editor.commands.setContent(newContent);
+                      toast.success("Change applied to editor");
+                    }
+                  }}
+                  onCreateVersion={async (label) => {
+                    if (selectedChapter && editor) {
+                      try {
+                        await versionsApi.create({
+                          parent_type: "chapter",
+                          parent_id: selectedChapter.id,
+                          content_snapshot: editor.getHTML(),
+                          label: label,
+                          created_by: "thaddaeus"
+                        });
+                      } catch (e) {
+                        console.error("Failed to create version:", e);
+                      }
+                    }
+                  }}
+                />
+              </TabsContent>
             </Tabs>
           </div>
         )}
