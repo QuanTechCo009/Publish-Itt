@@ -158,10 +158,65 @@ export default function Settings() {
             Settings
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Manage your style presets and preferences
+            Manage your themes, style presets, and preferences
           </p>
         </div>
       </div>
+
+      {/* Theme Selection */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="font-serif flex items-center gap-2">
+            <Palette className="h-5 w-5 text-accent" />
+            Theme
+          </CardTitle>
+          <CardDescription>
+            Choose a color theme for THADDAEUS
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup
+            value={theme}
+            onValueChange={(value) => {
+              setTheme(value);
+              toast.success(`Theme changed to ${themes.find(t => t.id === value)?.name}`);
+            }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+            data-testid="theme-selector"
+          >
+            {themes.map((t) => {
+              const Icon = THEME_ICONS[t.id] || Sun;
+              const colorClass = THEME_COLORS[t.id] || "bg-accent";
+              
+              return (
+                <Label
+                  key={t.id}
+                  htmlFor={`theme-${t.id}`}
+                  className={cn(
+                    "flex items-center gap-3 p-4 border rounded-sm cursor-pointer transition-all",
+                    theme === t.id 
+                      ? "border-accent bg-accent/5 ring-1 ring-accent" 
+                      : "border-border hover:border-accent/50"
+                  )}
+                  data-testid={`theme-option-${t.id}`}
+                >
+                  <RadioGroupItem value={t.id} id={`theme-${t.id}`} className="sr-only" />
+                  <div className={cn("p-2 rounded-sm", colorClass)}>
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{t.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{t.description}</p>
+                  </div>
+                  {theme === t.id && (
+                    <Check className="h-4 w-4 text-accent shrink-0" />
+                  )}
+                </Label>
+              );
+            })}
+          </RadioGroup>
+        </CardContent>
+      </Card>
 
       {/* Style Presets */}
       <Card>
