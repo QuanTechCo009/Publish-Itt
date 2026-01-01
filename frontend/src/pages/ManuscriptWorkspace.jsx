@@ -676,15 +676,15 @@ export default function ManuscriptWorkspace() {
   }
 
   return (
-    <div className="flex h-full" data-testid="manuscript-workspace">
+    <div className="flex h-full overflow-hidden" data-testid="manuscript-workspace">
       {/* ManuscriptPanel - Chapter Sidebar */}
       <aside 
         className={cn(
-          "flex flex-col bg-card border-r border-border sidebar-transition",
+          "flex flex-col bg-card border-r border-border sidebar-transition overflow-hidden",
           sidebarCollapsed ? "w-12" : "w-72"
         )}
       >
-        <div className="flex items-center justify-between p-3 border-b border-border">
+        <div className="flex items-center justify-between p-3 border-b border-border shrink-0">
           {!sidebarCollapsed && (
             <Select
               value={selectedProject?.id}
@@ -717,7 +717,7 @@ export default function ManuscriptWorkspace() {
             className="flex flex-col w-full overflow-hidden flex-1"
             data-testid="manuscript-panel"
           >
-            <Tabs defaultValue="chapters" className="flex-1 flex flex-col">
+            <Tabs defaultValue="chapters" className="flex-1 flex flex-col overflow-hidden">
               <TabsList className="w-full grid grid-cols-4 mx-3 mt-3 rounded-sm" data-testid="sidebar-tabs">
                 <TabsTrigger value="chapters" className="text-xs rounded-sm" data-testid="chapters-tab">
                   <BookOpen className="h-3.5 w-3.5 mr-1" />
