@@ -163,6 +163,15 @@ export const migrationApi = {
   migrateProjectsToManuscripts: () => api.post('/migrate/projects-to-manuscripts')
 }
 
+// Writing Statistics API
+export const statsApi = {
+  logSession: (data) => api.post('/stats/session', data),
+  getDailyStats: (date) => api.get(`/stats/daily/${date}`),
+  getStreak: () => api.get('/stats/streak'),
+  getOverview: () => api.get('/stats/overview'),
+  getWeekly: () => api.get('/stats/weekly')
+}
+
 // Import Manuscript Action
 export const actionsApi = {
   importManuscript: (file, title = null) => {
