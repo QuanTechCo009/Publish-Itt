@@ -1107,8 +1107,8 @@ export default function ManuscriptWorkspace() {
               </div>
             ) : (
               /* Expanded state with Tabs */
-              <Tabs defaultValue="ai" className="flex-1 flex flex-col">
-                <div className="flex items-center justify-between p-3 border-b border-border gap-2">
+              <Tabs defaultValue="ai" className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between p-3 border-b border-border gap-2 shrink-0">
                   <TabsList className="grid grid-cols-2 h-8 flex-1">
                     <TabsTrigger value="ai" className="text-xs" data-testid="ai-tab">
                       <Wand2 className="h-3 w-3 mr-1" />
@@ -1130,8 +1130,8 @@ export default function ManuscriptWorkspace() {
                 </div>
 
                 {/* AI Tab Content */}
-                <TabsContent value="ai" className="flex-1 flex flex-col mt-0">
-                  <div className="p-3 space-y-2 border-b border-border">
+                <TabsContent value="ai" className="flex-1 flex flex-col mt-0 overflow-hidden">
+                  <div className="p-3 space-y-2 border-b border-border shrink-0">
                     <Button
                       variant="outline"
                       className="w-full justify-start rounded-sm"
