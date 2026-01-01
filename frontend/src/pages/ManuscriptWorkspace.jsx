@@ -43,6 +43,7 @@ import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
 import VersionsPanel from "@/components/VersionsPanel";
 import NotesPanel from "@/components/NotesPanel";
 import WritingStatsPanel from "@/components/WritingStatsPanel";
+import AnalyzerPanel from "@/components/AnalyzerPanel";
 import { 
   Plus, 
   Save,
@@ -74,7 +75,8 @@ import {
   BookOpen,
   Clock,
   GitBranch,
-  BarChart3
+  BarChart3,
+  Zap
 } from "lucide-react";
 
 // Auto-save interval in milliseconds (10 minutes)
