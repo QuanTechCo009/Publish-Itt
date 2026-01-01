@@ -1058,10 +1058,22 @@ export default function ManuscriptWorkspace() {
               aiPanelCollapsed ? "w-12" : "w-80"
             )}
           >
-            <div className="flex items-center justify-between p-3 border-b border-border">
-              {!aiPanelCollapsed && (
-                <Tabs defaultValue="ai" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 h-8">
+            {aiPanelCollapsed ? (
+              /* Collapsed state */
+              <div className="flex items-center justify-center p-3 border-b border-border">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setAiPanelCollapsed(false)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              /* Expanded state with Tabs */
+              <Tabs defaultValue="ai" className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between p-3 border-b border-border gap-2">
+                  <TabsList className="grid grid-cols-2 h-8 flex-1">
                     <TabsTrigger value="ai" className="text-xs" data-testid="ai-tab">
                       <Wand2 className="h-3 w-3 mr-1" />
                       AI
@@ -1071,22 +1083,18 @@ export default function ManuscriptWorkspace() {
                       Stats
                     </TabsTrigger>
                   </TabsList>
-                </Tabs>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setAiPanelCollapsed(!aiPanelCollapsed)}
-                className="shrink-0"
-              >
-                {aiPanelCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-              </Button>
-            </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setAiPanelCollapsed(true)}
+                    className="shrink-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
 
-            {!aiPanelCollapsed && (
-              <Tabs defaultValue="ai" className="flex-1 flex flex-col">
                 {/* AI Tab Content */}
-                <TabsContent value="ai" className="flex-1 flex flex-col mt-0 data-[state=inactive]:hidden">
+                <TabsContent value="ai" className="flex-1 flex flex-col mt-0">
                   <div className="p-3 space-y-2 border-b border-border">
                     <Button
                       variant="outline"
