@@ -1090,7 +1090,7 @@ export default function ManuscriptWorkspace() {
           {/* AI Panel */}
           <aside
             className={cn(
-              "flex flex-col bg-card border-l border-border sidebar-transition",
+              "flex flex-col bg-card border-l border-border sidebar-transition overflow-hidden",
               aiPanelCollapsed ? "w-12" : "w-80"
             )}
           >
