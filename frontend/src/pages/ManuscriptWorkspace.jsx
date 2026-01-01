@@ -738,13 +738,10 @@ export default function ManuscriptWorkspace() {
               </TabsList>
               
               {/* Chapters Tab */}
-              <TabsContent value="chapters" className="flex-1 flex flex-col gap-3 p-4 mt-0 overflow-hidden">
+              <TabsContent value="chapters" className="flex-1 flex flex-col mt-0 overflow-hidden">
                 {/* Scrollable Manuscript/Chapter List */}
-                <div 
-                  className="overflow-y-auto pr-2 max-h-[400px]"
-                  data-testid="chapter-list-container"
-                >
-                  <div className="space-y-1">
+                <ScrollArea className="flex-1 min-h-0">
+                  <div className="p-4 space-y-1">
                     {chapters.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">
                         No chapters yet
@@ -770,10 +767,10 @@ export default function ManuscriptWorkspace() {
                       ))
                     )}
                   </div>
-                </div>
+                </ScrollArea>
 
                 {/* Manuscript Buttons - All inside ManuscriptPanel, below list */}
-                <div className="flex flex-col gap-2 border-t border-border pt-3 w-full">
+                <div className="flex flex-col gap-2 border-t border-border p-4 shrink-0">
                   <Button 
                     variant="outline" 
                     className="w-full rounded-sm justify-start" 
