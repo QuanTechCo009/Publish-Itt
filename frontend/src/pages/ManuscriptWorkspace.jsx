@@ -718,7 +718,7 @@ export default function ManuscriptWorkspace() {
             data-testid="manuscript-panel"
           >
             <Tabs defaultValue="chapters" className="flex-1 flex flex-col">
-              <TabsList className="w-full grid grid-cols-3 mx-3 mt-3 rounded-sm" data-testid="sidebar-tabs">
+              <TabsList className="w-full grid grid-cols-4 mx-3 mt-3 rounded-sm" data-testid="sidebar-tabs">
                 <TabsTrigger value="chapters" className="text-xs rounded-sm" data-testid="chapters-tab">
                   <BookOpen className="h-3.5 w-3.5 mr-1" />
                   Chapters
@@ -730,6 +730,10 @@ export default function ManuscriptWorkspace() {
                 <TabsTrigger value="notes" className="text-xs rounded-sm" data-testid="notes-tab">
                   <StickyNote className="h-3.5 w-3.5 mr-1" />
                   Notes
+                </TabsTrigger>
+                <TabsTrigger value="analyzer" className="text-xs rounded-sm" data-testid="analyzer-tab">
+                  <Zap className="h-3.5 w-3.5 mr-1" />
+                  Analyze
                 </TabsTrigger>
               </TabsList>
               
