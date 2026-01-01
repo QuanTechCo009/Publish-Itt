@@ -861,56 +861,68 @@ export default function ManuscriptWorkspace() {
               </TabsContent>
 
               {/* Versions Tab */}
-              <TabsContent value="versions" className="flex-1 p-4 mt-0 overflow-auto">
-                <VersionsPanel 
-                  parentType="chapter"
-                  parentId={selectedChapter?.id}
-                  currentContent={editor?.getHTML() || ""}
-                  onRestoreVersion={(content) => {
-                    if (editor) {
-                      editor.commands.setContent(content);
-                      toast.success("Version restored");
-                    }
-                  }}
-                />
+              <TabsContent value="versions" className="flex-1 mt-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <VersionsPanel 
+                      parentType="chapter"
+                      parentId={selectedChapter?.id}
+                      currentContent={editor?.getHTML() || ""}
+                      onRestoreVersion={(content) => {
+                        if (editor) {
+                          editor.commands.setContent(content);
+                          toast.success("Version restored");
+                        }
+                      }}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
 
               {/* Notes Tab */}
-              <TabsContent value="notes" className="flex-1 p-4 mt-0 overflow-auto">
-                <NotesPanel 
-                  parentType="chapter"
-                  parentId={selectedChapter?.id}
-                />
+              <TabsContent value="notes" className="flex-1 mt-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <NotesPanel 
+                      parentType="chapter"
+                      parentId={selectedChapter?.id}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
 
               {/* Analyzer Tab */}
-              <TabsContent value="analyzer" className="flex-1 p-4 mt-0 overflow-auto">
-                <AnalyzerPanel 
-                  content={editor?.getText() || ""}
-                  chapterId={selectedChapter?.id}
-                  projectId={selectedProject?.id}
-                  onApplyChange={(newContent) => {
-                    if (editor) {
-                      editor.commands.setContent(newContent);
-                      toast.success("Change applied to editor");
-                    }
-                  }}
-                  onCreateVersion={async (label) => {
-                    if (selectedChapter && editor) {
-                      try {
-                        await versionsApi.create({
-                          parent_type: "chapter",
-                          parent_id: selectedChapter.id,
-                          content_snapshot: editor.getHTML(),
-                          label: label,
-                          created_by: "thaddaeus"
-                        });
-                      } catch (e) {
-                        console.error("Failed to create version:", e);
-                      }
-                    }
-                  }}
-                />
+              <TabsContent value="analyzer" className="flex-1 mt-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <AnalyzerPanel 
+                      content={editor?.getText() || ""}
+                      chapterId={selectedChapter?.id}
+                      projectId={selectedProject?.id}
+                      onApplyChange={(newContent) => {
+                        if (editor) {
+                          editor.commands.setContent(newContent);
+                          toast.success("Change applied to editor");
+                        }
+                      }}
+                      onCreateVersion={async (label) => {
+                        if (selectedChapter && editor) {
+                          try {
+                            await versionsApi.create({
+                              parent_type: "chapter",
+                              parent_id: selectedChapter.id,
+                              content_snapshot: editor.getHTML(),
+                              label: label,
+                              created_by: "thaddaeus"
+                            });
+                          } catch (e) {
+                            console.error("Failed to create version:", e);
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
             </Tabs>
           </div>
