@@ -1155,7 +1155,13 @@ export default function ManuscriptWorkspace() {
                     </p>
                   )}
                 </ScrollArea>
-              </>
+              </TabsContent>
+
+              {/* Stats Tab Content */}
+              <TabsContent value="stats" className="flex-1 p-3 mt-0 overflow-auto data-[state=inactive]:hidden">
+                <WritingStatsPanel />
+              </TabsContent>
+            </Tabs>
             )}
           </aside>
         </div>
