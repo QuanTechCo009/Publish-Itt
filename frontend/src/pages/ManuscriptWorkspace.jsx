@@ -36,12 +36,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { projectApi, chapterApi, aiApi, uploadApi, versionsApi } from "@/lib/api";
+import { projectApi, chapterApi, aiApi, uploadApi, versionsApi, statsApi } from "@/lib/api";
 import { cn, formatWordCount } from "@/lib/utils";
 import { toast } from "sonner";
 import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
 import VersionsPanel from "@/components/VersionsPanel";
 import NotesPanel from "@/components/NotesPanel";
+import WritingStatsPanel from "@/components/WritingStatsPanel";
 import { 
   Plus, 
   Save,
@@ -72,7 +73,8 @@ import {
   StickyNote,
   BookOpen,
   Clock,
-  GitBranch
+  GitBranch,
+  BarChart3
 } from "lucide-react";
 
 // Auto-save interval in milliseconds (10 minutes)
