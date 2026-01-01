@@ -1060,74 +1060,88 @@ export default function ManuscriptWorkspace() {
           >
             <div className="flex items-center justify-between p-3 border-b border-border">
               {!aiPanelCollapsed && (
-                <span className="font-medium text-sm">AI Assistant</span>
+                <Tabs defaultValue="ai" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 h-8">
+                    <TabsTrigger value="ai" className="text-xs" data-testid="ai-tab">
+                      <Wand2 className="h-3 w-3 mr-1" />
+                      AI
+                    </TabsTrigger>
+                    <TabsTrigger value="stats" className="text-xs" data-testid="stats-tab">
+                      <BarChart3 className="h-3 w-3 mr-1" />
+                      Stats
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               )}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setAiPanelCollapsed(!aiPanelCollapsed)}
+                className="shrink-0"
               >
                 {aiPanelCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
               </Button>
             </div>
 
             {!aiPanelCollapsed && (
-              <>
-                <div className="p-3 space-y-2 border-b border-border">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start rounded-sm"
-                    size="sm"
-                    onClick={handleRewriteForTone}
-                    disabled={aiLoading}
-                    data-testid="rewrite-tone-btn"
-                  >
-                    <Wand2 className="h-4 w-4 mr-2" />
-                    Rewrite for Tone
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start rounded-sm"
-                    size="sm"
-                    onClick={handleSummarize}
-                    disabled={aiLoading}
-                    data-testid="summarize-btn"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Summarize Chapter
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start rounded-sm"
-                    size="sm"
-                    onClick={() => setOutlineOpen(true)}
-                    disabled={aiLoading}
-                    data-testid="generate-outline-btn"
-                  >
-                    <ListOrdered className="h-4 w-4 mr-2" />
-                    Generate Book Outline
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start rounded-sm bg-accent/10 hover:bg-accent/20 text-accent"
-                    size="sm"
-                    onClick={() => {
-                      if (editor && selectedChapter) {
-                        setImportedContent(editor.getText());
-                        setImportedFilename(selectedChapter.title);
-                        setImportAnalysisOpen(true);
-                      }
-                    }}
-                    disabled={!selectedChapter || !editor?.getText()}
-                    data-testid="analyze-chapter-btn"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Analyze Chapter
-                  </Button>
-                </div>
+              <Tabs defaultValue="ai" className="flex-1 flex flex-col">
+                {/* AI Tab Content */}
+                <TabsContent value="ai" className="flex-1 flex flex-col mt-0 data-[state=inactive]:hidden">
+                  <div className="p-3 space-y-2 border-b border-border">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start rounded-sm"
+                      size="sm"
+                      onClick={handleRewriteForTone}
+                      disabled={aiLoading}
+                      data-testid="rewrite-tone-btn"
+                    >
+                      <Wand2 className="h-4 w-4 mr-2" />
+                      Rewrite for Tone
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start rounded-sm"
+                      size="sm"
+                      onClick={handleSummarize}
+                      disabled={aiLoading}
+                      data-testid="summarize-btn"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Summarize Chapter
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start rounded-sm"
+                      size="sm"
+                      onClick={() => setOutlineOpen(true)}
+                      disabled={aiLoading}
+                      data-testid="generate-outline-btn"
+                    >
+                      <ListOrdered className="h-4 w-4 mr-2" />
+                      Generate Book Outline
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start rounded-sm bg-accent/10 hover:bg-accent/20 text-accent"
+                      size="sm"
+                      onClick={() => {
+                        if (editor && selectedChapter) {
+                          setImportedContent(editor.getText());
+                          setImportedFilename(selectedChapter.title);
+                          setImportAnalysisOpen(true);
+                        }
+                      }}
+                      disabled={!selectedChapter || !editor?.getText()}
+                      data-testid="analyze-chapter-btn"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Analyze Chapter
+                    </Button>
+                  </div>
 
-                <ScrollArea className="flex-1 p-3">
-                  {aiLoading ? (
+                  <ScrollArea className="flex-1 p-3">
+                    {aiLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-accent" />
                     </div>
