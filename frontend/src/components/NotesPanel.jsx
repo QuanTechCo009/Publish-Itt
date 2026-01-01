@@ -79,7 +79,11 @@ export default function NotesPanel({ parentType, parentId }) {
     setLoading(true);
     try {
       const res = await notesApi.getByParent(parentType, parentId);
-      setNotes(res.data);
+      // Sort DESCENDING by created_at (newest first) - THADDAEUS rule
+      const sortedNotes = [...res.data].sort((a, b) => 
+        new Date(b.created_at) - new Date(a.created_at)
+      );
+      setNotes(sortedNotes);
     } catch (error) {
       console.error("Failed to load notes:", error);
     } finally {
