@@ -833,6 +833,161 @@ async def delete_note(note_id: str):
         raise HTTPException(status_code=404, detail="Note not found")
     return {"message": "Note deleted successfully"}
 
+# ============== WRITING STATISTICS ENDPOINTS ==============
+
+@api_router.post("/stats/session", response_model=WritingSession)
+async def log_writing_session(session: WritingSessionCreate):
+    """Log a writing session"""
+    session_obj = WritingSession(**session.model_dump())
+    doc = session_obj.model_dump()
+    await db.writing_sessions.insert_one(doc)
+    return session_obj
+
+@api_router.get("/stats/daily/{date}", response_model=DailyStatsResponse)
+async def get_daily_stats(date: str):
+    """Get writing stats for a specific date (YYYY-MM-DD)"""
+    sessions = await db.writing_sessions.find({"date": date}, {"_id": 0}).to_list(1000)
+    
+    if not sessions:
+        return DailyStatsResponse(date=date)
+    
+    total_words_added = sum(s.get("words_added", 0) for s in sessions)
+    total_words_deleted = sum(s.get("words_deleted", 0) for s in sessions)
+    total_time = sum(s.get("time_spent_seconds", 0) for s in sessions)
+    projects = list(set(s.get("project_id") for s in sessions if s.get("project_id")))
+    chapters = list(set(s.get("chapter_id") for s in sessions if s.get("chapter_id")))
+    
+    return DailyStatsResponse(
+        date=date,
+        total_words_added=total_words_added,
+        total_words_deleted=total_words_deleted,
+        net_words=total_words_added - total_words_deleted,
+        total_time_seconds=total_time,
+        sessions_count=len(sessions),
+        projects_worked=projects,
+        chapters_worked=chapters
+    )
+
+@api_router.get("/stats/streak", response_model=WritingStreakResponse)
+async def get_writing_streak():
+    """Calculate current writing streak"""
+    # Get all unique dates with writing sessions, sorted descending
+    pipeline = [
+        {"$group": {"_id": "$date"}},
+        {"$sort": {"_id": -1}}
+    ]
+    dates_cursor = db.writing_sessions.aggregate(pipeline)
+    dates = [doc["_id"] async for doc in dates_cursor]
+    
+    if not dates:
+        return WritingStreakResponse()
+    
+    # Calculate current streak
+    from datetime import timedelta
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    
+    current_streak = 0
+    streak_dates = []
+    
+    # Check if user wrote today or yesterday to start the streak
+    if dates[0] == today or dates[0] == yesterday:
+        current_date = datetime.strptime(dates[0], "%Y-%m-%d")
+        for date_str in dates:
+            date = datetime.strptime(date_str, "%Y-%m-%d")
+            expected_date = current_date - timedelta(days=current_streak)
+            
+            if date == expected_date:
+                current_streak += 1
+                streak_dates.append(date_str)
+            else:
+                break
+    
+    # Calculate longest streak (simplified - just use current for now)
+    longest_streak = current_streak
+    
+    return WritingStreakResponse(
+        current_streak=current_streak,
+        longest_streak=longest_streak,
+        last_writing_date=dates[0] if dates else None,
+        streak_dates=streak_dates
+    )
+
+@api_router.get("/stats/overview", response_model=WritingStatsOverview)
+async def get_stats_overview():
+    """Get overall writing statistics overview"""
+    # Get all sessions
+    sessions = await db.writing_sessions.find({}, {"_id": 0}).to_list(10000)
+    
+    if not sessions:
+        return WritingStatsOverview()
+    
+    total_words = sum(s.get("words_added", 0) for s in sessions)
+    total_time = sum(s.get("time_spent_seconds", 0) for s in sessions)
+    total_sessions = len(sessions)
+    
+    # Get unique dates
+    unique_dates = list(set(s.get("date") for s in sessions))
+    days_active = len(unique_dates)
+    
+    # Get streak info
+    streak_data = await get_writing_streak()
+    
+    # Calculate averages
+    avg_words_per_day = total_words / days_active if days_active > 0 else 0
+    avg_session_minutes = (total_time / total_sessions / 60) if total_sessions > 0 else 0
+    
+    # Get last 7 days data
+    from datetime import timedelta
+    weekly_words = []
+    for i in range(6, -1, -1):
+        date = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
+        day_sessions = [s for s in sessions if s.get("date") == date]
+        day_words = sum(s.get("words_added", 0) for s in day_sessions)
+        day_name = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%a")
+        weekly_words.append({
+            "date": date,
+            "day": day_name,
+            "words": day_words
+        })
+    
+    return WritingStatsOverview(
+        total_words_written=total_words,
+        total_time_seconds=total_time,
+        total_sessions=total_sessions,
+        current_streak=streak_data.current_streak,
+        longest_streak=streak_data.longest_streak,
+        average_words_per_day=round(avg_words_per_day, 1),
+        average_session_minutes=round(avg_session_minutes, 1),
+        days_active=days_active,
+        weekly_words=weekly_words
+    )
+
+@api_router.get("/stats/weekly")
+async def get_weekly_stats():
+    """Get stats for the last 7 days"""
+    from datetime import timedelta
+    
+    weekly_data = []
+    for i in range(6, -1, -1):
+        date = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
+        day_name = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%a")
+        
+        sessions = await db.writing_sessions.find({"date": date}, {"_id": 0}).to_list(1000)
+        
+        words_added = sum(s.get("words_added", 0) for s in sessions)
+        time_spent = sum(s.get("time_spent_seconds", 0) for s in sessions)
+        
+        weekly_data.append({
+            "date": date,
+            "day": day_name,
+            "words": words_added,
+            "time_minutes": round(time_spent / 60, 1),
+            "sessions": len(sessions)
+        })
+    
+    return weekly_data
+
 # ============== IMPORT MANUSCRIPT ACTION ==============
 
 @api_router.post("/actions/import-manuscript")
