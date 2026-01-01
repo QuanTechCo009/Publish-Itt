@@ -128,6 +128,13 @@ export default function ManuscriptWorkspace() {
   const [autoVersionSaving, setAutoVersionSaving] = useState(false);
   const lastContentRef = useRef("");
   const versionsPanelRef = useRef(null);
+  
+  // Writing stats tracking state
+  const [sessionStartTime, setSessionStartTime] = useState(null);
+  const [sessionWordCount, setSessionWordCount] = useState(0);
+  const [showStatsPanel, setShowStatsPanel] = useState(true);
+  const lastWordCountRef = useRef(0);
+  const statsIntervalRef = useRef(null);
 
   // Editor setup
   const editor = useEditor({
