@@ -136,6 +136,50 @@ class Note(NoteBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# ============== WRITING STATISTICS COLLECTION ==============
+class WritingSessionBase(BaseModel):
+    project_id: Optional[str] = None
+    chapter_id: Optional[str] = None
+    date: str  # YYYY-MM-DD format
+    words_added: int = 0
+    words_deleted: int = 0
+    time_spent_seconds: int = 0
+
+class WritingSessionCreate(WritingSessionBase):
+    pass
+
+class WritingSession(WritingSessionBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class DailyStatsResponse(BaseModel):
+    date: str
+    total_words_added: int = 0
+    total_words_deleted: int = 0
+    net_words: int = 0
+    total_time_seconds: int = 0
+    sessions_count: int = 0
+    projects_worked: List[str] = []
+    chapters_worked: List[str] = []
+
+class WritingStreakResponse(BaseModel):
+    current_streak: int = 0
+    longest_streak: int = 0
+    last_writing_date: Optional[str] = None
+    streak_dates: List[str] = []
+
+class WritingStatsOverview(BaseModel):
+    total_words_written: int = 0
+    total_time_seconds: int = 0
+    total_sessions: int = 0
+    current_streak: int = 0
+    longest_streak: int = 0
+    average_words_per_day: float = 0
+    average_session_minutes: float = 0
+    days_active: int = 0
+    weekly_words: List[dict] = []  # Last 7 days
+
 # Chapter Models
 class ChapterBase(BaseModel):
     project_id: str
