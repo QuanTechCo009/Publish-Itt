@@ -278,6 +278,69 @@ export default function ManuscriptWorkspace() {
     return () => editor.off('update', handleUpdate);
   }, [editor, selectedChapter, autoVersionEnabled, editingStartTime]);
 
+  // Writing stats tracking - log sessions every 5 minutes
+  useEffect(() => {
+    if (!editor || !selectedChapter) return;
+
+    const logWritingSession = async () => {
+      const currentWordCount = editor.storage.characterCount?.words() || 0;
+      const wordDiff = currentWordCount - lastWordCountRef.current;
+      
+      // Only log if there's been writing activity
+      if (wordDiff === 0 && !sessionStartTime) return;
+      
+      const timeSpent = sessionStartTime 
+        ? Math.floor((Date.now() - sessionStartTime) / 1000)
+        : 0;
+      
+      // Only log if significant activity (at least 10 words or 60 seconds)
+      if (Math.abs(wordDiff) >= 10 || timeSpent >= 60) {
+        try {
+          const today = new Date().toISOString().split('T')[0];
+          await statsApi.logSession({
+            project_id: selectedProject?.id,
+            chapter_id: selectedChapter?.id,
+            date: today,
+            words_added: Math.max(0, wordDiff),
+            words_deleted: Math.max(0, -wordDiff),
+            time_spent_seconds: timeSpent
+          });
+          
+          // Reset session tracking
+          lastWordCountRef.current = currentWordCount;
+          setSessionStartTime(null);
+          setSessionWordCount(0);
+        } catch (error) {
+          console.error("Failed to log writing session:", error);
+        }
+      }
+    };
+
+    // Track when editing starts
+    const handleEditorUpdate = () => {
+      if (!sessionStartTime) {
+        setSessionStartTime(Date.now());
+        lastWordCountRef.current = editor.storage.characterCount?.words() || 0;
+      }
+      setSessionWordCount(editor.storage.characterCount?.words() || 0);
+    };
+
+    editor.on('update', handleEditorUpdate);
+    
+    // Log session every 5 minutes
+    statsIntervalRef.current = setInterval(logWritingSession, 5 * 60 * 1000);
+    
+    // Also log on unmount/chapter change
+    return () => {
+      editor.off('update', handleEditorUpdate);
+      if (statsIntervalRef.current) {
+        clearInterval(statsIntervalRef.current);
+      }
+      // Log final session
+      logWritingSession();
+    };
+  }, [editor, selectedChapter, selectedProject, sessionStartTime]);
+
   const loadProjects = async () => {
     try {
       const res = await projectApi.getAll();
