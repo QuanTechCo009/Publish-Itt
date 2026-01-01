@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -13,17 +14,42 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { stylePresetApi } from "@/lib/api";
+import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { 
   Plus, 
   Pencil, 
   Trash2,
   Palette,
   Loader2,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Sun,
+  TreePine,
+  Lamp,
+  Cloud,
+  Flame,
+  Check
 } from "lucide-react";
 
+const THEME_ICONS = {
+  default: Sun,
+  evergreen: TreePine,
+  lantern: Lamp,
+  misty: Cloud,
+  campfire: Flame,
+};
+
+const THEME_COLORS = {
+  default: "bg-amber-500",
+  evergreen: "bg-emerald-600",
+  lantern: "bg-yellow-500",
+  misty: "bg-slate-400",
+  campfire: "bg-orange-500",
+};
+
 export default function Settings() {
+  const { theme, setTheme, themes } = useTheme();
   const [presets, setPresets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
