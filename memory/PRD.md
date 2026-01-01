@@ -115,6 +115,17 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Automatic session logging every 5 minutes
 - [x] Backend API endpoints for stats retrieval
 
+### Phase 9: THADDAEUS Integration - Core (Jan 1, 2026) ✅
+- [x] Global UI Style System with 5 color themes
+- [x] Theme selection in Settings (Default, Evergreen Forest, Lantern Glow, Misty Morning, Campfire Warmth)
+- [x] Theme persistence via localStorage
+- [x] Descending order enforcement for Versions, Notes
+- [x] THADDAEUS Analyzer panel with actionable buttons
+- [x] Analyzer findings grouped by category (Structure, Formatting, Tone, Notes, Chapters, Issues)
+- [x] Action buttons: Apply Change, Save to Notes, Dismiss
+- [x] Re-analyze and Dismiss All functionality
+- [x] 4-tab sidebar layout (Chapters, Versions, Notes, Analyze)
+
 ## API Endpoints
 
 ### Projects
