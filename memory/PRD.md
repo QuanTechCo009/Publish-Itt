@@ -105,6 +105,16 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Auto-labeled versions with "Auto-save (timestamp)"
 - [x] Content change detection to track editing activity
 
+### Phase 8: Writing Statistics Dashboard ✅ (Jan 1, 2026)
+- [x] Writing session tracking (words added/deleted, time spent)
+- [x] Daily word count display with goal progress
+- [x] Writing streak tracking (current and longest)
+- [x] Weekly activity bar chart visualization
+- [x] Summary statistics (total words, time, avg/day, days active)
+- [x] Stats panel tab in AI sidebar with toggle
+- [x] Automatic session logging every 5 minutes
+- [x] Backend API endpoints for stats retrieval
+
 ## API Endpoints
 
 ### Projects
