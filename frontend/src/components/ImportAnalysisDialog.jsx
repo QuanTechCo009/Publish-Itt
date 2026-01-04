@@ -250,14 +250,6 @@ export default function ImportAnalysisDialog({
               results.push({ 
                 action: actionId, 
                 success: true, 
-                message: `Created ${splitRes.data.chapters_created} chapters`,
-                response: `Chapters created: ${splitRes.data.chapters.map(c => c.title).join(", ")}`,
-                chaptersCreated: splitRes.data.chapters
-              });
-            } else {
-              results.push({ 
-                action: actionId, 
-                success: true, 
                 message: "No chapter breaks detected",
                 response: "Content appears to be a single chapter"
               });
