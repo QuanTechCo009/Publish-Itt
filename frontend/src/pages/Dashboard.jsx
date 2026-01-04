@@ -272,15 +272,32 @@ export default function Dashboard() {
             {projects.length} {projects.length === 1 ? "project" : "projects"} in progress
           </p>
         </div>
-        <Button
-          onClick={() => setDialogOpen(true)}
-          className="rounded-sm shadow-sm"
-          size="lg"
-          data-testid="new-project-btn"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Start New Book
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="rounded-sm shadow-sm"
+            size="lg"
+            data-testid="import-manuscript-btn"
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4 mr-2" />
+            )}
+            Import Manuscript
+          </Button>
+          <Button
+            onClick={() => setDialogOpen(true)}
+            className="rounded-sm shadow-sm"
+            size="lg"
+            data-testid="new-project-btn"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Start New Book
+          </Button>
+        </div>
       </div>
 
       {/* Projects Grid */}
