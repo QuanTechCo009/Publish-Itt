@@ -137,6 +137,18 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Enhanced New Book dialog with all metadata fields
 - [x] Fixed scrolling issues in AI panel and sidebars
 
+### Phase 11: Magic Import Wizard (THADDAEUS) (Jan 4, 2026) ✅
+- [x] Auto-analysis triggers when Import Wizard dialog opens
+- [x] AI analysis displays: word count, reading level, structure issues, notes detected
+- [x] "Fix Everything Automatically" button runs autoformat, store_notes, full_qa
+- [x] Version snapshots created: "Imported Raw", "Pre-FixEverything Backup", "FixEverything Applied"
+- [x] Progress indicator during Fix Everything workflow
+- [x] Completion screen with success/failure indicators per action
+- [x] 10 individual action types: autoformat, remove_notes, store_notes, convert_notes, split_chapters, lantern_path, full_qa, extract_summaries, extract_characters, extract_glossary
+- [x] Action result display with Implement/Ignore options
+- [x] Notes extraction saves to Notes Collection
+- [x] Full test coverage (20 backend tests passing)
+
 ## API Endpoints
 
 ### Projects
