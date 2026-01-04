@@ -463,7 +463,7 @@ CAPABILITIES:
 - Analyze sales data and provide recommendations.
 
 RULES:
-- All suggestions must remain aligned with the Bigfoot Financial Adventures universe when applicable."""
+- All suggestions should remain aligned with the author's established universe and brand voice."""
 
 IMPORT_ANALYSIS_SYSTEM_PROMPT = GLOBAL_SYSTEM_PROMPT + """
 
@@ -496,8 +496,8 @@ ANALYSIS AREAS:
 - Identify formatting artifacts from Word/Google Docs
 
 5. LORE & UNIVERSE CHECK
-- Detect any lore drift
-- Detect any tone drift from the Bigfoot Financial Adventures brand
+- Detect any lore drift from the author's established universe
+- Detect any tone drift from the author's brand voice
 - Detect any out-of-universe elements
 
 OUTPUT FORMAT:
