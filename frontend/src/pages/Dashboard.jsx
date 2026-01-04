@@ -22,8 +22,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { projectApi, uploadApi } from "@/lib/api";
+import { GENRES, AGE_GROUPS, WRITING_STYLES, getGenresByCategory } from "@/lib/constants";
 import { cn, statusColors, formatDate, formatWordCount, calculateProgress } from "@/lib/utils";
 import { toast } from "sonner";
 import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
@@ -37,7 +40,8 @@ import {
   Loader2,
   Upload,
   FileUp,
-  X
+  X,
+  Sparkles
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -51,6 +55,9 @@ export default function Dashboard() {
     series_name: "",
     universe: "",
     type: "novel",
+    genre: "",
+    age_group: "",
+    writing_style: "",
     summary: ""
   });
   const [creating, setCreating] = useState(false);
