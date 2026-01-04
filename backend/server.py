@@ -1370,7 +1370,7 @@ Task:
   2) A reading level impression (simple, not technical).
   3) Notes on pacing (fast, slow, dense, airy).
   4) Any noticeable shifts in voice or formality.
-  5) 2–3 suggestions to better align with the target reader and the Bigfoot Financial Adventures brand.
+  5) 2–3 suggestions to better align with the target reader and the author's brand.
 
 Text:
 {request.content}"""
