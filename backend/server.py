@@ -1990,14 +1990,78 @@ class SplitChaptersResponse(BaseModel):
     chapters: List[dict]
     message: str
 
+def detect_chapters_regex(content: str) -> List[dict]:
+    """Regex-based chapter detection - more reliable than AI for structure"""
+    import re
+    
+    # Common chapter patterns - order matters (most specific first)
+    chapter_patterns = [
+        # "Chapter 1: Title" or "Chapter 1 - Title" or "Chapter 1 Title"
+        r'(?:^|\n\n+)(Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)[\s:\-–—]*([^\n]*))',
+        # "CHAPTER 1" (all caps)
+        r'(?:^|\n\n+)(CHAPTER\s+(\d+|[IVXLCDM]+)[\s:\-–—]*([^\n]*))',
+        # "Part 1: Title"
+        r'(?:^|\n\n+)(Part\s+(\d+|[IVXLCDM]+|One|Two|Three)[\s:\-–—]*([^\n]*))',
+        # "1. Title" at start of line
+        r'(?:^|\n\n+)((\d+)\.\s+([A-Z][^\n]{2,50}))',
+        # "I. Title" (Roman numerals)
+        r'(?:^|\n\n+)(([IVXLCDM]+)\.\s+([A-Z][^\n]{2,50}))',
+    ]
+    
+    chapters = []
+    chapter_positions = []
+    
+    # Find all chapter markers with their positions
+    for pattern in chapter_patterns:
+        for match in re.finditer(pattern, content, re.IGNORECASE | re.MULTILINE):
+            full_match = match.group(1).strip()
+            position = match.start(1)
+            
+            # Avoid duplicates (same position)
+            if not any(abs(pos - position) < 10 for pos in chapter_positions):
+                chapter_positions.append(position)
+                
+                # Extract title
+                if match.lastindex >= 3 and match.group(3):
+                    title = match.group(3).strip()
+                    if not title or len(title) < 2:
+                        title = full_match
+                else:
+                    title = full_match
+                
+                # Clean up title
+                title = re.sub(r'^[\s:\-–—]+', '', title).strip()
+                if not title:
+                    title = full_match
+                
+                chapters.append({
+                    "position": position,
+                    "marker": full_match,
+                    "title": title
+                })
+    
+    # Sort by position
+    chapters.sort(key=lambda x: x["position"])
+    
+    # Assign chapter numbers and build final structure
+    result = []
+    for i, ch in enumerate(chapters):
+        result.append({
+            "chapter_number": i + 1,
+            "title": ch["title"],
+            "start_position": ch["position"],
+            "marker": ch["marker"]
+        })
+    
+    return result
+
 @api_router.post("/ai/import/split-chapters", response_model=SplitChaptersResponse)
 async def split_and_create_chapters(request: SplitChaptersRequest):
     """
     Detect chapter breaks in content and create separate chapter records.
-    Uses AI to detect chapter structure, then creates chapter records in the database.
+    Uses regex-based detection for reliability, with AI enhancement for titles.
     """
     import re
-    import json
     
     if not request.content or len(request.content.strip()) < 100:
         raise HTTPException(status_code=400, detail="Content too short to split into chapters")
@@ -2005,98 +2069,55 @@ async def split_and_create_chapters(request: SplitChaptersRequest):
     if not request.project_id and not request.manuscript_id:
         raise HTTPException(status_code=400, detail="Either project_id or manuscript_id is required")
     
-    # First, use AI to detect chapter structure
-    detection_prompt = f"""Analyze this manuscript and identify all chapter breaks.
-
-IMPORTANT: Return your response as a valid JSON array only, with no additional text.
-
-For each chapter found, return an object with:
-- "chapter_number": integer (1, 2, 3, etc.)
-- "title": string (the chapter title, or generate one if not explicit)
-- "start_marker": string (the exact text that starts this chapter, first 50 chars)
-- "end_marker": string (the exact text before the next chapter, or "END" for the last chapter)
-
-Look for these patterns:
-- "Chapter 1", "Chapter One", "CHAPTER I", etc.
-- Numbered sections like "1.", "I.", "Part 1"
-- Title-case headings on their own line
-- Clear scene breaks with significant whitespace
-
-Manuscript content:
-{request.content[:25000]}
-
-Return ONLY the JSON array, like:
-[
-  {{"chapter_number": 1, "title": "The Beginning", "start_marker": "Chapter 1: The Beginning", "end_marker": "Chapter 2"}},
-  {{"chapter_number": 2, "title": "The Journey", "start_marker": "Chapter 2: The Journey", "end_marker": "END"}}
-]"""
-
-    try:
-        ai_response = await get_ai_response(IMPORT_ANALYSIS_SYSTEM_PROMPT, detection_prompt)
-        
-        # Parse the AI response to extract chapter info
-        # Try to find JSON array in the response
-        json_match = re.search(r'\[[\s\S]*\]', ai_response)
-        if json_match:
-            chapters_data = json.loads(json_match.group())
-        else:
-            # Fallback: try to parse the whole response as JSON
-            chapters_data = json.loads(ai_response)
-    except (json.JSONDecodeError, Exception) as e:
-        # If AI response isn't valid JSON, use regex-based detection
-        logger.warning(f"AI chapter detection failed, using regex fallback: {e}")
-        chapters_data = detect_chapters_regex(request.content)
+    content = request.content
+    logger.info(f"Split chapters: Processing {len(content)} characters")
+    
+    # Use regex-based detection (more reliable for structure)
+    chapters_data = detect_chapters_regex(content)
+    logger.info(f"Split chapters: Detected {len(chapters_data)} chapter markers")
     
     if not chapters_data or len(chapters_data) == 0:
-        # No chapters detected, treat the whole content as one chapter
+        # No chapters detected - try to use AI as fallback for unstructured content
+        logger.info("No chapter markers found, treating as single chapter")
         chapters_data = [{
             "chapter_number": 1,
             "title": "Chapter 1",
-            "start_marker": request.content[:50],
-            "end_marker": "END"
+            "start_position": 0,
+            "marker": ""
         }]
     
     # Now split the content and create chapter records
     created_chapters = []
-    content = request.content
     
     for i, chapter_info in enumerate(chapters_data):
         chapter_number = chapter_info.get("chapter_number", i + 1)
         chapter_title = chapter_info.get("title", f"Chapter {chapter_number}")
+        start_pos = chapter_info.get("start_position", 0)
+        
+        # Find the end position (start of next chapter or end of content)
+        if i + 1 < len(chapters_data):
+            end_pos = chapters_data[i + 1].get("start_position", len(content))
+        else:
+            end_pos = len(content)
         
         # Extract chapter content
-        start_marker = chapter_info.get("start_marker", "")
-        end_marker = chapter_info.get("end_marker", "END")
-        
-        # Find the start position
-        start_pos = 0
-        if start_marker and start_marker in content:
-            start_pos = content.find(start_marker)
-        elif i > 0 and created_chapters:
-            # Start after the previous chapter
-            start_pos = created_chapters[-1].get("_end_pos", 0)
-        
-        # Find the end position
-        if end_marker == "END" or i == len(chapters_data) - 1:
-            end_pos = len(content)
-        elif end_marker and end_marker in content[start_pos + 1:]:
-            end_pos = content.find(end_marker, start_pos + 1)
-        else:
-            # Use next chapter's start marker
-            if i + 1 < len(chapters_data):
-                next_start = chapters_data[i + 1].get("start_marker", "")
-                if next_start and next_start in content[start_pos + 1:]:
-                    end_pos = content.find(next_start, start_pos + 1)
-                else:
-                    end_pos = len(content)
-            else:
-                end_pos = len(content)
-        
         chapter_content = content[start_pos:end_pos].strip()
         
         # Skip if chapter content is too short (likely a detection error)
-        if len(chapter_content) < 50:
+        if len(chapter_content) < 20:
+            logger.warning(f"Skipping chapter {chapter_number}: content too short ({len(chapter_content)} chars)")
             continue
+        
+        # Clean up title if it's too long or contains the chapter marker
+        if len(chapter_title) > 100:
+            chapter_title = chapter_title[:100].rsplit(' ', 1)[0] + "..."
+        
+        # Remove leading "Chapter X:" from title if present
+        title_clean = re.sub(r'^(Chapter\s+\d+|Chapter\s+[IVXLCDM]+|Part\s+\d+)[\s:\-–—]*', '', chapter_title, flags=re.IGNORECASE).strip()
+        if title_clean and len(title_clean) > 2:
+            chapter_title = title_clean
+        
+        logger.info(f"Creating chapter {chapter_number}: '{chapter_title}' ({len(chapter_content)} chars)")
         
         # Create chapter record
         chapter_obj = Chapter(
@@ -2115,8 +2136,7 @@ Return ONLY the JSON array, like:
             "id": chapter_obj.id,
             "chapter_number": chapter_number,
             "title": chapter_title,
-            "word_count": len(chapter_content.split()),
-            "_end_pos": end_pos  # Internal tracking
+            "word_count": len(chapter_content.split())
         })
     
     # Update project/manuscript word count
@@ -2127,9 +2147,7 @@ Return ONLY the JSON array, like:
             {"$inc": {"word_count": total_words}, "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
         )
     
-    # Clean up internal tracking field
-    for c in created_chapters:
-        c.pop("_end_pos", None)
+    logger.info(f"Split chapters complete: Created {len(created_chapters)} chapters, {total_words} total words")
     
     return SplitChaptersResponse(
         success=True,
@@ -2137,47 +2155,6 @@ Return ONLY the JSON array, like:
         chapters=created_chapters,
         message=f"Successfully created {len(created_chapters)} chapters"
     )
-
-def detect_chapters_regex(content: str) -> List[dict]:
-    """Fallback regex-based chapter detection"""
-    import re
-    
-    # Common chapter patterns
-    patterns = [
-        r'^(Chapter\s+(\d+|[IVXLCDM]+)[:\.\s]*(.*)?)$',  # Chapter 1: Title
-        r'^(CHAPTER\s+(\d+|[IVXLCDM]+)[:\.\s]*(.*)?)$',  # CHAPTER 1
-        r'^(\d+\.\s+(.+))$',  # 1. Title
-        r'^(Part\s+(\d+|[IVXLCDM]+)[:\.\s]*(.*)?)$',  # Part 1: Title
-    ]
-    
-    chapters = []
-    lines = content.split('\n')
-    current_chapter = None
-    chapter_num = 0
-    
-    for i, line in enumerate(lines):
-        line_stripped = line.strip()
-        for pattern in patterns:
-            match = re.match(pattern, line_stripped, re.IGNORECASE)
-            if match:
-                chapter_num += 1
-                # Extract title from the match
-                title = match.group(3) if match.lastindex >= 3 and match.group(3) else match.group(1)
-                title = title.strip() if title else f"Chapter {chapter_num}"
-                
-                chapters.append({
-                    "chapter_number": chapter_num,
-                    "title": title,
-                    "start_marker": line_stripped[:50],
-                    "end_marker": "END"  # Will be updated
-                })
-                break
-    
-    # Update end markers
-    for i in range(len(chapters) - 1):
-        chapters[i]["end_marker"] = chapters[i + 1]["start_marker"]
-    
-    return chapters
 
 # ============== STATUS ENDPOINTS ==============
 
