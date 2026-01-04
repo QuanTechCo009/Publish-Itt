@@ -68,7 +68,7 @@ const ACTION_OPTIONS = [
   {
     id: "split_chapters",
     label: "Split into Chapters",
-    description: "Detect chapter breaks and create separate Chapter records",
+    description: "Detect chapter breaks and create separate Chapter records (works best with full manuscript imports)",
     icon: BookOpen,
     category: "structure"
   },
