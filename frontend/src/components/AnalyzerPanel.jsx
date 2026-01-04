@@ -91,27 +91,29 @@ export default function AnalyzerPanel({
 
     setAnalyzing(true);
     try {
-      const res = await aiApi.importAnalyze({ 
+      const res = await importAnalysisApi.analyze(
         content, 
-        filename: "Chapter Analysis" 
-      });
+        "Chapter Analysis",
+        projectId,
+        chapterId
+      );
       
       // Transform analysis results into findings
       const analysisFindings = [];
       let findingId = 0;
 
       // Parse the analysis response
-      if (res.data?.analysis) {
-        const analysis = res.data.analysis;
+      if (res.data) {
+        const data = res.data;
         
-        // Structure findings
-        if (analysis.structure_issues?.length) {
-          analysis.structure_issues.forEach(issue => {
+        // Structure findings from structure_issues array
+        if (data.structure_issues?.length) {
+          data.structure_issues.forEach(issue => {
             analysisFindings.push({
               id: `finding-${findingId++}`,
               category: 'structure',
-              title: issue.title || 'Structure Issue',
-              description: issue.description || issue,
+              title: typeof issue === 'string' ? 'Structure Issue' : (issue.title || 'Structure Issue'),
+              description: typeof issue === 'string' ? issue : (issue.description || issue),
               suggestion: issue.suggestion,
               severity: issue.severity || 'medium',
               applyAction: issue.fix
@@ -119,14 +121,14 @@ export default function AnalyzerPanel({
           });
         }
 
-        // Formatting findings
-        if (analysis.formatting_issues?.length) {
-          analysis.formatting_issues.forEach(issue => {
+        // Formatting findings from formatting_issues array
+        if (data.formatting_issues?.length) {
+          data.formatting_issues.forEach(issue => {
             analysisFindings.push({
               id: `finding-${findingId++}`,
               category: 'formatting',
-              title: issue.title || 'Formatting Issue',
-              description: issue.description || issue,
+              title: typeof issue === 'string' ? 'Formatting Issue' : (issue.title || 'Formatting Issue'),
+              description: typeof issue === 'string' ? issue : (issue.description || issue),
               suggestion: issue.suggestion,
               severity: issue.severity || 'low',
               applyAction: issue.fix
@@ -134,60 +136,82 @@ export default function AnalyzerPanel({
           });
         }
 
-        // Notes detected
-        if (analysis.notes_detected?.length) {
-          analysis.notes_detected.forEach(note => {
+        // Notes detected from notes_detected array
+        if (data.notes_detected?.length) {
+          data.notes_detected.forEach(note => {
             analysisFindings.push({
               id: `finding-${findingId++}`,
               category: 'notes',
               title: 'Author Note Detected',
-              description: note.text || note,
+              description: typeof note === 'string' ? note : (note.text || note),
               location: note.location,
               severity: 'info',
-              noteText: note.text || note
+              noteText: typeof note === 'string' ? note : (note.text || note)
             });
           });
         }
 
-        // Chapter detection
-        if (analysis.chapter_breaks?.length) {
-          analysis.chapter_breaks.forEach(chapter => {
-            analysisFindings.push({
-              id: `finding-${findingId++}`,
-              category: 'chapters',
-              title: chapter.title || 'Chapter Break Detected',
-              description: `Potential chapter starting at: "${chapter.preview || chapter}"`,
-              severity: 'info'
-            });
-          });
-        }
-
-        // Tone issues
-        if (analysis.tone_issues?.length) {
-          analysis.tone_issues.forEach(issue => {
+        // Style issues from style_issues array
+        if (data.style_issues?.length) {
+          data.style_issues.forEach(issue => {
             analysisFindings.push({
               id: `finding-${findingId++}`,
               category: 'tone',
-              title: issue.title || 'Tone Inconsistency',
-              description: issue.description || issue,
+              title: typeof issue === 'string' ? 'Style Issue' : (issue.title || 'Style Issue'),
+              description: typeof issue === 'string' ? issue : (issue.description || issue),
               suggestion: issue.suggestion,
               severity: issue.severity || 'medium'
             });
           });
         }
-      }
 
-      // If no structured analysis, create generic findings
-      if (analysisFindings.length === 0 && res.data?.suggestions) {
-        res.data.suggestions.forEach((suggestion, idx) => {
-          analysisFindings.push({
-            id: `finding-${idx}`,
-            category: 'issues',
-            title: suggestion.action || 'Suggestion',
-            description: suggestion.description || suggestion,
-            severity: 'medium'
+        // Lore issues
+        if (data.lore_issues?.length) {
+          data.lore_issues.forEach(issue => {
+            analysisFindings.push({
+              id: `finding-${findingId++}`,
+              category: 'issues',
+              title: typeof issue === 'string' ? 'Lore Issue' : (issue.title || 'Lore Issue'),
+              description: typeof issue === 'string' ? issue : (issue.description || issue),
+              suggestion: issue.suggestion,
+              severity: 'medium'
+            });
           });
-        });
+        }
+
+        // Add reading level info as a finding
+        if (data.estimated_reading_level) {
+          analysisFindings.push({
+            id: `finding-${findingId++}`,
+            category: 'tone',
+            title: 'Reading Level',
+            description: `Estimated reading level: ${data.estimated_reading_level}`,
+            severity: 'info'
+          });
+        }
+
+        // Add word count info
+        if (data.word_count) {
+          analysisFindings.push({
+            id: `finding-${findingId++}`,
+            category: 'structure',
+            title: 'Word Count',
+            description: `Total words: ${data.word_count.toLocaleString()}`,
+            severity: 'info'
+          });
+        }
+
+        // Parse the main analysis text for additional insights
+        if (data.analysis && analysisFindings.length < 3) {
+          // If we didn't get structured findings, add the main analysis as a general finding
+          analysisFindings.push({
+            id: `finding-${findingId++}`,
+            category: 'structure',
+            title: 'Analysis Summary',
+            description: data.analysis.substring(0, 500) + (data.analysis.length > 500 ? '...' : ''),
+            severity: 'info'
+          });
+        }
       }
 
       setFindings(analysisFindings);
