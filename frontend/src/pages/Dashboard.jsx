@@ -461,12 +461,58 @@ export default function Dashboard() {
               Start New Book
             </DialogTitle>
             <DialogDescription>
-              Set up your new writing project
+              Create a new project or import an existing manuscript
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="max-h-[60vh] pr-4">
+          
+          {/* Import Manuscript Section */}
+          <div className="border-2 border-dashed border-border rounded-lg p-4 hover:border-accent/50 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-md bg-accent/10">
+                  <Upload className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Import Manuscript</h4>
+                  <p className="text-xs text-muted-foreground">Upload .txt, .docx, .pdf, or .md file</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  fileInputRef.current?.click();
+                  setDialogOpen(false);
+                }}
+                disabled={uploading}
+                className="rounded-sm"
+                data-testid="import-manuscript-btn"
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <FileUp className="h-4 w-4 mr-2" />
+                    Browse Files
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or create from scratch</span>
+            </div>
+          </div>
+
+          <ScrollArea className="max-h-[50vh] pr-4">
             <form onSubmit={handleCreateProject}>
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-2">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
                   <Input
