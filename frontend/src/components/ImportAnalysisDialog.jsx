@@ -109,8 +109,8 @@ const ACTION_OPTIONS = [
   }
 ];
 
-// Actions to run for "Fix Everything"
-const FIX_EVERYTHING_ACTIONS = ["autoformat", "store_notes", "full_qa"];
+// Actions to run for "Fix Everything" - now includes split_chapters
+const FIX_EVERYTHING_ACTIONS = ["autoformat", "store_notes", "split_chapters", "full_qa"];
 
 export default function ImportAnalysisDialog({ 
   open, 
