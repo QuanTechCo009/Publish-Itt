@@ -1911,19 +1911,19 @@ Manuscript:
 
         "full_qa": """Run a comprehensive QA check on this manuscript:
 
-1. **Tone Analysis**: Is the tone consistent? Does it match the warm, encouraging Bigfoot Financial Adventures brand?
+1. **Tone Analysis**: Is the tone consistent throughout the manuscript? Does it match the author's intended voice?
 
-2. **Lore Check**: Are there any elements that seem out of place for a children's financial literacy story?
+2. **World/Universe Check**: Are there any elements that seem inconsistent with the established world?
 
 3. **Character Consistency**: Do characters behave consistently throughout?
 
-4. **Educational Clarity**: Are financial concepts explained clearly for young readers?
+4. **Clarity**: Are concepts and events explained clearly for the target audience?
 
 5. **Structural Completeness**: Are there any gaps in the narrative?
 
 6. **Pacing Issues**: Does the story flow well? Any sections too fast or slow?
 
-7. **Reading Level**: Is the language appropriate for 3rd-5th graders?
+7. **Reading Level**: Is the language appropriate for the target age group?
 
 Provide:
 - Issues found (categorized)
