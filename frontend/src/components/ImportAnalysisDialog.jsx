@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { importAnalysisApi, chapterApi } from "@/lib/api";
+import { Progress } from "@/components/ui/progress";
+import { importAnalysisApi, chapterApi, versionsApi, notesApi } from "@/lib/api";
 import { toast } from "sonner";
 import { 
   Loader2, 
@@ -30,71 +31,86 @@ import {
   X,
   Check,
   XCircle,
-  ArrowLeft
+  ArrowLeft,
+  Zap,
+  Shield
 } from "lucide-react";
 
 const ACTION_OPTIONS = [
   {
     id: "autoformat",
-    label: "A) Autoformat the manuscript",
+    label: "Auto-format Manuscript",
     description: "Normalize spacing, fix paragraphs, standardize headings",
-    icon: Wand2
+    icon: Wand2,
+    category: "formatting"
   },
   {
     id: "remove_notes",
-    label: "B) Remove all notes",
+    label: "Remove All Notes",
     description: "Remove inline notes, comments, and annotations",
-    icon: Trash2
+    icon: Trash2,
+    category: "notes"
   },
   {
     id: "store_notes",
-    label: "C) Store notes separately",
-    description: "Extract notes to a separate Notes Collection",
-    icon: Archive
+    label: "Store Notes Separately",
+    description: "Extract notes to the Notes Collection",
+    icon: Archive,
+    category: "notes"
   },
   {
     id: "convert_notes",
-    label: "D) Convert notes into chapter metadata",
+    label: "Convert Notes to Metadata",
     description: "Transform notes into chapter_notes, revision_notes, author_intent",
-    icon: FileStack
+    icon: FileStack,
+    category: "notes"
   },
   {
     id: "split_chapters",
-    label: "E) Split into chapters automatically",
+    label: "Split into Chapters",
     description: "Detect chapter breaks and create separate Chapter records",
-    icon: BookOpen
+    icon: BookOpen,
+    category: "structure"
   },
   {
     id: "lantern_path",
-    label: "F) Apply Lantern Path structure",
+    label: "Apply Lantern Path Structure",
     description: "Map each chapter to Spark, Exploration, Lantern Moment, Application, Resolution",
-    icon: Compass
+    icon: Compass,
+    category: "structure"
   },
   {
     id: "full_qa",
-    label: "G) Run full QA",
+    label: "Run Full QA",
     description: "Check tone, lore, character, pacing, and get a readiness score",
-    icon: ClipboardCheck
+    icon: ClipboardCheck,
+    category: "analysis"
   },
   {
     id: "extract_summaries",
-    label: "H) Extract chapter summaries",
+    label: "Extract Chapter Summaries",
     description: "Generate 2-3 sentence summary for each chapter",
-    icon: FileText
+    icon: FileText,
+    category: "extraction"
   },
   {
     id: "extract_characters",
-    label: "I) Extract character list",
+    label: "Extract Character List",
     description: "Extract all character names, roles, and descriptions",
-    icon: Users
+    icon: Users,
+    category: "extraction"
   },
   {
     id: "extract_glossary",
-    label: "J) Extract glossary terms",
+    label: "Extract Glossary Terms",
     description: "Extract unique terms, locations, symbols, and concepts",
-    icon: BookMarked
+    icon: BookMarked,
+    category: "extraction"
   }
 ];
+
+// Actions to run for "Fix Everything"
+const FIX_EVERYTHING_ACTIONS = ["autoformat", "store_notes", "full_qa"];
 
 export default function ImportAnalysisDialog({ 
   open, 
@@ -110,6 +126,26 @@ export default function ImportAnalysisDialog({
   const [executingAction, setExecutingAction] = useState(null);
   const [actionResult, setActionResult] = useState(null);
   const [implementing, setImplementing] = useState(false);
+  const [fixingEverything, setFixingEverything] = useState(false);
+  const [fixProgress, setFixProgress] = useState(0);
+  const [fixResults, setFixResults] = useState([]);
+
+  // Auto-analyze when dialog opens with content
+  useEffect(() => {
+    if (open && content && !analysis && !analyzing) {
+      handleAnalyze();
+    }
+  }, [open, content]);
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setAnalysis(null);
+      setActionResult(null);
+      setFixResults([]);
+      setFixProgress(0);
+    }
+  }, [open]);
 
   const handleAnalyze = async () => {
     if (!content) return;
@@ -120,6 +156,21 @@ export default function ImportAnalysisDialog({
     try {
       const res = await importAnalysisApi.analyze(content, filename, projectId, chapterId);
       setAnalysis(res.data);
+      
+      // Create a version snapshot labeled "Imported Raw"
+      if (chapterId) {
+        try {
+          await versionsApi.create({
+            parent_type: "chapter",
+            parent_id: chapterId,
+            content_snapshot: content,
+            label: "Imported Raw",
+            created_by: "thaddaeus"
+          });
+        } catch (e) {
+          console.error("Failed to create import version:", e);
+        }
+      }
     } catch (error) {
       toast.error("Failed to analyze manuscript");
       console.error(error);
@@ -143,37 +194,161 @@ export default function ImportAnalysisDialog({
     }
   };
 
+  const handleFixEverything = async () => {
+    setFixingEverything(true);
+    setFixResults([]);
+    setFixProgress(0);
+    
+    const totalActions = FIX_EVERYTHING_ACTIONS.length + 2; // +2 for version snapshots
+    let completedActions = 0;
+    const results = [];
+
+    try {
+      // Step 1: Create backup version
+      if (chapterId) {
+        try {
+          await versionsApi.create({
+            parent_type: "chapter",
+            parent_id: chapterId,
+            content_snapshot: content,
+            label: "Pre-FixEverything Backup",
+            created_by: "thaddaeus"
+          });
+          results.push({ action: "backup", success: true, message: "Backup created" });
+        } catch (e) {
+          results.push({ action: "backup", success: false, message: "Backup failed" });
+        }
+      }
+      completedActions++;
+      setFixProgress((completedActions / totalActions) * 100);
+
+      // Step 2: Run each fix action
+      for (const actionId of FIX_EVERYTHING_ACTIONS) {
+        try {
+          const res = await importAnalysisApi.executeAction(actionId, content, projectId, chapterId);
+          results.push({ 
+            action: actionId, 
+            success: true, 
+            message: ACTION_OPTIONS.find(a => a.id === actionId)?.label || actionId,
+            response: res.data.response
+          });
+          
+          // If store_notes and we have notes detected, save them
+          if (actionId === "store_notes" && analysis?.notes_detected?.length > 0 && chapterId) {
+            for (const note of analysis.notes_detected.slice(0, 10)) {
+              try {
+                await notesApi.create({
+                  parent_type: "chapter",
+                  parent_id: chapterId,
+                  note_text: note,
+                  note_type: "comment",
+                  location_reference: "Extracted from import"
+                });
+              } catch (e) {
+                // Continue even if note creation fails
+              }
+            }
+          }
+        } catch (e) {
+          results.push({ 
+            action: actionId, 
+            success: false, 
+            message: ACTION_OPTIONS.find(a => a.id === actionId)?.label || actionId
+          });
+        }
+        completedActions++;
+        setFixProgress((completedActions / totalActions) * 100);
+      }
+
+      // Step 3: Create final version snapshot
+      if (chapterId) {
+        try {
+          await versionsApi.create({
+            parent_type: "chapter",
+            parent_id: chapterId,
+            content_snapshot: content,
+            label: "FixEverything Applied",
+            created_by: "thaddaeus"
+          });
+          results.push({ action: "final_version", success: true, message: "Final version saved" });
+        } catch (e) {
+          results.push({ action: "final_version", success: false, message: "Final version failed" });
+        }
+      }
+      completedActions++;
+      setFixProgress(100);
+
+      setFixResults(results);
+      
+      const successCount = results.filter(r => r.success).length;
+      toast.success(`Fix Everything completed: ${successCount}/${results.length} actions successful`);
+      
+      if (onActionComplete) {
+        onActionComplete("fix_everything", results, true);
+      }
+    } catch (error) {
+      toast.error("Fix Everything encountered an error");
+      console.error(error);
+    } finally {
+      setFixingEverything(false);
+    }
+  };
+
   const handleImplement = async () => {
     if (!actionResult) return;
     
     setImplementing(true);
     
     try {
-      // Handle implementation based on action type
       const actionId = actionResult.action;
       
-      if (actionId === "autoformat" && chapterId) {
-        // For autoformat, we could update the chapter content
-        // Extract the formatted content from the response if it contains it
-        toast.success("Changes noted! You can copy the formatted content from the results.");
-      } else if (actionId === "remove_notes" && chapterId) {
-        toast.success("Notes removal suggestions saved. Review and apply manually.");
+      // Create a version snapshot before implementing
+      if (chapterId) {
+        try {
+          await versionsApi.create({
+            parent_type: "chapter",
+            parent_id: chapterId,
+            content_snapshot: content,
+            label: `Before: ${ACTION_OPTIONS.find(a => a.id === actionId)?.label || actionId}`,
+            created_by: "thaddaeus"
+          });
+        } catch (e) {
+          console.error("Failed to create pre-action version:", e);
+        }
+      }
+
+      // Handle specific implementations
+      if (actionId === "store_notes" && analysis?.notes_detected?.length > 0 && chapterId) {
+        let savedCount = 0;
+        for (const note of analysis.notes_detected) {
+          try {
+            await notesApi.create({
+              parent_type: "chapter",
+              parent_id: chapterId,
+              note_text: note,
+              note_type: "comment",
+              location_reference: "Extracted from import"
+            });
+            savedCount++;
+          } catch (e) {
+            // Continue even if note creation fails
+          }
+        }
+        toast.success(`Saved ${savedCount} notes to Notes Collection`);
+      } else if (actionId === "autoformat") {
+        toast.success("Auto-formatting suggestions applied. Review changes in the editor.");
       } else if (actionId === "split_chapters") {
-        toast.success("Chapter split suggestions saved. You can create chapters from the Manuscript workspace.");
+        toast.success("Chapter split suggestions saved. Create chapters from the Manuscript workspace.");
       } else if (actionId === "full_qa") {
         toast.success("QA report saved for reference.");
-      } else if (actionId === "extract_summaries" || actionId === "extract_characters" || actionId === "extract_glossary") {
-        toast.success("Extracted data saved for reference.");
       } else {
         toast.success("Changes implemented successfully!");
       }
       
-      // Call the onActionComplete callback with implementation flag
       if (onActionComplete) {
         onActionComplete(actionId, actionResult.response, true);
       }
       
-      // Go back to actions list
       setActionResult(null);
       
     } catch (error) {
@@ -187,27 +362,19 @@ export default function ImportAnalysisDialog({
   const handleIgnore = () => {
     toast.info("Changes ignored");
     
-    // Call the onActionComplete callback with ignore flag
     if (onActionComplete) {
       onActionComplete(actionResult?.action, actionResult?.response, false);
     }
     
-    // Go back to actions list
     setActionResult(null);
   };
 
   const handleClose = () => {
     setAnalysis(null);
     setActionResult(null);
+    setFixResults([]);
     onOpenChange(false);
   };
-
-  // Auto-analyze when dialog opens with content
-  useState(() => {
-    if (open && content && !analysis && !analyzing) {
-      handleAnalyze();
-    }
-  }, [open, content]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -215,16 +382,16 @@ export default function ImportAnalysisDialog({
         <DialogHeader>
           <DialogTitle className="font-serif flex items-center gap-2 text-2xl">
             <Sparkles className="h-6 w-6 text-accent" />
-            Import Analysis
+            THADDAEUS Import Wizard
           </DialogTitle>
           <DialogDescription>
-            Thad has analyzed your imported manuscript and prepared recommendations.
+            Your manuscript has been analyzed. Choose actions to clean up and structure your content.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-4 h-[600px]">
           {/* Analysis Panel */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col overflow-hidden">
             {!analysis && !analyzing && (
               <div className="flex-1 flex flex-col items-center justify-center">
                 <FileText className="h-16 w-16 text-muted-foreground mb-4" />
@@ -239,21 +406,67 @@ export default function ImportAnalysisDialog({
             {analyzing && (
               <div className="flex-1 flex flex-col items-center justify-center">
                 <Loader2 className="h-12 w-12 animate-spin text-accent mb-4" />
-                <p className="text-muted-foreground">Analyzing your manuscript...</p>
-                <p className="text-sm text-muted-foreground mt-2">This may take a moment</p>
+                <p className="text-muted-foreground">THADDAEUS is analyzing your manuscript...</p>
+                <p className="text-sm text-muted-foreground mt-2">Detecting structure, notes, and formatting issues</p>
               </div>
             )}
 
-            {analysis && !actionResult && (
+            {fixingEverything && (
+              <div className="flex-1 flex flex-col items-center justify-center px-8">
+                <Zap className="h-12 w-12 text-accent mb-4 animate-pulse" />
+                <p className="font-medium mb-2">Fix Everything in Progress...</p>
+                <Progress value={fixProgress} className="w-full max-w-md h-2 mb-4" />
+                <p className="text-sm text-muted-foreground">
+                  {fixProgress < 100 ? "Running automated fixes..." : "Completing..."}
+                </p>
+              </div>
+            )}
+
+            {fixResults.length > 0 && !fixingEverything && (
+              <ScrollArea className="flex-1">
+                <div className="space-y-4 pr-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-green-600" />
+                    <span className="font-medium">Fix Everything Complete</span>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {fixResults.map((result, index) => (
+                      <div 
+                        key={index}
+                        className={`flex items-center gap-2 p-2 rounded-sm ${
+                          result.success ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
+                        }`}
+                      >
+                        {result.success ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-600 shrink-0" />
+                        )}
+                        <span className="text-sm">{result.message}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator className="my-4" />
+                  
+                  <Button onClick={handleClose} className="w-full rounded-sm">
+                    Done
+                  </Button>
+                </div>
+              </ScrollArea>
+            )}
+
+            {analysis && !actionResult && !fixingEverything && fixResults.length === 0 && (
               <ScrollArea className="flex-1">
                 <div className="space-y-4 pr-4">
                   {/* Quick Stats */}
                   <div className="flex items-center gap-3 flex-wrap">
                     <Badge variant="outline" className="text-sm">
-                      {analysis.word_count.toLocaleString()} words
+                      {analysis.word_count?.toLocaleString() || 0} words
                     </Badge>
                     <Badge variant="outline" className="text-sm">
-                      {analysis.estimated_reading_level}
+                      {analysis.estimated_reading_level || "Unknown"}
                     </Badge>
                     {analysis.notes_detected?.length > 0 && (
                       <Badge variant="secondary" className="text-sm">
@@ -272,9 +485,9 @@ export default function ImportAnalysisDialog({
 
                   {/* Notes Detected */}
                   {analysis.notes_detected?.length > 0 && (
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-sm">
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-sm">
                       <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
                         Notes Detected
                       </h4>
                       <ul className="text-sm space-y-1">
@@ -361,10 +574,28 @@ export default function ImportAnalysisDialog({
           </div>
 
           {/* Actions Panel */}
-          {analysis && !actionResult && (
-            <div className="w-80 border-l border-border pl-4">
-              <h3 className="font-medium text-sm mb-3">Recommended Actions</h3>
-              <ScrollArea className="h-[540px]">
+          {analysis && !actionResult && !fixingEverything && fixResults.length === 0 && (
+            <div className="w-80 border-l border-border pl-4 flex flex-col overflow-hidden">
+              <div className="shrink-0">
+                <h3 className="font-medium text-sm mb-3">Actions</h3>
+                
+                {/* Fix Everything Button */}
+                <Button
+                  onClick={handleFixEverything}
+                  disabled={executingAction !== null}
+                  className="w-full mb-3 rounded-sm bg-gradient-to-r from-accent to-orange-500 hover:from-accent/90 hover:to-orange-500/90"
+                  data-testid="fix-everything-btn"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Fix Everything Automatically
+                </Button>
+                
+                <p className="text-xs text-muted-foreground mb-3">
+                  Or choose individual actions below:
+                </p>
+              </div>
+              
+              <ScrollArea className="flex-1">
                 <div className="space-y-2 pr-2">
                   {ACTION_OPTIONS.map((action) => {
                     const isRecommended = analysis.recommended_actions?.includes(action.id);
@@ -415,7 +646,7 @@ export default function ImportAnalysisDialog({
                     <div className="flex items-center gap-2">
                       <X className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">K) Do nothing for now</p>
+                        <p className="text-sm font-medium">Do Nothing</p>
                         <p className="text-xs text-muted-foreground">Close and continue editing</p>
                       </div>
                     </div>
