@@ -71,6 +71,11 @@ export default function Dashboard() {
   const [importProjectTitle, setImportProjectTitle] = useState("");
   const [importChapterTitle, setImportChapterTitle] = useState("");
   
+  // Rename state
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [projectToRename, setProjectToRename] = useState(null);
+  const [newTitle, setNewTitle] = useState("");
+  
   // Import Analysis state
   const [importAnalysisOpen, setImportAnalysisOpen] = useState(false);
   const [importedContent, setImportedContent] = useState("");
