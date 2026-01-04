@@ -269,9 +269,11 @@ export default function ArtStudio() {
                         No presets - create one in Settings
                       </SelectItem>
                     )}
-                    <SelectItem value="Bigfoot Adventure">Bigfoot Adventure</SelectItem>
-                    <SelectItem value="Evergreen Mythic">Evergreen Mythic</SelectItem>
+                    <SelectItem value="Epic Fantasy">Epic Fantasy</SelectItem>
+                    <SelectItem value="Dark & Moody">Dark & Moody</SelectItem>
                     <SelectItem value="Whimsical Children">Whimsical Children</SelectItem>
+                    <SelectItem value="Sci-Fi Futuristic">Sci-Fi Futuristic</SelectItem>
+                    <SelectItem value="Romance Soft">Romance Soft</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
