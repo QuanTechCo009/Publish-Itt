@@ -2001,6 +2001,9 @@ def detect_chapters_regex(content: str) -> List[dict]:
     lines = content.split('\n')
     current_pos = 0
     
+    # Word-to-number mapping for written numbers
+    word_numbers = r'One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty|Twenty[\s-]?One|Twenty[\s-]?Two|Twenty[\s-]?Three|Twenty[\s-]?Four|Twenty[\s-]?Five|Thirty|Forty|Fifty'
+    
     for i, line in enumerate(lines):
         line_stripped = line.strip()
         if not line_stripped:
@@ -2009,9 +2012,10 @@ def detect_chapters_regex(content: str) -> List[dict]:
         
         title = None
         matched = False
+        chapter_num_str = None
         
-        # Pattern 1: "Chapter X" or "CHAPTER X" with optional title
-        match = re.match(r'^(Chapter|CHAPTER)\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve)[\s:\-–—]*(.*)$', line_stripped, re.IGNORECASE)
+        # Pattern 1: "Chapter X" or "CHAPTER X" with optional title (supports numbers 1-999, Roman numerals, and written numbers)
+        match = re.match(rf'^(Chapter|CHAPTER)\s+(\d{{1,3}}|[IVXLCDM]+|{word_numbers})[\s:\-–—\.]*(.*)$', line_stripped, re.IGNORECASE)
         if match:
             matched = True
             chapter_num_str = match.group(2)
@@ -2019,11 +2023,27 @@ def detect_chapters_regex(content: str) -> List[dict]:
             
         # Pattern 2: "Part X" with optional title
         if not matched:
-            match = re.match(r'^(Part)\s+(\d+|[IVXLCDM]+|One|Two|Three)[\s:\-–—]*(.*)$', line_stripped, re.IGNORECASE)
+            match = re.match(rf'^(Part)\s+(\d{{1,3}}|[IVXLCDM]+|{word_numbers})[\s:\-–—\.]*(.*)$', line_stripped, re.IGNORECASE)
             if match:
                 matched = True
                 chapter_num_str = match.group(2)
                 title = match.group(3).strip() if match.group(3) else None
+        
+        # Pattern 3: "Prologue", "Epilogue", "Introduction", "Preface" as chapter markers
+        if not matched:
+            match = re.match(r'^(Prologue|Epilogue|Introduction|Preface|Foreword|Afterword)[\s:\-–—\.]*(.*)$', line_stripped, re.IGNORECASE)
+            if match:
+                matched = True
+                chapter_num_str = match.group(1)
+                title = match.group(2).strip() if match.group(2) else match.group(1)
+        
+        # Pattern 4: Standalone number followed by period and title "1. Title"
+        if not matched:
+            match = re.match(r'^(\d{1,3})\.\s+([A-Z].{2,80})$', line_stripped)
+            if match:
+                matched = True
+                chapter_num_str = match.group(1)
+                title = match.group(2).strip()
         
         if matched:
             # Avoid duplicates (same position)
