@@ -1852,7 +1852,31 @@ Be encouraging and helpful, not critical."""
     recommended_actions = ["full_qa"]
     if len(notes_detected) > 0:
         recommended_actions.extend(["remove_notes", "store_notes"])
-    if "chapter" in request.content.lower() or "Chapter" in request.content:
+    
+    # Detect chapter markers to help user understand what will be split
+    chapter_patterns = [
+        r'(?:^|\n)(CHAPTER\s+\d+)',
+        r'(?:^|\n)(Chapter\s+\d+)',
+        r'(?:^|\n)(CHAPTER\s+[IVXLCDM]+)',
+        r'(?:^|\n)(Chapter\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve))',
+        r'(?:^|\n)(Prologue)',
+        r'(?:^|\n)(Epilogue)',
+        r'(?:^|\n)(Part\s+\d+)',
+    ]
+    detected_chapters = []
+    for pattern in chapter_patterns:
+        matches = re.findall(pattern, request.content, re.IGNORECASE)
+        detected_chapters.extend(matches)
+    
+    # Remove duplicates and sort
+    detected_chapters = list(set(detected_chapters))
+    chapters_count = len(detected_chapters)
+    
+    logger.info(f"Import analysis: Detected {chapters_count} chapter markers: {detected_chapters[:10]}")
+    
+    if chapters_count > 1:
+        recommended_actions.append("split_chapters")
+    elif "chapter" in request.content.lower() or "Chapter" in request.content:
         recommended_actions.append("split_chapters")
     recommended_actions.extend(["autoformat", "extract_summaries"])
     
@@ -1865,7 +1889,9 @@ Be encouraging and helpful, not critical."""
         "lore_issues": lore_issues,
         "word_count": word_count,
         "estimated_reading_level": reading_level,
-        "recommended_actions": list(set(recommended_actions))
+        "recommended_actions": list(set(recommended_actions)),
+        "detected_chapters_count": chapters_count,
+        "detected_chapters_preview": detected_chapters[:15]  # Show first 15 chapter markers
     }
 
 @api_router.post("/ai/import/action", response_model=AIResponse)
