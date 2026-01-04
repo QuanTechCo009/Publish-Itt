@@ -221,7 +221,16 @@ export default function Dashboard() {
       const res = await projectApi.create(newProject);
       setProjects([...projects, res.data]);
       setDialogOpen(false);
-      setNewProject({ title: "", series_name: "", universe: "", type: "novel", summary: "" });
+      setNewProject({ 
+        title: "", 
+        series_name: "", 
+        universe: "", 
+        type: "novel", 
+        genre: "",
+        age_group: "",
+        writing_style: "",
+        summary: "" 
+      });
       toast.success("Project created successfully!");
     } catch (error) {
       toast.error("Failed to create project");
@@ -253,8 +262,9 @@ export default function Dashboard() {
   return (
     <div className="p-8 lg:p-12 max-w-7xl mx-auto animate-fade-in" data-testid="dashboard">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-10">
         <div>
+          <p className="text-sm font-medium text-accent mb-1">PUBLISH ITT</p>
           <h1 className="text-4xl md:text-5xl font-serif font-medium tracking-tight">
             Your Library
           </h1>
@@ -264,7 +274,8 @@ export default function Dashboard() {
         </div>
         <Button
           onClick={() => setDialogOpen(true)}
-          className="rounded-sm"
+          className="rounded-sm shadow-sm"
+          size="lg"
           data-testid="new-project-btn"
         >
           <Plus className="h-4 w-4 mr-2" />
