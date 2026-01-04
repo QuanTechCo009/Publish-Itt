@@ -140,14 +140,28 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 ### Phase 11: Magic Import Wizard (THADDAEUS) (Jan 4, 2026) ✅
 - [x] Auto-analysis triggers when Import Wizard dialog opens
 - [x] AI analysis displays: word count, reading level, structure issues, notes detected
-- [x] "Fix Everything Automatically" button runs autoformat, store_notes, full_qa
+- [x] "Fix Everything Automatically" button runs autoformat, store_notes, split_chapters, full_qa
 - [x] Version snapshots created: "Imported Raw", "Pre-FixEverything Backup", "FixEverything Applied"
 - [x] Progress indicator during Fix Everything workflow
 - [x] Completion screen with success/failure indicators per action
 - [x] 10 individual action types: autoformat, remove_notes, store_notes, convert_notes, split_chapters, lantern_path, full_qa, extract_summaries, extract_characters, extract_glossary
 - [x] Action result display with Implement/Ignore options
 - [x] Notes extraction saves to Notes Collection
-- [x] Full test coverage (20 backend tests passing)
+- [x] Full test coverage (13 backend tests passing)
+
+### Phase 12: Chapter Detection & Splitting Enhancement (Jan 4, 2026) ✅
+- [x] Fixed Analyzer panel "Analyze" button (was calling non-existent API)
+- [x] Enhanced DOCX text extraction to include tables
+- [x] Robust chapter detection supporting multiple formats:
+  - CHAPTER 1, CHAPTER 1: Title, CHAPTER 1 — Title
+  - Chapter One, Chapter Two (written numbers up to Twenty-Five)
+  - CHAPTER I, II, III (Roman numerals)
+  - Part 1, Part 2
+  - Prologue, Epilogue, Introduction, Foreword
+- [x] Split chapters integrated into "Fix Everything Automatically" workflow
+- [x] Chapters preview shown in Import Analysis (count + markers)
+- [x] Detailed logging for debugging import issues
+- [x] All 13 chapters correctly detected and created from user's DOCX manuscript
 
 ## API Endpoints
 
