@@ -99,6 +99,7 @@ export default function ManuscriptWorkspace() {
   // AI state
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState("");
+  const [aiResponseType, setAiResponseType] = useState(null); // 'rewrite', 'summarize', 'outline', etc.
   
   // Dialog state
   const [newChapterOpen, setNewChapterOpen] = useState(false);
