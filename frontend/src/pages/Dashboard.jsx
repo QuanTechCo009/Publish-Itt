@@ -598,32 +598,36 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-                className="rounded-sm"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={creating}
-                className="rounded-sm"
-                data-testid="create-project-submit"
-              >
-                {creating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  "Create Project"
-                )}
-              </Button>
-            </DialogFooter>
           </form>
+          </ScrollArea>
+          <DialogFooter className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              className="rounded-sm"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateProject}
+              disabled={creating || !newProject.title}
+              className="rounded-sm"
+              data-testid="create-project-submit"
+            >
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Project
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
