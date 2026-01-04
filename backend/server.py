@@ -2043,7 +2043,6 @@ def detect_chapters_regex(content: str) -> List[dict]:
                     "marker": full_match,
                     "title": title
                 })
-                })
     
     # Sort by position
     chapters.sort(key=lambda x: x["position"])
