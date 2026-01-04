@@ -1994,57 +1994,59 @@ def detect_chapters_regex(content: str) -> List[dict]:
     """Regex-based chapter detection - more reliable than AI for structure"""
     import re
     
-    # Common chapter patterns - order matters (most specific first)
-    chapter_patterns = [
-        # "Chapter 1: Title" or "Chapter 1 - Title" or "Chapter 1 Title"
-        (r'(?:^|\n\n*)(Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)[\s:\-–—]*([^\n]*))', 3),
-        # "CHAPTER 1" (all caps)  
-        (r'(?:^|\n\n*)(CHAPTER\s+(\d+|[IVXLCDM]+)[\s:\-–—]*([^\n]*))', 3),
-        # "Part 1: Title"
-        (r'(?:^|\n\n*)(Part\s+(\d+|[IVXLCDM]+|One|Two|Three)[\s:\-–—]*([^\n]*))', 3),
-    ]
-    
     chapters = []
     chapter_positions = []
     
-    # Find all chapter markers with their positions
-    for pattern, title_group in chapter_patterns:
-        for match in re.finditer(pattern, content, re.IGNORECASE | re.MULTILINE):
-            full_match = match.group(1).strip()
-            position = match.start(1)
+    # Split content into lines for line-by-line processing
+    lines = content.split('\n')
+    current_pos = 0
+    
+    for i, line in enumerate(lines):
+        line_stripped = line.strip()
+        if not line_stripped:
+            current_pos += len(line) + 1
+            continue
+        
+        title = None
+        matched = False
+        
+        # Pattern 1: "Chapter X" or "CHAPTER X" with optional title
+        match = re.match(r'^(Chapter|CHAPTER)\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve)[\s:\-–—]*(.*)$', line_stripped, re.IGNORECASE)
+        if match:
+            matched = True
+            chapter_num_str = match.group(2)
+            title = match.group(3).strip() if match.group(3) else None
             
+        # Pattern 2: "Part X" with optional title
+        if not matched:
+            match = re.match(r'^(Part)\s+(\d+|[IVXLCDM]+|One|Two|Three)[\s:\-–—]*(.*)$', line_stripped, re.IGNORECASE)
+            if match:
+                matched = True
+                chapter_num_str = match.group(2)
+                title = match.group(3).strip() if match.group(3) else None
+        
+        if matched:
             # Avoid duplicates (same position)
-            if not any(abs(pos - position) < 10 for pos in chapter_positions):
-                chapter_positions.append(position)
+            if not any(abs(pos - current_pos) < 10 for pos in chapter_positions):
+                chapter_positions.append(current_pos)
                 
-                # Extract title from the designated group
-                title = ""
-                if match.lastindex >= title_group and match.group(title_group):
-                    title = match.group(title_group).strip()
-                
-                # Clean up title - remove leading punctuation
-                title = re.sub(r'^[\s:\-–—]+', '', title).strip()
-                
-                # If title is empty or same as the chapter marker, generate a default
+                # Generate title if not found
                 if not title or len(title) < 2:
-                    # Extract chapter number for default title
-                    num_match = re.search(r'(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)', full_match, re.IGNORECASE)
-                    if num_match:
-                        title = f"Chapter {num_match.group(1)}"
-                    else:
-                        title = full_match
+                    title = f"Chapter {chapter_num_str}"
                 
-                # Truncate overly long titles (might have captured next paragraph)
+                # Truncate overly long titles
                 if len(title) > 80:
                     title = title[:80].rsplit(' ', 1)[0]
                 
                 chapters.append({
-                    "position": position,
-                    "marker": full_match,
+                    "position": current_pos,
+                    "marker": line_stripped,
                     "title": title
                 })
+        
+        current_pos += len(line) + 1
     
-    # Sort by position
+    # Sort by position (should already be sorted, but just in case)
     chapters.sort(key=lambda x: x["position"])
     
     # Assign chapter numbers and build final structure
