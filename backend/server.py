@@ -1975,11 +1975,11 @@ Manuscript:
 
 @api_router.get("/")
 async def root():
-    return {"message": "Author OS API is running"}
+    return {"message": "Publish Itt API is running"}
 
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "Author OS"}
+    return {"status": "healthy", "service": "Publish Itt"}
 
 # Include the router in the main app
 app.include_router(api_router)
