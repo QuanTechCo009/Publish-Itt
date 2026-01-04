@@ -584,9 +584,6 @@ export default function ManuscriptWorkspace() {
     // Clear the AI response
     setAiResponse("");
     setAiResponseType(null);
-    
-    // Mark as unsaved
-    setHasUnsavedChanges(true);
   };
 
   // Deny/dismiss the rewrite suggestion
