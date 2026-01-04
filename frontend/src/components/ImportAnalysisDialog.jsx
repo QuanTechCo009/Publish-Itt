@@ -227,7 +227,10 @@ export default function ImportAnalysisDialog({
         try {
           // Special handling for split_chapters - actually create the chapters
           if (actionId === "split_chapters" && projectId) {
+            console.log(`[FixEverything] Calling splitAndCreateChapters with ${content?.length || 0} characters`);
+            console.log(`[FixEverything] Content preview: ${content?.substring(0, 200)}...`);
             const splitRes = await importAnalysisApi.splitAndCreateChapters(content, projectId, null);
+            console.log(`[FixEverything] Split result:`, splitRes.data);
             if (splitRes.data?.chapters_created > 0) {
               results.push({ 
                 action: actionId, 
