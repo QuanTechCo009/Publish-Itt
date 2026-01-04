@@ -231,7 +231,22 @@ export default function ImportAnalysisDialog({
             console.log(`[FixEverything] Content preview: ${content?.substring(0, 200)}...`);
             const splitRes = await importAnalysisApi.splitAndCreateChapters(content, projectId, null);
             console.log(`[FixEverything] Split result:`, splitRes.data);
-            if (splitRes.data?.chapters_created > 0) {
+            if (splitRes.data?.chapters_created > 1) {
+              results.push({ 
+                action: actionId, 
+                success: true, 
+                message: `Created ${splitRes.data.chapters_created} chapters`,
+                response: `Chapters created: ${splitRes.data.chapters.map(c => c.title).join(", ")}`,
+                chaptersCreated: splitRes.data.chapters
+              });
+            } else if (splitRes.data?.chapters_created === 1) {
+              results.push({ 
+                action: actionId, 
+                success: true, 
+                message: "Content is a single chapter",
+                response: "No additional chapter breaks detected in this content. If you're analyzing an existing chapter, this is expected."
+              });
+            } else {
               results.push({ 
                 action: actionId, 
                 success: true, 
