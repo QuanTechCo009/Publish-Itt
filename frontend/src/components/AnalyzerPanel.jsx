@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { aiApi, notesApi, versionsApi } from "@/lib/api";
+import { aiApi, notesApi, versionsApi, importAnalysisApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { 
