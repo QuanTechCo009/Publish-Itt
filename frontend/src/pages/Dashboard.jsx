@@ -244,6 +244,35 @@ export default function Dashboard() {
     }
   };
 
+  const handleOpenRename = (e, project) => {
+    e.stopPropagation();
+    setProjectToRename(project);
+    setNewTitle(project.title);
+    setRenameDialogOpen(true);
+  };
+
+  const handleRenameProject = async () => {
+    if (!newTitle.trim()) {
+      toast.error("Please enter a title");
+      return;
+    }
+    
+    if (!projectToRename) return;
+    
+    try {
+      await projectApi.update(projectToRename.id, { title: newTitle.trim() });
+      setProjects(projects.map(p => 
+        p.id === projectToRename.id ? { ...p, title: newTitle.trim() } : p
+      ));
+      setRenameDialogOpen(false);
+      setProjectToRename(null);
+      setNewTitle("");
+      toast.success("Project renamed successfully!");
+    } catch (error) {
+      toast.error("Failed to rename project");
+    }
+  };
+
   const QuickAction = ({ icon: Icon, label, onClick }) => (
     <Button
       variant="ghost"
