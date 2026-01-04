@@ -508,9 +508,11 @@ export default function ManuscriptWorkspace() {
       return;
     }
     setAiLoading(true);
+    setAiResponseType(null);
     try {
       const res = await aiApi.rewrite(editor.getText(), "warm and engaging");
       setAiResponse(res.data.response);
+      setAiResponseType('rewrite');
     } catch (error) {
       toast.error("Failed to get AI response");
     } finally {
@@ -524,9 +526,11 @@ export default function ManuscriptWorkspace() {
       return;
     }
     setAiLoading(true);
+    setAiResponseType(null);
     try {
       const res = await aiApi.summarize(editor.getText());
       setAiResponse(res.data.response);
+      setAiResponseType('summarize');
     } catch (error) {
       toast.error("Failed to get AI response");
     } finally {
