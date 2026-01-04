@@ -199,7 +199,7 @@ export default function ImportAnalysisDialog({
     setFixResults([]);
     setFixProgress(0);
     
-    const totalActions = FIX_EVERYTHING_ACTIONS.length + 2; // +2 for version snapshots
+    const totalActions = FIX_EVERYTHING_ACTIONS.length + 3; // +3 for version snapshots and chapter splitting
     let completedActions = 0;
     const results = [];
 
@@ -214,7 +214,7 @@ export default function ImportAnalysisDialog({
             label: "Pre-FixEverything Backup",
             created_by: "thaddaeus"
           });
-          results.push({ action: "backup", success: true, message: "Backup created" });
+          results.push({ action: "backup", success: true, message: "Backup version created" });
         } catch (e) {
           results.push({ action: "backup", success: false, message: "Backup failed" });
         }
@@ -225,13 +225,34 @@ export default function ImportAnalysisDialog({
       // Step 2: Run each fix action
       for (const actionId of FIX_EVERYTHING_ACTIONS) {
         try {
-          const res = await importAnalysisApi.executeAction(actionId, content, projectId, chapterId);
-          results.push({ 
-            action: actionId, 
-            success: true, 
-            message: ACTION_OPTIONS.find(a => a.id === actionId)?.label || actionId,
-            response: res.data.response
-          });
+          // Special handling for split_chapters - actually create the chapters
+          if (actionId === "split_chapters" && projectId) {
+            const splitRes = await importAnalysisApi.splitAndCreateChapters(content, projectId, null);
+            if (splitRes.data?.chapters_created > 0) {
+              results.push({ 
+                action: actionId, 
+                success: true, 
+                message: `Created ${splitRes.data.chapters_created} chapters`,
+                response: `Chapters created: ${splitRes.data.chapters.map(c => c.title).join(", ")}`,
+                chaptersCreated: splitRes.data.chapters
+              });
+            } else {
+              results.push({ 
+                action: actionId, 
+                success: true, 
+                message: "No chapter breaks detected",
+                response: "Content appears to be a single chapter"
+              });
+            }
+          } else {
+            const res = await importAnalysisApi.executeAction(actionId, content, projectId, chapterId);
+            results.push({ 
+              action: actionId, 
+              success: true, 
+              message: ACTION_OPTIONS.find(a => a.id === actionId)?.label || actionId,
+              response: res.data.response
+            });
+          }
           
           // If store_notes and we have notes detected, save them
           if (actionId === "store_notes" && analysis?.notes_detected?.length > 0 && chapterId) {
@@ -250,6 +271,7 @@ export default function ImportAnalysisDialog({
             }
           }
         } catch (e) {
+          console.error(`Action ${actionId} failed:`, e);
           results.push({ 
             action: actionId, 
             success: false, 
@@ -281,7 +303,13 @@ export default function ImportAnalysisDialog({
       setFixResults(results);
       
       const successCount = results.filter(r => r.success).length;
-      toast.success(`Fix Everything completed: ${successCount}/${results.length} actions successful`);
+      const chaptersCreated = results.find(r => r.chaptersCreated)?.chaptersCreated?.length || 0;
+      
+      if (chaptersCreated > 0) {
+        toast.success(`Fix Everything completed! Created ${chaptersCreated} chapters`);
+      } else {
+        toast.success(`Fix Everything completed: ${successCount}/${results.length} actions successful`);
+      }
       
       if (onActionComplete) {
         onActionComplete("fix_everything", results, true);
