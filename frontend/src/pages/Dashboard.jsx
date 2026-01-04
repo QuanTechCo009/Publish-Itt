@@ -41,7 +41,8 @@ import {
   Upload,
   FileUp,
   X,
-  Sparkles
+  Sparkles,
+  Pencil
 } from "lucide-react";
 
 export default function Dashboard() {
