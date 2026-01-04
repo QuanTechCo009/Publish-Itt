@@ -2076,11 +2076,15 @@ async def split_and_create_chapters(request: SplitChaptersRequest):
         raise HTTPException(status_code=400, detail="Either project_id or manuscript_id is required")
     
     content = request.content
-    logger.info(f"Split chapters: Processing {len(content)} characters")
+    logger.info(f"Split chapters: Received {len(content)} characters")
+    logger.info(f"Split chapters: First 200 chars: {content[:200]}")
+    logger.info(f"Split chapters: Last 200 chars: {content[-200:]}")
     
     # Use regex-based detection (more reliable for structure)
     chapters_data = detect_chapters_regex(content)
     logger.info(f"Split chapters: Detected {len(chapters_data)} chapter markers")
+    for ch in chapters_data:
+        logger.info(f"  Chapter {ch['chapter_number']}: '{ch['title']}' at position {ch['start_position']}")
     
     if not chapters_data or len(chapters_data) == 0:
         # No chapters detected - try to use AI as fallback for unstructured content
