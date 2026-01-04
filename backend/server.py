@@ -1416,7 +1416,7 @@ async def generate_art_prompts(request: ArtPromptRequest):
   - Reflect the mood of the story.
 
 For each concept, provide:
-- A short label (e.g., "Bigfoot at the Forest Bank").
+- A short label (e.g., "Hero at the Crossroads").
 - A detailed visual prompt describing:
   - Setting
   - Key characters
