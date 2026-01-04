@@ -1768,8 +1768,8 @@ Perform the following analysis and provide results in a structured format:
 - Identify formatting artifacts from Word/Google Docs
 
 ## 5. LORE & UNIVERSE CHECK
-- Note any potential lore drift from the Bigfoot Financial Adventures universe
-- Note any tone drift from the brand (warm, curious, empowering)
+- Note any potential lore drift from the author's established universe
+- Note any tone drift from the author's brand voice
 - Flag any out-of-universe elements
 
 ## 6. SUMMARY
