@@ -545,14 +545,54 @@ export default function ManuscriptWorkspace() {
     }
     setAiLoading(true);
     setOutlineOpen(false);
+    setAiResponseType(null);
     try {
       const res = await aiApi.generateOutline(selectedProject.summary, outlineCount);
       setAiResponse(res.data.response);
+      setAiResponseType('outline');
     } catch (error) {
       toast.error("Failed to generate outline");
     } finally {
       setAiLoading(false);
     }
+  };
+
+  // Apply rewritten content to editor
+  const handleApplyRewrite = async () => {
+    if (!editor || !aiResponse) return;
+    
+    // Save current content as a version before applying
+    if (selectedChapter?.id) {
+      try {
+        await versionsApi.create({
+          parent_type: "chapter",
+          parent_id: selectedChapter.id,
+          content_snapshot: editor.getHTML(),
+          label: "Before Tone Rewrite",
+          created_by: "user"
+        });
+      } catch (e) {
+        console.error("Failed to save version:", e);
+      }
+    }
+    
+    // Apply the rewritten content
+    editor.commands.setContent(`<p>${aiResponse.replace(/\n/g, '</p><p>')}</p>`);
+    toast.success("Rewrite applied to chapter");
+    
+    // Clear the AI response
+    setAiResponse("");
+    setAiResponseType(null);
+    
+    // Mark as unsaved
+    setHasUnsavedChanges(true);
+  };
+
+  // Deny/dismiss the rewrite suggestion
+  const handleDenyRewrite = () => {
+    setAiResponse("");
+    setAiResponseType(null);
+    toast.info("Rewrite dismissed");
   };
 
   // Upload Functions
