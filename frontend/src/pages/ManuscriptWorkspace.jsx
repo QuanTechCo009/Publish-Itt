@@ -76,7 +76,8 @@ import {
   Clock,
   GitBranch,
   BarChart3,
-  Zap
+  Zap,
+  Check
 } from "lucide-react";
 
 // Auto-save interval in milliseconds (10 minutes)
