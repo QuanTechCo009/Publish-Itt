@@ -199,7 +199,7 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 ## Outstanding Tasks
 
 ### P1 - High Priority
-- [ ] Implement "Implement Changes" backend logic for Import Analysis actions (auto-formatting, chapter splitting, etc.)
+- [ ] Implement "Implement Changes" backend logic for full content transformation (apply autoformat changes to editor content, actually split chapters into DB records)
 - [ ] Complete data model unification (deprecate old project endpoints)
 
 ### P2 - Medium Priority
