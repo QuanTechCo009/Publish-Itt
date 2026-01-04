@@ -1245,8 +1245,61 @@ export default function ManuscriptWorkspace() {
                           <Loader2 className="h-6 w-6 animate-spin text-accent" />
                         </div>
                       ) : aiResponse ? (
-                        <div className="ai-response text-sm whitespace-pre-wrap" data-testid="ai-response">
-                          {aiResponse}
+                        <div className="space-y-3">
+                          {/* Response Type Label */}
+                          {aiResponseType === 'rewrite' && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Wand2 className="h-3 w-3" />
+                              <span>Suggested Rewrite</span>
+                            </div>
+                          )}
+                          
+                          {/* AI Response Content */}
+                          <div className="ai-response text-sm whitespace-pre-wrap p-3 bg-muted/30 rounded-sm border" data-testid="ai-response">
+                            {aiResponse}
+                          </div>
+                          
+                          {/* Apply/Deny Buttons for Rewrite */}
+                          {aiResponseType === 'rewrite' && (
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 rounded-sm bg-green-600 hover:bg-green-700"
+                                onClick={handleApplyRewrite}
+                                data-testid="apply-rewrite-btn"
+                              >
+                                <Check className="h-4 w-4 mr-2" />
+                                Apply
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 rounded-sm"
+                                onClick={handleDenyRewrite}
+                                data-testid="deny-rewrite-btn"
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Deny
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Dismiss button for non-rewrite responses */}
+                          {aiResponseType && aiResponseType !== 'rewrite' && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-full rounded-sm text-muted-foreground"
+                              onClick={() => {
+                                setAiResponse("");
+                                setAiResponseType(null);
+                              }}
+                              data-testid="dismiss-ai-btn"
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Dismiss
+                            </Button>
+                          )}
                         </div>
                       ) : (
                         <p className="text-sm text-muted-foreground text-center py-8">
