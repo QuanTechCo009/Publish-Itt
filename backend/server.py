@@ -1210,6 +1210,7 @@ async def preview_manuscript_upload(file: UploadFile = File(...)):
     
     # Read file content
     content = await file.read()
+    logger.info(f"Upload preview: Read {len(content)} bytes from {filename}")
     
     # Extract text based on file type
     try:
@@ -1224,12 +1225,19 @@ async def preview_manuscript_upload(file: UploadFile = File(...)):
         else:
             text = ""
     except Exception as e:
+        logger.error(f"Failed to parse {filename}: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
     
     if not text.strip():
         raise HTTPException(status_code=400, detail="No text content found in the file")
     
     word_count = len(text.split())
+    logger.info(f"Upload preview: Extracted {len(text)} chars, {word_count} words from {filename}")
+    
+    # Check for chapter markers
+    import re
+    chapter_markers = re.findall(r'(?:CHAPTER|Chapter|chapter)\s+\d+', text)
+    logger.info(f"Upload preview: Found {len(chapter_markers)} chapter markers: {chapter_markers[:10]}")
     
     # Return preview (first 2000 chars)
     preview = text[:2000] + ("..." if len(text) > 2000 else "")
