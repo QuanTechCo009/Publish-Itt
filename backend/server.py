@@ -1997,22 +1997,18 @@ def detect_chapters_regex(content: str) -> List[dict]:
     # Common chapter patterns - order matters (most specific first)
     chapter_patterns = [
         # "Chapter 1: Title" or "Chapter 1 - Title" or "Chapter 1 Title"
-        r'(?:^|\n\n+)(Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)[\s:\-–—]*([^\n]*))',
-        # "CHAPTER 1" (all caps)
-        r'(?:^|\n\n+)(CHAPTER\s+(\d+|[IVXLCDM]+)[\s:\-–—]*([^\n]*))',
+        (r'(?:^|\n\n*)(Chapter\s+(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)[\s:\-–—]*([^\n]*))', 3),
+        # "CHAPTER 1" (all caps)  
+        (r'(?:^|\n\n*)(CHAPTER\s+(\d+|[IVXLCDM]+)[\s:\-–—]*([^\n]*))', 3),
         # "Part 1: Title"
-        r'(?:^|\n\n+)(Part\s+(\d+|[IVXLCDM]+|One|Two|Three)[\s:\-–—]*([^\n]*))',
-        # "1. Title" at start of line
-        r'(?:^|\n\n+)((\d+)\.\s+([A-Z][^\n]{2,50}))',
-        # "I. Title" (Roman numerals)
-        r'(?:^|\n\n+)(([IVXLCDM]+)\.\s+([A-Z][^\n]{2,50}))',
+        (r'(?:^|\n\n*)(Part\s+(\d+|[IVXLCDM]+|One|Two|Three)[\s:\-–—]*([^\n]*))', 3),
     ]
     
     chapters = []
     chapter_positions = []
     
     # Find all chapter markers with their positions
-    for pattern in chapter_patterns:
+    for pattern, title_group in chapter_patterns:
         for match in re.finditer(pattern, content, re.IGNORECASE | re.MULTILINE):
             full_match = match.group(1).strip()
             position = match.start(1)
@@ -2021,23 +2017,32 @@ def detect_chapters_regex(content: str) -> List[dict]:
             if not any(abs(pos - position) < 10 for pos in chapter_positions):
                 chapter_positions.append(position)
                 
-                # Extract title
-                if match.lastindex >= 3 and match.group(3):
-                    title = match.group(3).strip()
-                    if not title or len(title) < 2:
-                        title = full_match
-                else:
-                    title = full_match
+                # Extract title from the designated group
+                title = ""
+                if match.lastindex >= title_group and match.group(title_group):
+                    title = match.group(title_group).strip()
                 
-                # Clean up title
+                # Clean up title - remove leading punctuation
                 title = re.sub(r'^[\s:\-–—]+', '', title).strip()
-                if not title:
-                    title = full_match
+                
+                # If title is empty or same as the chapter marker, generate a default
+                if not title or len(title) < 2:
+                    # Extract chapter number for default title
+                    num_match = re.search(r'(\d+|[IVXLCDM]+|One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten)', full_match, re.IGNORECASE)
+                    if num_match:
+                        title = f"Chapter {num_match.group(1)}"
+                    else:
+                        title = full_match
+                
+                # Truncate overly long titles (might have captured next paragraph)
+                if len(title) > 80:
+                    title = title[:80].rsplit(' ', 1)[0]
                 
                 chapters.append({
                     "position": position,
                     "marker": full_match,
                     "title": title
+                })
                 })
     
     # Sort by position
