@@ -355,15 +355,6 @@ export default function Dashboard() {
                       Supports .txt, .docx, .pdf, .md
                     </p>
                   </div>
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".txt,.docx,.pdf,.md"
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                    data-testid="dashboard-file-input"
-                  />
                 </>
               )}
             </CardContent>
