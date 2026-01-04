@@ -126,6 +126,12 @@ export const importAnalysisApi = {
       content, 
       project_id: projectId, 
       chapter_id: chapterId 
+    }),
+  splitAndCreateChapters: (content, projectId, manuscriptId) =>
+    api.post('/ai/import/split-chapters', {
+      content,
+      project_id: projectId,
+      manuscript_id: manuscriptId
     })
 }
 
