@@ -684,13 +684,13 @@ export default function ManuscriptWorkspace() {
           sidebarCollapsed ? "w-12" : "w-72"
         )}
       >
-        <div className="flex items-center justify-between p-3 border-b border-border shrink-0">
+        <div className="flex items-center justify-between p-3 border-b border-border shrink-0 gap-2">
           {!sidebarCollapsed && (
             <Select
               value={selectedProject?.id}
               onValueChange={handleProjectChange}
             >
-              <SelectTrigger className="flex-1 mr-2 rounded-sm text-sm" data-testid="project-select">
+              <SelectTrigger className="flex-1 min-w-0 rounded-sm text-sm" data-testid="project-select">
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
@@ -704,7 +704,7 @@ export default function ManuscriptWorkspace() {
             variant="ghost"
             size="icon"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="shrink-0"
+            className="shrink-0 h-8 w-8"
             data-testid="toggle-sidebar-btn"
           >
             {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
