@@ -848,6 +848,58 @@ export default function Dashboard() {
         projectId={newProjectId}
         onActionComplete={handleImportActionComplete}
       />
+
+      {/* Rename Project Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="sm:max-w-md" data-testid="rename-project-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl flex items-center gap-2">
+              <Pencil className="h-4 w-4 text-accent" />
+              Rename Project
+            </DialogTitle>
+            <DialogDescription>
+              Enter a new title for your project
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="newTitle">New Title</Label>
+              <Input
+                id="newTitle"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="Enter new title"
+                className="rounded-sm"
+                data-testid="rename-project-input"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleRenameProject();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setRenameDialogOpen(false)}
+              className="rounded-sm"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRenameProject}
+              disabled={!newTitle.trim()}
+              className="rounded-sm"
+              data-testid="confirm-rename-btn"
+            >
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
