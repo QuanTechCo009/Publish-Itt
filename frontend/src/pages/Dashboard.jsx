@@ -456,7 +456,7 @@ export default function Dashboard() {
                 <Label htmlFor="series">Series Name</Label>
                 <Input
                   id="series"
-                  placeholder="e.g., Bigfoot Financial Adventures"
+                  placeholder="e.g., The Dragon Chronicles"
                   value={newProject.series_name}
                   onChange={(e) => setNewProject({ ...newProject, series_name: e.target.value })}
                   className="rounded-sm"

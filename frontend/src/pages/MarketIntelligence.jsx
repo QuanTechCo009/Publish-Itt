@@ -35,7 +35,7 @@ export default function MarketIntelligence() {
   const [copied, setCopied] = useState(false);
   
   // Form states
-  const [universe, setUniverse] = useState("Bigfoot Financial Adventures");
+  const [universe, setUniverse] = useState("My Story Universe");
   const [ideaCount, setIdeaCount] = useState(10);
   const [genre, setGenre] = useState("children's financial literacy");
   const [ageGroup, setAgeGroup] = useState("");
@@ -222,7 +222,7 @@ export default function MarketIntelligence() {
                   <Input
                     value={universe}
                     onChange={(e) => setUniverse(e.target.value)}
-                    placeholder="e.g., Bigfoot Financial Adventures"
+                    placeholder="e.g., The Dragon Chronicles"
                     className="rounded-sm"
                     data-testid="universe-input"
                   />

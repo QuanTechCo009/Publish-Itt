@@ -48,7 +48,7 @@ export default function Layout() {
         <div className="flex items-center h-16 px-4 border-b border-border">
           <Feather className="h-6 w-6 text-accent shrink-0" />
           {!collapsed && (
-            <span className="ml-3 font-serif text-xl font-medium">Author OS</span>
+            <span className="ml-3 font-serif text-xl font-medium tracking-tight">Publish Itt</span>
           )}
         </div>
 

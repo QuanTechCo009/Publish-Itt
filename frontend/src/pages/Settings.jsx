@@ -323,7 +323,7 @@ export default function Settings() {
                 <Label htmlFor="name">Name *</Label>
                 <Input
                   id="name"
-                  placeholder="e.g., Bigfoot Adventure"
+                  placeholder="e.g., Epic Fantasy"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="rounded-sm"
