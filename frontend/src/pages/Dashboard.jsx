@@ -442,72 +442,159 @@ export default function Dashboard() {
 
       {/* New Project Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md" data-testid="new-project-dialog">
+        <DialogContent className="sm:max-w-lg max-h-[90vh]" data-testid="new-project-dialog">
           <DialogHeader>
-            <DialogTitle className="font-serif text-2xl">Start New Book</DialogTitle>
+            <DialogTitle className="font-serif text-2xl flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent" />
+              Start New Book
+            </DialogTitle>
+            <DialogDescription>
+              Set up your new writing project
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreateProject}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Enter book title"
-                  value={newProject.title}
-                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                  className="rounded-sm"
-                  data-testid="new-project-title"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="series">Series Name</Label>
-                <Input
-                  id="series"
-                  placeholder="e.g., The Dragon Chronicles"
-                  value={newProject.series_name}
-                  onChange={(e) => setNewProject({ ...newProject, series_name: e.target.value })}
-                  className="rounded-sm"
-                  data-testid="new-project-series"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="universe">Universe</Label>
-                <Input
-                  id="universe"
-                  placeholder="e.g., Evergreen Forest"
-                  value={newProject.universe}
-                  onChange={(e) => setNewProject({ ...newProject, universe: e.target.value })}
-                  className="rounded-sm"
-                  data-testid="new-project-universe"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="type">Type</Label>
-                <Select
-                  value={newProject.type}
-                  onValueChange={(value) => setNewProject({ ...newProject, type: value })}
-                >
-                  <SelectTrigger className="rounded-sm" data-testid="new-project-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="novel">Novel</SelectItem>
-                    <SelectItem value="children">Children's Book</SelectItem>
-                    <SelectItem value="educational">Educational</SelectItem>
-                    <SelectItem value="short-story">Short Story</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="summary">Summary</Label>
-                <Textarea
-                  id="summary"
-                  placeholder="Brief description of your book..."
-                  value={newProject.summary}
-                  onChange={(e) => setNewProject({ ...newProject, summary: e.target.value })}
-                  className="rounded-sm resize-none"
-                  rows={3}
-                  data-testid="new-project-summary"
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <form onSubmit={handleCreateProject}>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter book title"
+                    value={newProject.title}
+                    onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                    className="rounded-sm"
+                    data-testid="new-project-title"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="series">Series Name</Label>
+                    <Input
+                      id="series"
+                      placeholder="e.g., The Dragon Chronicles"
+                      value={newProject.series_name}
+                      onChange={(e) => setNewProject({ ...newProject, series_name: e.target.value })}
+                      className="rounded-sm"
+                      data-testid="new-project-series"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="universe">Universe</Label>
+                    <Input
+                      id="universe"
+                      placeholder="e.g., Evergreen Forest"
+                      value={newProject.universe}
+                      onChange={(e) => setNewProject({ ...newProject, universe: e.target.value })}
+                      className="rounded-sm"
+                      data-testid="new-project-universe"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Type</Label>
+                    <Select
+                      value={newProject.type}
+                      onValueChange={(value) => setNewProject({ ...newProject, type: value })}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="new-project-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="novel">Novel</SelectItem>
+                        <SelectItem value="novella">Novella</SelectItem>
+                        <SelectItem value="short-story">Short Story</SelectItem>
+                        <SelectItem value="anthology">Anthology</SelectItem>
+                        <SelectItem value="childrens">Children's Book</SelectItem>
+                        <SelectItem value="picture-book">Picture Book</SelectItem>
+                        <SelectItem value="non-fiction">Non-Fiction</SelectItem>
+                        <SelectItem value="memoir">Memoir</SelectItem>
+                        <SelectItem value="poetry">Poetry Collection</SelectItem>
+                        <SelectItem value="screenplay">Screenplay</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="age_group">Target Age Group</Label>
+                    <Select
+                      value={newProject.age_group}
+                      onValueChange={(value) => setNewProject({ ...newProject, age_group: value })}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="new-project-age-group">
+                        <SelectValue placeholder="Select age group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AGE_GROUPS.map((age) => (
+                          <SelectItem key={age.value} value={age.value}>
+                            {age.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="genre">Genre</Label>
+                  <Select
+                    value={newProject.genre}
+                    onValueChange={(value) => setNewProject({ ...newProject, genre: value })}
+                  >
+                    <SelectTrigger className="rounded-sm" data-testid="new-project-genre">
+                      <SelectValue placeholder="Select genre" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Object.entries(getGenresByCategory()).map(([category, genres]) => (
+                        <SelectGroup key={category}>
+                          <SelectLabel className="text-xs font-semibold text-muted-foreground">
+                            {category}
+                          </SelectLabel>
+                          {genres.map((genre) => (
+                            <SelectItem key={genre.value} value={genre.value}>
+                              {genre.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="writing_style">Writing Style</Label>
+                  <Select
+                    value={newProject.writing_style}
+                    onValueChange={(value) => setNewProject({ ...newProject, writing_style: value })}
+                  >
+                    <SelectTrigger className="rounded-sm" data-testid="new-project-style">
+                      <SelectValue placeholder="Select writing style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WRITING_STYLES.map((style) => (
+                        <SelectItem key={style.value} value={style.value}>
+                          <div className="flex flex-col">
+                            <span>{style.label}</span>
+                            <span className="text-xs text-muted-foreground">{style.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="summary">Summary</Label>
+                  <Textarea
+                    id="summary"
+                    placeholder="Brief description of your book..."
+                    value={newProject.summary}
+                    onChange={(e) => setNewProject({ ...newProject, summary: e.target.value })}
+                    className="rounded-sm resize-none"
+                    rows={3}
+                    data-testid="new-project-summary"
                 />
               </div>
             </div>
