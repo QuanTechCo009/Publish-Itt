@@ -163,6 +163,14 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Detailed logging for debugging import issues
 - [x] All 13 chapters correctly detected and created from user's DOCX manuscript
 
+### Phase 13: Rewrite for Tone Apply/Deny (Jan 4, 2026) ✅
+- [x] Added Apply/Deny buttons for "Rewrite for Tone" AI suggestions
+- [x] Apply button: Creates version backup ("Before Tone Rewrite"), replaces editor content, shows success toast
+- [x] Deny button: Dismisses suggestion, clears AI panel, shows info toast
+- [x] Response type tracking (rewrite, summarize, outline) for conditional UI
+- [x] Styled suggestion box with label "Suggested Rewrite"
+- [x] Dismiss button for non-rewrite AI responses
+
 ## API Endpoints
 
 ### Projects
