@@ -218,11 +218,11 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - ESLint warnings for useEffect dependencies (code quality)
 
 ## Test Coverage
-- Backend: 30/30 tests passing (100%)
+- Backend: 50/50 tests passing (100%) - includes 20 new Import Wizard tests
 - Frontend: All core features tested and working
 
 ## 3rd Party Integrations
 - **OpenAI GPT-5.2** - Text generation via Emergent LLM Key
 
 ---
-*Last Updated: December 31, 2025*
+*Last Updated: January 4, 2026*
