@@ -1854,19 +1854,20 @@ Be encouraging and helpful, not critical."""
         recommended_actions.extend(["remove_notes", "store_notes"])
     
     # Detect chapter markers to help user understand what will be split
+    # Use more flexible patterns that work with various line ending styles
     chapter_patterns = [
-        r'(?:^|\n)(CHAPTER\s+\d+)',
-        r'(?:^|\n)(Chapter\s+\d+)',
-        r'(?:^|\n)(CHAPTER\s+[IVXLCDM]+)',
-        r'(?:^|\n)(Chapter\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve))',
-        r'(?:^|\n)(Prologue)',
-        r'(?:^|\n)(Epilogue)',
-        r'(?:^|\n)(Part\s+\d+)',
+        r'(?:^|\n+)\s*(CHAPTER\s+\d+)',
+        r'(?:^|\n+)\s*(Chapter\s+\d+)',
+        r'(?:^|\n+)\s*(CHAPTER\s+[IVXLCDM]+)',
+        r'(?:^|\n+)\s*(Chapter\s+(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve))',
+        r'(?:^|\n+)\s*(Prologue)',
+        r'(?:^|\n+)\s*(Epilogue)',
+        r'(?:^|\n+)\s*(Part\s+\d+)',
     ]
     detected_chapters = []
     for pattern in chapter_patterns:
-        matches = re.findall(pattern, request.content, re.IGNORECASE)
-        detected_chapters.extend(matches)
+        matches = re.findall(pattern, request.content, re.IGNORECASE | re.MULTILINE)
+        detected_chapters.extend([m.strip() for m in matches])
     
     # Remove duplicates and sort
     detected_chapters = list(set(detected_chapters))
