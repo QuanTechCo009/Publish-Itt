@@ -1058,10 +1058,32 @@ def extract_text_from_txt(content: bytes) -> str:
         return content.decode('latin-1')
 
 def extract_text_from_docx(content: bytes) -> str:
-    """Extract text from a .docx file"""
+    """Extract text from a .docx file - handles paragraphs, tables, and headers"""
     doc = DocxDocument(io.BytesIO(content))
-    paragraphs = [para.text for para in doc.paragraphs]
-    return '\n\n'.join(paragraphs)
+    text_parts = []
+    
+    # Extract from paragraphs (main body)
+    for para in doc.paragraphs:
+        text = para.text.strip()
+        if text:
+            text_parts.append(text)
+    
+    # Extract from tables (some manuscripts use tables for formatting)
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    text = para.text.strip()
+                    if text:
+                        text_parts.append(text)
+    
+    # Join with double newlines to preserve paragraph structure
+    result = '\n\n'.join(text_parts)
+    
+    # Log extraction stats for debugging
+    logger.info(f"DOCX extraction: {len(text_parts)} text blocks, {len(result)} total chars")
+    
+    return result
 
 def extract_text_from_pdf(content: bytes) -> str:
     """Extract text from a .pdf file"""
