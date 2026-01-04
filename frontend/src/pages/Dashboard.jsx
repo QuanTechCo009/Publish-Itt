@@ -408,9 +408,20 @@ export default function Dashboard() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-serif text-xl font-medium truncate">
-                      {project.title}
-                    </h3>
+                    <div className="flex items-center gap-2 group">
+                      <h3 className="font-serif text-xl font-medium truncate">
+                        {project.title}
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        onClick={(e) => handleOpenRename(e, project)}
+                        data-testid={`rename-project-${project.id}`}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </div>
                     {project.series_name && (
                       <p className="text-sm text-muted-foreground truncate">
                         {project.series_name}
