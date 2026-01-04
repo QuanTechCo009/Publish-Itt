@@ -506,6 +506,12 @@ export default function ImportAnalysisDialog({
                     <Badge variant="outline" className="text-sm">
                       {analysis.estimated_reading_level || "Unknown"}
                     </Badge>
+                    {analysis.detected_chapters_count > 0 && (
+                      <Badge variant="secondary" className="text-sm bg-blue-100 text-blue-800">
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        {analysis.detected_chapters_count} chapters detected
+                      </Badge>
+                    )}
                     {analysis.notes_detected?.length > 0 && (
                       <Badge variant="secondary" className="text-sm">
                         <AlertCircle className="h-3 w-3 mr-1" />
@@ -513,6 +519,28 @@ export default function ImportAnalysisDialog({
                       </Badge>
                     )}
                   </div>
+
+                  {/* Detected Chapters Preview */}
+                  {analysis.detected_chapters_count > 0 && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-sm">
+                      <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-blue-600" />
+                        Chapters Detected ({analysis.detected_chapters_count})
+                      </h4>
+                      <div className="flex flex-wrap gap-1">
+                        {analysis.detected_chapters_preview?.slice(0, 10).map((ch, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {ch}
+                          </Badge>
+                        ))}
+                        {analysis.detected_chapters_count > 10 && (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">
+                            +{analysis.detected_chapters_count - 10} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <Separator />
 
