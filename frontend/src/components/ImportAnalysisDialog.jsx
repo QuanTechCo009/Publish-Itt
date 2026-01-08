@@ -355,42 +355,76 @@ export default function ImportAnalysisDialog({
         }
       }
 
-      // Handle specific implementations
-      if (actionId === "store_notes" && analysis?.notes_detected?.length > 0 && chapterId) {
-        let savedCount = 0;
-        for (const note of analysis.notes_detected) {
-          try {
-            await notesApi.create({
-              parent_type: "chapter",
-              parent_id: chapterId,
-              note_text: note,
-              note_type: "comment",
-              location_reference: "Extracted from import"
-            });
-            savedCount++;
-          } catch (e) {
-            // Continue even if note creation fails
+      // Actions that modify chapter content directly
+      const contentModifyingActions = ["autoformat", "remove_notes"];
+      
+      // Actions that create notes
+      const notesActions = ["store_notes", "convert_notes"];
+      
+      if (contentModifyingActions.includes(actionId) && chapterId) {
+        // Call the implement endpoint to apply changes
+        const res = await importAnalysisApi.implementAction(
+          actionId,
+          content,
+          chapterId,
+          projectId,
+          null
+        );
+        
+        if (res.data.chapter_updated) {
+          toast.success(`${ACTION_OPTIONS.find(a => a.id === actionId)?.label} applied successfully!`);
+          
+          // Notify parent to refresh content
+          if (onActionComplete) {
+            onActionComplete(actionId, res.data, true);
           }
+        } else {
+          toast.info("No changes were applied.");
         }
-        toast.success(`Saved ${savedCount} notes to Notes Collection`);
-      } else if (actionId === "autoformat") {
-        toast.success("Auto-formatting suggestions applied. Review changes in the editor.");
-      } else if (actionId === "split_chapters") {
+      } else if (notesActions.includes(actionId) && chapterId) {
+        // For store_notes, pass the detected notes to be saved
+        const notesToSave = actionId === "store_notes" ? analysis?.notes_detected : null;
+        
+        const res = await importAnalysisApi.implementAction(
+          actionId,
+          content,
+          chapterId,
+          projectId,
+          notesToSave
+        );
+        
+        if (res.data.notes_created > 0) {
+          toast.success(`Saved ${res.data.notes_created} notes to Notes Collection`);
+        } else {
+          toast.info("No notes were saved.");
+        }
+        
+        if (onActionComplete) {
+          onActionComplete(actionId, res.data, true);
+        }
+      } else if (actionId === "split_chapters" && projectId) {
+        // Split chapters is handled separately
         toast.success("Chapter split suggestions saved. Create chapters from the Manuscript workspace.");
+        if (onActionComplete) {
+          onActionComplete(actionId, actionResult.response, true);
+        }
       } else if (actionId === "full_qa") {
         toast.success("QA report saved for reference.");
+        if (onActionComplete) {
+          onActionComplete(actionId, actionResult.response, true);
+        }
       } else {
-        toast.success("Changes implemented successfully!");
-      }
-      
-      if (onActionComplete) {
-        onActionComplete(actionId, actionResult.response, true);
+        // For other actions, just notify completion
+        toast.success("Changes processed successfully!");
+        if (onActionComplete) {
+          onActionComplete(actionId, actionResult.response, true);
+        }
       }
       
       setActionResult(null);
       
     } catch (error) {
-      toast.error("Failed to implement changes");
+      toast.error("Failed to implement changes: " + (error.response?.data?.detail || error.message));
       console.error(error);
     } finally {
       setImplementing(false);
