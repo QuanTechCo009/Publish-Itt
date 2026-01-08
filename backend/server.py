@@ -244,6 +244,35 @@ class ArtAsset(ArtAssetBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+# BookArtProfile Models - Visual identity for a manuscript
+class BookArtProfileBase(BaseModel):
+    project_id: str
+    genre: str = ""
+    age_group: str = ""
+    mood: str = ""
+    art_style_preferences: str = ""
+    color_palette: str = ""
+    reference_notes: str = ""
+    ai_summary: Optional[str] = None  # AI-generated visual identity summary
+
+class BookArtProfileCreate(BookArtProfileBase):
+    pass
+
+class BookArtProfileUpdate(BaseModel):
+    genre: Optional[str] = None
+    age_group: Optional[str] = None
+    mood: Optional[str] = None
+    art_style_preferences: Optional[str] = None
+    color_palette: Optional[str] = None
+    reference_notes: Optional[str] = None
+    ai_summary: Optional[str] = None
+
+class BookArtProfile(BookArtProfileBase):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 # StylePreset Models
 class StylePresetBase(BaseModel):
     name: str
