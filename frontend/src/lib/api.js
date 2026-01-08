@@ -207,6 +207,13 @@ export const migrationApi = {
   migrateProjectsToManuscripts: () => api.post('/migrate/projects-to-manuscripts')
 }
 
+// Book Art Profile API
+export const artProfileApi = {
+  getByProject: (projectId) => api.get(`/art-profiles/project/${projectId}`),
+  createOrUpdate: (data) => api.post('/art-profiles', data),
+  update: (projectId, data) => api.put(`/art-profiles/project/${projectId}`, data)
+}
+
 // Writing Statistics API
 export const statsApi = {
   logSession: (data) => api.post('/stats/session', data),
