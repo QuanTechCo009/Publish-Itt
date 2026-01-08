@@ -82,6 +82,22 @@ export default function Settings() {
     toast.success("Tour completed! You're ready to create.");
   };
 
+  const handleResetOnboarding = () => {
+    // Clear all onboarding-related localStorage keys
+    localStorage.removeItem("thad_onboarding_complete");
+    localStorage.removeItem("thad_user_name");
+    localStorage.removeItem("thad_tour_complete");
+    
+    toast.success("Onboarding reset! Redirecting to welcome experience...");
+    
+    // Navigate to Dashboard which will trigger the onboarding flow
+    setTimeout(() => {
+      navigate("/");
+      // Force page reload to ensure fresh state
+      window.location.reload();
+    }, 500);
+  };
+
   useEffect(() => {
     loadPresets();
   }, []);
