@@ -29,8 +29,11 @@ import {
   Lamp,
   Cloud,
   Flame,
-  Check
+  Check,
+  Map,
+  Sparkles
 } from "lucide-react";
+import ThadTour from "@/components/ThadTour";
 
 const THEME_ICONS = {
   default: Sun,
