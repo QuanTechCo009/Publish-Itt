@@ -2962,6 +2962,214 @@ Manuscript:
     response = await get_ai_response(IMPORT_ANALYSIS_SYSTEM_PROMPT, prompt)
     return AIResponse(response=response, module="import_analysis")
 
+# ============== IMPLEMENT IMPORT ACTION ENDPOINT ==============
+
+class ImplementActionRequest(BaseModel):
+    action: str  # autoformat, remove_notes, etc.
+    original_content: str  # The original chapter content
+    chapter_id: Optional[str] = None
+    project_id: Optional[str] = None
+    # For actions that produce modified content
+    apply_content: bool = True  # Whether to apply the AI-generated content
+    # For notes-related actions
+    extracted_notes: Optional[List[str]] = None
+
+class ImplementActionResponse(BaseModel):
+    success: bool
+    message: str
+    action: str
+    chapter_updated: bool = False
+    notes_created: int = 0
+    new_content_preview: Optional[str] = None
+
+@api_router.post("/ai/import/implement", response_model=ImplementActionResponse)
+async def implement_import_action(request: ImplementActionRequest):
+    """
+    Implement the changes from an import action by:
+    1. Getting the AI-processed content for actions like autoformat/remove_notes
+    2. Updating the chapter content in the database
+    3. Creating notes records for store_notes action
+    """
+    
+    chapter_updated = False
+    notes_created = 0
+    new_content = None
+    
+    # Actions that modify content and need AI processing
+    content_modifying_actions = ["autoformat", "remove_notes"]
+    
+    # Actions that extract data but don't modify content directly
+    extraction_actions = ["store_notes", "convert_notes", "extract_summaries", "extract_characters", "extract_glossary"]
+    
+    # Analysis actions that don't modify content
+    analysis_actions = ["full_qa", "lantern_path", "split_chapters"]
+    
+    try:
+        if request.action in content_modifying_actions and request.apply_content:
+            # Get AI to process and return cleaned content
+            action_prompts = {
+                "autoformat": """Clean and format this manuscript text. 
+Return ONLY the cleaned text without any commentary or explanation.
+Apply these formatting rules:
+- Normalize paragraph spacing (single blank line between paragraphs)
+- Fix broken sentences that span multiple lines
+- Standardize quotation marks
+- Remove extra whitespace
+- Keep chapter headings intact
+
+Text to clean:
+{content}
+
+Return the cleaned text only:""",
+                
+                "remove_notes": """Remove all author notes, comments, and annotations from this text.
+Remove patterns like:
+- [TODO: ...], [NOTE: ...], [TK], [FIXME]
+- (Author note: ...), (Note to self: ...)
+- {{comments}}, <!-- comments -->
+- **NOTE:** blocks
+- Any bracketed reminders or editorial marks
+
+Return ONLY the cleaned text without the notes. Do not add any commentary.
+
+Text:
+{content}
+
+Cleaned text:"""
+            }
+            
+            prompt = action_prompts[request.action].format(content=request.original_content[:30000])
+            new_content = await get_ai_response(IMPORT_ANALYSIS_SYSTEM_PROMPT, prompt)
+            
+            # Update chapter if chapter_id provided
+            if request.chapter_id and new_content:
+                # Clean up the response - remove any AI preamble
+                cleaned_content = new_content.strip()
+                
+                # Convert plain text to HTML paragraphs for the editor
+                if not cleaned_content.startswith('<'):
+                    paragraphs = cleaned_content.split('\n\n')
+                    html_content = ''.join(f'<p>{p.strip()}</p>' for p in paragraphs if p.strip())
+                    cleaned_content = html_content
+                
+                # Update the chapter
+                result = await db.chapters.update_one(
+                    {"id": request.chapter_id},
+                    {"$set": {
+                        "content": cleaned_content,
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                if result.modified_count > 0:
+                    chapter_updated = True
+                    
+                    # Update project word count
+                    chapter = await db.chapters.find_one({"id": request.chapter_id}, {"_id": 0})
+                    if chapter and chapter.get("project_id"):
+                        import re
+                        # Strip HTML tags for word count
+                        text_only = re.sub(r'<[^>]+>', '', cleaned_content)
+                        new_word_count = len(text_only.split())
+                        
+                        # Get all chapters for this project to recalculate total
+                        all_chapters = await db.chapters.find(
+                            {"project_id": chapter["project_id"]}, 
+                            {"content": 1}
+                        ).to_list(1000)
+                        
+                        total_words = sum(
+                            len(re.sub(r'<[^>]+>', '', c.get("content", "")).split()) 
+                            for c in all_chapters
+                        )
+                        
+                        await db.projects.update_one(
+                            {"id": chapter["project_id"]},
+                            {"$set": {
+                                "word_count": total_words,
+                                "updated_at": datetime.now(timezone.utc).isoformat()
+                            }}
+                        )
+        
+        elif request.action == "store_notes" and request.extracted_notes:
+            # Create note records from extracted notes
+            if request.chapter_id:
+                for note_text in request.extracted_notes[:50]:  # Limit to 50 notes
+                    note_obj = Note(
+                        parent_type="chapter",
+                        parent_id=request.chapter_id,
+                        note_text=note_text,
+                        note_type="comment",
+                        location_reference="Extracted from import"
+                    )
+                    await db.notes.insert_one(note_obj.model_dump())
+                    notes_created += 1
+        
+        elif request.action == "convert_notes" and request.chapter_id:
+            # Get AI to categorize notes into metadata
+            prompt = f"""Analyze the notes in this text and categorize them into:
+1. chapter_notes: General notes about chapter content
+2. revision_notes: Notes about changes needed  
+3. author_intent: Notes about what the author intended
+
+Return as JSON with these three keys. Each key should have an array of note strings.
+
+Text:
+{request.original_content[:15000]}
+
+JSON output:"""
+            
+            response = await get_ai_response(IMPORT_ANALYSIS_SYSTEM_PROMPT, prompt)
+            
+            # Parse and store categorized notes
+            import json
+            import re
+            
+            json_match = re.search(r'\{[\s\S]*\}', response)
+            if json_match:
+                try:
+                    categorized = json.loads(json_match.group())
+                    
+                    for note_type, notes_list in categorized.items():
+                        if isinstance(notes_list, list):
+                            for note_text in notes_list[:20]:
+                                note_obj = Note(
+                                    parent_type="chapter",
+                                    parent_id=request.chapter_id,
+                                    note_text=str(note_text),
+                                    note_type=note_type,
+                                    location_reference="Converted from import"
+                                )
+                                await db.notes.insert_one(note_obj.model_dump())
+                                notes_created += 1
+                except json.JSONDecodeError:
+                    pass
+        
+        # Build response message
+        messages = []
+        if chapter_updated:
+            messages.append("Chapter content updated")
+        if notes_created > 0:
+            messages.append(f"{notes_created} notes saved")
+        if not messages:
+            if request.action in analysis_actions:
+                messages.append("Analysis complete - no content changes required")
+            else:
+                messages.append("Action processed")
+        
+        return ImplementActionResponse(
+            success=True,
+            message=". ".join(messages),
+            action=request.action,
+            chapter_updated=chapter_updated,
+            notes_created=notes_created,
+            new_content_preview=new_content[:500] if new_content else None
+        )
+        
+    except Exception as e:
+        logger.error(f"Implement action failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to implement action: {str(e)}")
+
 # ============== SPLIT CHAPTERS ENDPOINT ==============
 
 class SplitChaptersRequest(BaseModel):
