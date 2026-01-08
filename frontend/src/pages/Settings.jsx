@@ -65,6 +65,19 @@ export default function Settings() {
     color_palette: ""
   });
   const [saving, setSaving] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+
+  // Get user context from localStorage (set during onboarding)
+  const userName = localStorage.getItem("thad_user_name") || "Writer";
+
+  const handleStartTour = () => {
+    setShowTour(true);
+  };
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+    toast.success("Tour completed! You're ready to create.");
+  };
 
   useEffect(() => {
     loadPresets();
