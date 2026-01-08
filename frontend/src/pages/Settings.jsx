@@ -179,6 +179,47 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* General Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="font-serif flex items-center gap-2">
+            <SettingsIcon className="h-5 w-5 text-accent" />
+            General
+          </CardTitle>
+          <CardDescription>
+            App preferences and helpful features
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Guided Tour Button */}
+            <div className="flex items-center justify-between p-4 border border-border rounded-sm hover:border-accent/30 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-sm bg-accent/10">
+                  <Map className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-sm">Guided Tour</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Take a quick tour of Publish Itt's features with Thad
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStartTour}
+                className="rounded-sm"
+                data-testid="start-guided-tour-btn"
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Start Tour
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Theme Selection */}
       <Card className="mb-6">
         <CardHeader>
