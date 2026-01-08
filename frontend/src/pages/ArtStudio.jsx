@@ -609,6 +609,79 @@ export default function ArtStudio() {
                 </CardContent>
               </Card>
 
+              {/* Refinement Suggestions Bubble */}
+              {showRefinements && refinementSuggestions.length > 0 && (
+                <Card 
+                  className="border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-500/5 to-transparent relative"
+                  data-testid="refinement-suggestions-card"
+                >
+                  {/* Speech bubble pointer */}
+                  <div className="absolute -top-2 left-6 w-4 h-4 bg-card border-l border-t border-purple-500/30 transform rotate-45" />
+                  
+                  <CardHeader className="pb-2 pt-4">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-purple-500" />
+                        Refinement Suggestions
+                      </CardTitle>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRegenerateRefinements}
+                          disabled={refinementsLoading}
+                          className="h-7 px-2 text-xs"
+                          data-testid="regenerate-refinements-btn"
+                        >
+                          {refinementsLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                              Refresh
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowRefinements(false)}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          data-testid="close-refinements-btn"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Based on your current profile, consider these style refinements:
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0 pb-4">
+                    <div className="space-y-3">
+                      {refinementSuggestions.map((suggestion, index) => (
+                        <div 
+                          key={index}
+                          className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
+                          data-testid={`refinement-suggestion-${index}`}
+                        >
+                          <div className="rounded-full bg-purple-500/20 text-purple-600 w-6 h-6 flex items-center justify-center shrink-0 text-xs font-bold">
+                            {index + 1}
+                          </div>
+                          <p className="text-sm leading-relaxed">{suggestion}</p>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Update your profile fields above and click <strong>Refresh</strong> to get new suggestions
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* How It Works */}
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
