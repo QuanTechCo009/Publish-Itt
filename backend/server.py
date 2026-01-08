@@ -1424,6 +1424,102 @@ Description of current progress:
     response = await get_ai_response(WORKFLOW_SYSTEM_PROMPT, prompt)
     return AIResponse(response=response, module="workflow")
 
+@api_router.post("/ai/workflow-stage", response_model=WorkflowStageAnalysisResponse)
+async def analyze_workflow_stage(request: WorkflowStageAnalysisRequest):
+    """Analyze manuscript and determine workflow stage with next steps"""
+    
+    # Build context from request
+    context_parts = []
+    
+    if request.manuscript:
+        # Truncate manuscript for analysis (first 3000 chars for efficiency)
+        manuscript_preview = request.manuscript[:3000]
+        if len(request.manuscript) > 3000:
+            manuscript_preview += "... [truncated for analysis]"
+        context_parts.append(f"Current manuscript text:\n{manuscript_preview}")
+    
+    if request.section_info:
+        context_parts.append(f"Section metadata: {request.section_info}")
+    
+    if request.workflow_stage:
+        context_parts.append(f"Current workflow stage (user-set): {request.workflow_stage}")
+    
+    if request.goals:
+        context_parts.append(f"Writing goals: {request.goals}")
+    
+    if request.time_away:
+        context_parts.append(f"Time since last session: {request.time_away}")
+    
+    if request.age_group:
+        context_parts.append(f"Target age group: {request.age_group}")
+    
+    user_context = "\n".join(context_parts) if context_parts else "No manuscript content provided yet."
+    
+    prompt = f"""USER CONTEXT:
+{user_context}
+
+TASK:
+Identify the user's current workflow stage and suggest the next logical action.
+Keep the message concise, warm, and empowering.
+
+IMPORTANT: You must respond with a JSON object in this exact format:
+{{
+    "stage": "<one of: Idea Drop, Outline, Draft, Revise, Polish, Complete>",
+    "message": "<your friendly message identifying the stage and encouragement>",
+    "next_steps": ["<action 1>", "<action 2>"]
+}}
+
+Respond ONLY with the JSON object, no other text."""
+    
+    try:
+        response = await get_ai_response(WORKFLOW_STAGE_SYSTEM_PROMPT, prompt)
+        
+        # Parse JSON from response
+        import json
+        import re
+        
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[^{}]*\}', response, re.DOTALL)
+        if json_match:
+            parsed = json.loads(json_match.group())
+            stage = parsed.get("stage", "Draft")
+            message = parsed.get("message", response)
+            next_steps = parsed.get("next_steps", ["Continue writing", "Review your progress"])
+        else:
+            # Fallback if JSON parsing fails
+            stage = "Draft"
+            message = response
+            next_steps = ["Continue writing", "Review your progress"]
+        
+        # Map stage to progress percentage
+        stage_progress = {
+            "Idea Drop": 10,
+            "Outline": 25,
+            "Draft": 50,
+            "Revise": 70,
+            "Polish": 90,
+            "Complete": 100
+        }
+        
+        progress = stage_progress.get(stage, 50)
+        
+        return WorkflowStageAnalysisResponse(
+            stage=stage,
+            message=message,
+            next_steps=next_steps[:2],  # Limit to 2 steps
+            progress_percent=progress
+        )
+        
+    except Exception as e:
+        logger.error(f"Workflow stage analysis failed: {e}")
+        # Return sensible defaults
+        return WorkflowStageAnalysisResponse(
+            stage="Draft",
+            message="I'm ready to help you with your manuscript! Let's see where you are in your writing journey.",
+            next_steps=["Open a chapter to start writing", "Review your existing content"],
+            progress_percent=50
+        )
+
 @api_router.post("/ai/analyze-tone", response_model=AIResponse)
 async def analyze_tone(request: ToneAnalysisRequest):
     prompt = f"""Target reader: 3rd–5th grade.
