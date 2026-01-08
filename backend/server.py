@@ -353,6 +353,22 @@ class ImportAnalysisResponse(BaseModel):
     estimated_reading_level: str
     recommended_actions: List[str]
 
+# Workflow Stage Analysis Models
+class WorkflowStageAnalysisRequest(BaseModel):
+    manuscript: str
+    section_info: Optional[str] = None
+    workflow_stage: Optional[str] = None
+    goals: Optional[str] = None
+    time_away: Optional[str] = None
+    age_group: Optional[str] = None
+    project_id: Optional[str] = None
+
+class WorkflowStageAnalysisResponse(BaseModel):
+    stage: str  # Idea Drop, Outline, Draft, Revise, Polish, Complete
+    message: str
+    next_steps: List[str]
+    progress_percent: int
+
 # ============== SYSTEM PROMPTS ==============
 
 GLOBAL_SYSTEM_PROMPT = """You are Thaddaeus ("Thad"), the creative intelligence powering Publish Itt. 
