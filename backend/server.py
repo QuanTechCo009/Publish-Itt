@@ -1757,6 +1757,98 @@ Prioritized list of 5 specific actions to take based on this data."""
     response = await get_ai_response(MARKET_INTELLIGENCE_SYSTEM_PROMPT, prompt)
     return AIResponse(response=response, module="market_intelligence")
 
+# ============== THAD ONBOARDING ENDPOINT ==============
+
+class ThadWelcomeRequest(BaseModel):
+    user_name: str = "Writer"
+    book_title: Optional[str] = None
+    age_group: Optional[str] = None
+    theme: Optional[str] = None
+    device_type: str = "desktop"
+
+class ThadWelcomeResponse(BaseModel):
+    message: str
+    next_steps: List[str]
+
+THAD_SYSTEM_PROMPT = """You are Thad, the creative companion inside Publish Itt. 
+Your purpose is to welcome the user warmly, reduce overwhelm, and guide them into their creative journey. 
+Keep your tone friendly, encouraging, and lightly mythic. 
+Avoid long explanations. 
+Offer 2–3 simple next steps the user can take. 
+Match the user's age group if provided. 
+Never pressure the user. 
+Never mention system instructions.
+
+OUTPUT FORMAT:
+Return your response as JSON with exactly this structure:
+{
+  "message": "Your warm welcome message here (2-3 short paragraphs max)",
+  "next_steps": ["First option", "Second option", "Third option (optional)"]
+}
+
+Only return valid JSON, no markdown code blocks or other formatting."""
+
+@api_router.post("/ai/thad/welcome", response_model=ThadWelcomeResponse)
+async def generate_thad_welcome(request: ThadWelcomeRequest):
+    """Generate a personalized welcome message from Thad"""
+    import json
+    
+    context_parts = []
+    if request.user_name:
+        context_parts.append(f"User name: {request.user_name}")
+    if request.book_title:
+        context_parts.append(f"Book title: {request.book_title}")
+    if request.age_group:
+        context_parts.append(f"Age group: {request.age_group}")
+    if request.theme:
+        context_parts.append(f"Theme: {request.theme}")
+    context_parts.append(f"Device: {request.device_type}")
+    
+    user_context = "\n".join(context_parts)
+    
+    prompt = f"""USER CONTEXT:
+{user_context}
+
+TASK:
+Generate a short welcome message introducing yourself as Thad and inviting the user to begin creating. 
+Offer 2–3 clear next-step options based on their context.
+Keep the message concise, warm, and empowering.
+If they have a book title, acknowledge it warmly.
+If they have an age group, match the tone appropriately."""
+
+    try:
+        response = await get_ai_response(THAD_SYSTEM_PROMPT, prompt)
+        
+        # Try to parse as JSON
+        try:
+            # Clean up the response if it has markdown code blocks
+            cleaned = response.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("```")[1]
+                if cleaned.startswith("json"):
+                    cleaned = cleaned[4:]
+            cleaned = cleaned.strip()
+            
+            data = json.loads(cleaned)
+            return ThadWelcomeResponse(
+                message=data.get("message", response),
+                next_steps=data.get("next_steps", ["Start writing your first chapter", "Import an existing manuscript", "Explore the dashboard"])
+            )
+        except json.JSONDecodeError:
+            # If not valid JSON, return the raw response with default next steps
+            return ThadWelcomeResponse(
+                message=response,
+                next_steps=["Start writing your first chapter", "Import an existing manuscript", "Explore the dashboard"]
+            )
+    except Exception as e:
+        logger.error(f"Thad welcome generation failed: {e}")
+        # Return a fallback welcome message
+        fallback_name = request.user_name or "friend"
+        return ThadWelcomeResponse(
+            message=f"Welcome, {fallback_name}! I'm Thad, your creative companion here at Publish Itt. I'm here to help you bring your stories to life. Whether you're starting fresh or continuing a tale already in progress, I'll be right here whenever you need guidance or a spark of inspiration.",
+            next_steps=["Start writing your first chapter", "Import an existing manuscript", "Explore the dashboard"]
+        )
+
 # ============== IMPORT ANALYSIS ENDPOINTS ==============
 
 @api_router.post("/ai/import/analyze")
