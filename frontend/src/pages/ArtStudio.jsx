@@ -194,11 +194,51 @@ export default function ArtStudio() {
     const project = projects.find(p => p.id === projId);
     setSelectedProject(project);
     setSelectedChapter(null);
+    setExtractedScene("");
+    setArtPromptResult(null);
     navigate(`/art/${projId}`);
     loadChapters(projId);
     loadArtAssets(projId);
     loadArtProfile(projId, project);
     setAiResponse("");
+  };
+
+  // Extract visually rich scene from chapter content
+  const extractSceneFromChapter = async (chapter) => {
+    if (!chapter?.content) {
+      setExtractedScene("");
+      return;
+    }
+    
+    setSceneExtracting(true);
+    try {
+      // Use AI to identify the most visually rich moment
+      const res = await aiApi.extractScene(chapter.content, artProfile);
+      if (res.data?.scene) {
+        setExtractedScene(res.data.scene);
+        setUseExtractedScene(true);
+      }
+    } catch (error) {
+      console.error("Scene extraction failed:", error);
+      // Fallback: use first 500 characters of chapter content
+      const plainText = chapter.content.replace(/<[^>]*>/g, '').trim();
+      setExtractedScene(plainText.substring(0, 500) + (plainText.length > 500 ? '...' : ''));
+    } finally {
+      setSceneExtracting(false);
+    }
+  };
+
+  const handleChapterChange = (chapterId) => {
+    if (chapterId === "none") {
+      setSelectedChapter(null);
+      setExtractedScene("");
+    } else {
+      const chapter = chapters.find(c => c.id === chapterId);
+      setSelectedChapter(chapter);
+      if (chapter) {
+        extractSceneFromChapter(chapter);
+      }
+    }
   };
 
   const handleProfileChange = (field, value) => {
