@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -12,8 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { projectApi, chapterApi, stylePresetApi, artAssetApi, aiApi } from "@/lib/api";
+import { projectApi, chapterApi, stylePresetApi, artAssetApi, aiApi, artProfileApi } from "@/lib/api";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { 
   Loader2, 
   Sparkles,
@@ -22,8 +26,41 @@ import {
   FileImage,
   Image,
   Save,
-  Trash2
+  Trash2,
+  Palette,
+  RefreshCw,
+  ArrowRight,
+  Check,
+  Lightbulb,
+  Wand2
 } from "lucide-react";
+
+// Genre options
+const GENRE_OPTIONS = [
+  "Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", 
+  "Horror", "Historical Fiction", "Literary Fiction", "Adventure",
+  "Children's", "Middle Grade", "Young Adult", "Non-Fiction"
+];
+
+// Age group options
+const AGE_GROUP_OPTIONS = [
+  "Picture Book (0-5)", "Early Reader (5-8)", "Middle Grade (8-12)",
+  "Young Adult (12-18)", "New Adult (18-25)", "Adult"
+];
+
+// Mood options
+const MOOD_OPTIONS = [
+  "Whimsical", "Dark", "Mysterious", "Uplifting", "Melancholic",
+  "Adventurous", "Romantic", "Suspenseful", "Cozy", "Epic",
+  "Playful", "Serene", "Intense", "Nostalgic"
+];
+
+// Art style options
+const ART_STYLE_OPTIONS = [
+  "Watercolor", "Oil Painting", "Digital Art", "Line Art", "Cartoon",
+  "Realistic", "Abstract", "Minimalist", "Vintage", "Art Nouveau",
+  "Comic Book", "Storybook Illustration", "Photorealistic", "Impressionist"
+];
 
 export default function ArtStudio() {
   const { projectId } = useParams();
@@ -41,6 +78,22 @@ export default function ArtStudio() {
   const [aiResponse, setAiResponse] = useState("");
   const [promptType, setPromptType] = useState("cover");
   const [context, setContext] = useState("");
+  const [activeTab, setActiveTab] = useState("generate");
+
+  // Book Art Profile State
+  const [artProfile, setArtProfile] = useState({
+    project_id: "",
+    genre: "",
+    age_group: "",
+    mood: "",
+    art_style_preferences: "",
+    color_palette: "",
+    reference_notes: "",
+    ai_summary: null
+  });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSummaryLoading, setProfileSummaryLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -53,6 +106,7 @@ export default function ArtStudio() {
         setSelectedProject(project);
         loadChapters(projectId);
         loadArtAssets(projectId);
+        loadArtProfile(projectId, project);
       }
     }
   }, [projectId, projects]);
@@ -67,9 +121,11 @@ export default function ArtStudio() {
       setStylePresets(presetsRes.data);
       
       if (!projectId && projectsRes.data.length > 0) {
-        setSelectedProject(projectsRes.data[0]);
-        loadChapters(projectsRes.data[0].id);
-        loadArtAssets(projectsRes.data[0].id);
+        const firstProject = projectsRes.data[0];
+        setSelectedProject(firstProject);
+        loadChapters(firstProject.id);
+        loadArtAssets(firstProject.id);
+        loadArtProfile(firstProject.id, firstProject);
       }
     } catch (error) {
       toast.error("Failed to load data");
@@ -96,6 +152,31 @@ export default function ArtStudio() {
     }
   };
 
+  const loadArtProfile = async (projId, project) => {
+    setProfileLoading(true);
+    try {
+      const res = await artProfileApi.getByProject(projId);
+      setArtProfile(res.data);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      // Profile doesn't exist yet - auto-suggest based on project metadata
+      const suggestedProfile = {
+        project_id: projId,
+        genre: project?.genre || "",
+        age_group: project?.age_group || "",
+        mood: "",
+        art_style_preferences: "",
+        color_palette: "",
+        reference_notes: "",
+        ai_summary: null
+      };
+      setArtProfile(suggestedProfile);
+      setHasUnsavedChanges(false);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   const handleProjectChange = (projId) => {
     const project = projects.find(p => p.id === projId);
     setSelectedProject(project);
@@ -103,7 +184,72 @@ export default function ArtStudio() {
     navigate(`/art/${projId}`);
     loadChapters(projId);
     loadArtAssets(projId);
+    loadArtProfile(projId, project);
     setAiResponse("");
+  };
+
+  const handleProfileChange = (field, value) => {
+    setArtProfile(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!selectedProject) return;
+    
+    setProfileLoading(true);
+    try {
+      const profileData = {
+        ...artProfile,
+        project_id: selectedProject.id
+      };
+      await artProfileApi.createOrUpdate(profileData);
+      setHasUnsavedChanges(false);
+      toast.success("Art profile saved!");
+    } catch (error) {
+      toast.error("Failed to save art profile");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleGenerateProfileSummary = async () => {
+    if (!selectedProject) return;
+    
+    setProfileSummaryLoading(true);
+    try {
+      const res = await aiApi.generateArtProfileSummary({
+        ...artProfile,
+        project_id: selectedProject.id
+      });
+      
+      setArtProfile(prev => ({
+        ...prev,
+        ai_summary: res.data.summary
+      }));
+      
+      // Show refinements as a toast or in UI
+      if (res.data.refinements && res.data.refinements.length > 0) {
+        toast.info(
+          <div>
+            <p className="font-medium mb-1">Refinement suggestions:</p>
+            {res.data.refinements.map((r, i) => (
+              <p key={i} className="text-sm">• {r}</p>
+            ))}
+          </div>,
+          { duration: 8000 }
+        );
+      }
+      
+      setHasUnsavedChanges(true);
+      toast.success("Visual identity summary generated!");
+    } catch (error) {
+      toast.error("Failed to generate summary");
+    } finally {
+      setProfileSummaryLoading(false);
+    }
   };
 
   const handleGeneratePrompts = async () => {
@@ -119,12 +265,19 @@ export default function ArtStudio() {
     setAiLoading(true);
     try {
       const contextText = context || selectedProject.summary || selectedProject.title;
+      
+      // Include art profile in the generation
+      const profileContext = artProfile.ai_summary 
+        ? `\n\nBook Art Profile:\n${artProfile.ai_summary}\nMood: ${artProfile.mood}\nStyle: ${artProfile.art_style_preferences}\nColors: ${artProfile.color_palette}`
+        : "";
+      
       const res = await aiApi.generateArtPrompts(
         selectedProject.id,
         selectedChapter?.id,
         selectedPreset,
         promptType,
-        contextText
+        contextText + profileContext,
+        artProfile
       );
       setAiResponse(res.data.response);
     } catch (error) {
@@ -199,7 +352,7 @@ export default function ArtStudio() {
             Art Studio
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Generate visual prompts for your book
+            Define your visual identity and generate art prompts
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -219,195 +372,435 @@ export default function ArtStudio() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Generation Panel */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="font-serif flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-accent" />
-              Generate Art Prompts
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Prompt Type */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Prompt Type</label>
-                <Select value={promptType} onValueChange={setPromptType}>
-                  <SelectTrigger className="rounded-sm" data-testid="prompt-type-select">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {promptTypeOptions.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        <div className="flex items-center gap-2">
-                          <opt.icon className="h-4 w-4" />
-                          {opt.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      {/* Main Content with Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2 rounded-sm">
+          <TabsTrigger value="profile" className="rounded-sm" data-testid="art-profile-tab">
+            <Palette className="h-4 w-4 mr-2" />
+            Book Art Profile
+          </TabsTrigger>
+          <TabsTrigger value="generate" className="rounded-sm" data-testid="generate-tab">
+            <Wand2 className="h-4 w-4 mr-2" />
+            Generate Art
+          </TabsTrigger>
+        </TabsList>
 
-              {/* Style Preset */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Style Preset</label>
-                <Select value={selectedPreset} onValueChange={setSelectedPreset}>
-                  <SelectTrigger className="rounded-sm" data-testid="style-preset-select">
-                    <SelectValue placeholder="Select style" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stylePresets.length > 0 ? (
-                      stylePresets.map(preset => (
-                        <SelectItem key={preset.id} value={preset.name}>
-                          {preset.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="default" disabled>
-                        No presets - create one in Settings
-                      </SelectItem>
-                    )}
-                    <SelectItem value="Epic Fantasy">Epic Fantasy</SelectItem>
-                    <SelectItem value="Dark & Moody">Dark & Moody</SelectItem>
-                    <SelectItem value="Whimsical Children">Whimsical Children</SelectItem>
-                    <SelectItem value="Sci-Fi Futuristic">Sci-Fi Futuristic</SelectItem>
-                    <SelectItem value="Romance Soft">Romance Soft</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Chapter (optional) */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Chapter (optional)</label>
-                <Select 
-                  value={selectedChapter?.id || "none"} 
-                  onValueChange={(v) => setSelectedChapter(v === "none" ? null : chapters.find(c => c.id === v))}
-                >
-                  <SelectTrigger className="rounded-sm" data-testid="art-chapter-select">
-                    <SelectValue placeholder="All chapters" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">All chapters</SelectItem>
-                    {chapters.map(c => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.chapter_number}. {c.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Additional Context</label>
-              <Textarea
-                placeholder="Describe the scene, mood, or specific elements you want in the artwork..."
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                className="min-h-[100px] rounded-sm resize-none"
-                data-testid="art-context-input"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleGeneratePrompts}
-                disabled={aiLoading || !selectedPreset}
-                className="flex-1 rounded-sm"
-                data-testid="generate-art-btn"
-              >
-                {aiLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generate {promptTypeOptions.find(o => o.value === promptType)?.label} Ideas
-                  </>
-                )}
-              </Button>
-              {aiResponse && (
-                <Button
-                  variant="outline"
-                  onClick={handleSaveAsset}
-                  className="rounded-sm"
-                  data-testid="save-art-asset-btn"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save as Asset
-                </Button>
-              )}
-            </div>
-
-            {/* AI Response */}
-            {aiResponse && (
-              <div className="mt-4 p-4 bg-muted rounded-sm">
-                <ScrollArea className="max-h-[300px]">
-                  <div className="ai-response text-sm whitespace-pre-wrap" data-testid="art-ai-response">
-                    {aiResponse}
+        {/* Book Art Profile Tab */}
+        <TabsContent value="profile" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Profile Form */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="font-serif flex items-center gap-2">
+                      <Palette className="h-5 w-5 text-accent" />
+                      Visual Identity
+                    </CardTitle>
+                    <CardDescription>
+                      Define the artistic direction for your book
+                    </CardDescription>
                   </div>
-                </ScrollArea>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Saved Assets */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-serif flex items-center gap-2">
-              <ImageIcon className="h-5 w-5" />
-              Saved Assets
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[500px]">
-              {artAssets.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-                  <ImageIcon className="h-12 w-12 mb-4 opacity-50" />
-                  <p className="text-sm text-center">
-                    No saved art assets yet. Generate prompts and save them here.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {artAssets.map((asset) => (
-                    <div 
-                      key={asset.id} 
-                      className="p-3 bg-muted rounded-sm"
-                      data-testid={`art-asset-${asset.id}`}
+                  <div className="flex items-center gap-2">
+                    {hasUnsavedChanges && (
+                      <Badge variant="outline" className="text-orange-500 border-orange-500/50">
+                        Unsaved changes
+                      </Badge>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={handleSaveProfile}
+                      disabled={profileLoading || !hasUnsavedChanges}
+                      className="rounded-sm"
+                      data-testid="save-profile-btn"
                     >
-                      <div className="flex items-start justify-between mb-2">
-                        <Badge variant="outline" className="capitalize text-xs">
-                          {asset.type.replace("_", " ")}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteAsset(asset.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Style: {asset.style_preset}
-                      </p>
-                      <p className="text-xs line-clamp-3">
-                        {asset.prompt_used.substring(0, 150)}...
+                      {profileLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-1" />
+                          Save Profile
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Genre */}
+                  <div className="space-y-2">
+                    <Label htmlFor="genre">Genre</Label>
+                    <Select
+                      value={artProfile.genre}
+                      onValueChange={(v) => handleProfileChange("genre", v)}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="profile-genre">
+                        <SelectValue placeholder="Select genre" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GENRE_OPTIONS.map(g => (
+                          <SelectItem key={g} value={g}>{g}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Age Group */}
+                  <div className="space-y-2">
+                    <Label htmlFor="age_group">Age Group</Label>
+                    <Select
+                      value={artProfile.age_group}
+                      onValueChange={(v) => handleProfileChange("age_group", v)}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="profile-age-group">
+                        <SelectValue placeholder="Select age group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AGE_GROUP_OPTIONS.map(a => (
+                          <SelectItem key={a} value={a}>{a}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Mood */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mood">Mood</Label>
+                    <Select
+                      value={artProfile.mood}
+                      onValueChange={(v) => handleProfileChange("mood", v)}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="profile-mood">
+                        <SelectValue placeholder="Select mood" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MOOD_OPTIONS.map(m => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Art Style */}
+                  <div className="space-y-2">
+                    <Label htmlFor="art_style">Art Style Preferences</Label>
+                    <Select
+                      value={artProfile.art_style_preferences}
+                      onValueChange={(v) => handleProfileChange("art_style_preferences", v)}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="profile-art-style">
+                        <SelectValue placeholder="Select art style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ART_STYLE_OPTIONS.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Color Palette */}
+                <div className="space-y-2">
+                  <Label htmlFor="color_palette">Color Palette</Label>
+                  <Input
+                    id="color_palette"
+                    placeholder="e.g., Earth tones with deep forest greens and golden highlights"
+                    value={artProfile.color_palette}
+                    onChange={(e) => handleProfileChange("color_palette", e.target.value)}
+                    className="rounded-sm"
+                    data-testid="profile-color-palette"
+                  />
+                </div>
+
+                {/* Reference Notes */}
+                <div className="space-y-2">
+                  <Label htmlFor="reference_notes">Reference Notes</Label>
+                  <Textarea
+                    id="reference_notes"
+                    placeholder="Add any reference artists, existing book covers you like, or specific visual elements you want to include..."
+                    value={artProfile.reference_notes}
+                    onChange={(e) => handleProfileChange("reference_notes", e.target.value)}
+                    className="min-h-[100px] rounded-sm resize-none"
+                    data-testid="profile-reference-notes"
+                  />
+                </div>
+
+                {/* Generate Summary Button */}
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerateProfileSummary}
+                    disabled={profileSummaryLoading}
+                    className="rounded-sm"
+                    data-testid="generate-summary-btn"
+                  >
+                    {profileSummaryLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate Visual Identity Summary
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Summary & Tips */}
+            <div className="space-y-4">
+              {/* Visual Identity Summary */}
+              <Card className="border-l-4 border-l-accent">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-accent" />
+                    Visual Identity Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {artProfile.ai_summary ? (
+                    <p className="text-sm text-muted-foreground leading-relaxed" data-testid="ai-summary">
+                      {artProfile.ai_summary}
+                    </p>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Lightbulb className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                      <p className="text-sm text-muted-foreground">
+                        Fill in your profile details and click "Generate Visual Identity Summary" to get an AI-crafted description of your book's visual style.
                       </p>
                     </div>
-                  ))}
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* How It Works */}
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">How It Works</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <div className="rounded-full bg-accent/20 text-accent w-5 h-5 flex items-center justify-center shrink-0 text-[10px] font-bold">1</div>
+                    <p>Define your genre, mood, and visual preferences</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="rounded-full bg-accent/20 text-accent w-5 h-5 flex items-center justify-center shrink-0 text-[10px] font-bold">2</div>
+                    <p>Generate a visual identity summary with Thad</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="rounded-full bg-accent/20 text-accent w-5 h-5 flex items-center justify-center shrink-0 text-[10px] font-bold">3</div>
+                    <p>Your profile automatically informs all art generation</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Generate Art Tab */}
+        <TabsContent value="generate">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Generation Panel */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="font-serif flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-accent" />
+                  Generate Art Prompts
+                </CardTitle>
+                {artProfile.ai_summary && (
+                  <CardDescription className="flex items-center gap-2 text-green-600">
+                    <Check className="h-3 w-3" />
+                    Using Book Art Profile
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Prompt Type */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Prompt Type</label>
+                    <Select value={promptType} onValueChange={setPromptType}>
+                      <SelectTrigger className="rounded-sm" data-testid="prompt-type-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {promptTypeOptions.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <opt.icon className="h-4 w-4" />
+                              {opt.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Style Preset */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Style Preset</label>
+                    <Select value={selectedPreset} onValueChange={setSelectedPreset}>
+                      <SelectTrigger className="rounded-sm" data-testid="style-preset-select">
+                        <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stylePresets.length > 0 ? (
+                          stylePresets.map(preset => (
+                            <SelectItem key={preset.id} value={preset.name}>
+                              {preset.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="default" disabled>
+                            No presets - create one in Settings
+                          </SelectItem>
+                        )}
+                        <SelectItem value="Epic Fantasy">Epic Fantasy</SelectItem>
+                        <SelectItem value="Dark & Moody">Dark & Moody</SelectItem>
+                        <SelectItem value="Whimsical Children">Whimsical Children</SelectItem>
+                        <SelectItem value="Sci-Fi Futuristic">Sci-Fi Futuristic</SelectItem>
+                        <SelectItem value="Romance Soft">Romance Soft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Chapter (optional) */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Chapter (optional)</label>
+                    <Select 
+                      value={selectedChapter?.id || "none"} 
+                      onValueChange={(v) => setSelectedChapter(v === "none" ? null : chapters.find(c => c.id === v))}
+                    >
+                      <SelectTrigger className="rounded-sm" data-testid="art-chapter-select">
+                        <SelectValue placeholder="All chapters" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">All chapters</SelectItem>
+                        {chapters.map(c => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.chapter_number}. {c.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Additional Context</label>
+                  <Textarea
+                    placeholder="Describe the scene, mood, or specific elements you want in the artwork..."
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    className="min-h-[100px] rounded-sm resize-none"
+                    data-testid="art-context-input"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleGeneratePrompts}
+                    disabled={aiLoading || !selectedPreset}
+                    className="flex-1 rounded-sm"
+                    data-testid="generate-art-btn"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate {promptTypeOptions.find(o => o.value === promptType)?.label} Ideas
+                      </>
+                    )}
+                  </Button>
+                  {aiResponse && (
+                    <Button
+                      variant="outline"
+                      onClick={handleSaveAsset}
+                      className="rounded-sm"
+                      data-testid="save-art-asset-btn"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save as Asset
+                    </Button>
+                  )}
+                </div>
+
+                {/* AI Response */}
+                {aiResponse && (
+                  <div className="mt-4 p-4 bg-muted rounded-sm">
+                    <ScrollArea className="max-h-[300px]">
+                      <div className="ai-response text-sm whitespace-pre-wrap" data-testid="art-ai-response">
+                        {aiResponse}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Saved Assets */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-serif flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5" />
+                  Saved Assets
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  {artAssets.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                      <ImageIcon className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-sm text-center">
+                        No saved art assets yet. Generate prompts and save them here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {artAssets.map((asset) => (
+                        <div 
+                          key={asset.id} 
+                          className="p-3 bg-muted rounded-sm"
+                          data-testid={`art-asset-${asset.id}`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <Badge variant="outline" className="capitalize text-xs">
+                              {asset.type.replace("_", " ")}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteAsset(asset.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">
+                            Style: {asset.style_preset}
+                          </p>
+                          <p className="text-xs line-clamp-3">
+                            {asset.prompt_used.substring(0, 150)}...
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
