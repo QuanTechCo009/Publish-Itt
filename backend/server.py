@@ -1501,7 +1501,7 @@ async def update_art_profile(project_id: str, update: BookArtProfileUpdate):
 
 @api_router.post("/ai/art-profile-summary")
 async def generate_art_profile_summary(profile: BookArtProfileCreate):
-    """Generate AI summary for a book art profile"""
+    """Generate AI summary for a book art profile with targeted refinement suggestions"""
     
     context_parts = []
     if profile.genre:
@@ -1524,14 +1524,23 @@ async def generate_art_profile_summary(profile: BookArtProfileCreate):
 
 TASK:
 Create a concise Book Art Profile summarizing the visual identity.
-Offer 1–2 optional refinements to help the user clarify their style.
+Then provide 2-3 specific, actionable refinement suggestions to help clarify their visual style.
+
+REFINEMENT FOCUS AREAS (choose 2-3 based on what's missing or could be enhanced):
+- Line-and-texture approach (e.g., "Consider whether you want crisp digital lines or a softer watercolor texture")
+- Character stylization (e.g., "Think about whether characters should be round and playful or detailed and elegant")
+- Age-appropriate tone adjustments (e.g., "For middle grade, soften any dark elements with whimsical touches")
+- Color intensity and contrast (e.g., "Consider whether bold saturated colors or muted pastels better fit your mood")
+- Environmental style (e.g., "Decide if backgrounds should be detailed or minimal to focus on characters")
+- Lighting approach (e.g., "Warm golden light vs. cool mystical glows can shift the entire mood")
 
 IMPORTANT: You must respond with a JSON object in this exact format:
 {{
-    "summary": "<2-3 sentences describing the visual identity>",
-    "refinements": ["<refinement suggestion 1>", "<refinement suggestion 2>"]
+    "summary": "<2-3 sentences describing the visual identity in an evocative, inspiring way>",
+    "refinements": ["<specific suggestion 1 with example>", "<specific suggestion 2 with example>", "<specific suggestion 3 with example>"]
 }}
 
+Make refinements specific to THIS profile's genre, mood, and age group. Be friendly and helpful.
 Respond ONLY with the JSON object, no other text."""
     
     try:
@@ -1552,14 +1561,20 @@ Respond ONLY with the JSON object, no other text."""
         
         return {
             "summary": summary,
-            "refinements": refinements[:2]
+            "refinements": refinements[:3]  # Allow up to 3 refinements
         }
         
     except Exception as e:
         logger.error(f"Art profile summary generation failed: {e}")
+        # Provide genre-appropriate fallback refinements
+        fallback_refinements = [
+            "Consider your line-and-texture approach: Would watercolor softness, ink precision, or digital crispness best serve your story's mood?",
+            "Think about character stylization: Should figures be round and approachable for younger readers, or more detailed and elegant?",
+            "Reflect on your lighting choices: Warm golden tones create comfort, while cool blues add mystery."
+        ]
         return {
             "summary": "Your book's visual identity is taking shape. Add more details to help define the perfect artistic direction.",
-            "refinements": ["Consider specifying a dominant color scheme", "Add reference artists or styles you admire"]
+            "refinements": fallback_refinements
         }
 
 # ============== TONE PROFILE ENDPOINTS ==============
