@@ -224,6 +224,7 @@ export default function ArtStudio() {
     if (!selectedProject) return;
     
     setProfileSummaryLoading(true);
+    setRefinementsLoading(true);
     try {
       const res = await aiApi.generateArtProfileSummary({
         ...artProfile,
@@ -235,17 +236,10 @@ export default function ArtStudio() {
         ai_summary: res.data.summary
       }));
       
-      // Show refinements as a toast or in UI
+      // Store refinements for the bubble display
       if (res.data.refinements && res.data.refinements.length > 0) {
-        toast.info(
-          <div>
-            <p className="font-medium mb-1">Refinement suggestions:</p>
-            {res.data.refinements.map((r, i) => (
-              <p key={i} className="text-sm">• {r}</p>
-            ))}
-          </div>,
-          { duration: 8000 }
-        );
+        setRefinementSuggestions(res.data.refinements);
+        setShowRefinements(true);
       }
       
       setHasUnsavedChanges(true);
@@ -254,6 +248,38 @@ export default function ArtStudio() {
       toast.error("Failed to generate summary");
     } finally {
       setProfileSummaryLoading(false);
+      setRefinementsLoading(false);
+    }
+  };
+
+  const handleRegenerateRefinements = async () => {
+    if (!selectedProject) return;
+    
+    setRefinementsLoading(true);
+    try {
+      const res = await aiApi.generateArtProfileSummary({
+        ...artProfile,
+        project_id: selectedProject.id
+      });
+      
+      // Update refinements
+      if (res.data.refinements && res.data.refinements.length > 0) {
+        setRefinementSuggestions(res.data.refinements);
+        toast.success("Refinement suggestions updated!");
+      }
+      
+      // Also update summary if available
+      if (res.data.summary) {
+        setArtProfile(prev => ({
+          ...prev,
+          ai_summary: res.data.summary
+        }));
+        setHasUnsavedChanges(true);
+      }
+    } catch (error) {
+      toast.error("Failed to regenerate suggestions");
+    } finally {
+      setRefinementsLoading(false);
     }
   };
 
