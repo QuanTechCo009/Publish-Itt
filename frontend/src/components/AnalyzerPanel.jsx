@@ -140,12 +140,12 @@ export default function AnalyzerPanel({
     }
   }, [content, projectId, chapterId, projectTitle, ageGroup]);
 
-  // Auto-analyze on mount if enabled
+  // Auto-analyze when content becomes available or when tab is opened
   useEffect(() => {
-    if (autoAnalyzeOnMount && content && content.trim().length >= 30) {
+    if (autoAnalyzeOnMount && content && content.trim().length >= 30 && !toneStyleData && !toneStyleLoading) {
       runToneStyleAnalysis();
     }
-  }, [autoAnalyzeOnMount]); // Only run on mount
+  }, [autoAnalyzeOnMount, content, toneStyleData, toneStyleLoading, runToneStyleAnalysis]);
 
   // Detailed Import Analysis (existing functionality)
   const runDetailedAnalysis = async () => {
