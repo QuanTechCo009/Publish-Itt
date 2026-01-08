@@ -80,6 +80,16 @@ export const aiApi = {
     api.post('/ai/outline', { project_summary: projectSummary, target_chapter_count: targetChapterCount }),
   analyzeWorkflow: (statusDescription) => 
     api.post('/ai/workflow-analysis', { status_description: statusDescription }),
+  analyzeWorkflowStage: (manuscript, sectionInfo, workflowStage, goals, timeAway, ageGroup, projectId) =>
+    api.post('/ai/workflow-stage', {
+      manuscript,
+      section_info: sectionInfo,
+      workflow_stage: workflowStage,
+      goals,
+      time_away: timeAway,
+      age_group: ageGroup,
+      project_id: projectId
+    }),
   analyzeTone: (content, projectId, chapterId) => 
     api.post('/ai/analyze-tone', { content, project_id: projectId, chapter_id: chapterId }),
   generateArtPrompts: (projectId, chapterId, stylePreset, promptType, context) =>
