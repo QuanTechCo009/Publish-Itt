@@ -100,6 +100,14 @@ export default function ArtStudio() {
   const [showRefinements, setShowRefinements] = useState(false);
   const [refinementsLoading, setRefinementsLoading] = useState(false);
 
+  // Scene Extraction State
+  const [extractedScene, setExtractedScene] = useState("");
+  const [sceneExtracting, setSceneExtracting] = useState(false);
+  const [useExtractedScene, setUseExtractedScene] = useState(true);
+  
+  // Structured Art Prompt Output
+  const [artPromptResult, setArtPromptResult] = useState(null);
+
   useEffect(() => {
     loadInitialData();
   }, []);
