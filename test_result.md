@@ -132,6 +132,19 @@ frontend:
         agent: "main"
         comment: "Implemented Workflow Tab with: 1) WorkflowPanel component showing current stage (Idea Drop, Outline, Draft, Revise, Polish, Complete), 2) Auto-analyze on tab open, 3) Manual Refresh button, 4) AI-powered stage detection using new /api/ai/workflow-stage endpoint, 5) Progress bar and percentage, 6) Thad's personalized message, 7) Suggested next steps, 8) Stage timeline visualization. Screenshot verified all components working."
 
+backend:
+  - task: "Workflow Stage Analysis API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added POST /api/ai/workflow-stage endpoint with WorkflowStageAnalysisRequest/Response models. Uses WORKFLOW_STAGE_SYSTEM_PROMPT for AI analysis. Returns JSON with stage, message, next_steps, and progress_percent. Tested via frontend - AI correctly identified 'Draft' stage for existing manuscript."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
