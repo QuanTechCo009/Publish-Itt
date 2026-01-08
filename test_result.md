@@ -208,7 +208,19 @@ frontend:
         comment: "Added Refinement Suggestions bubble to Book Art Profile tab: 1) Purple-accented card with speech bubble styling, 2) Appears after generating Visual Identity Summary, 3) Shows 2-3 targeted refinement suggestions based on profile inputs, 4) Suggestions focus on line-and-texture approach, character stylization, age-appropriate tone, etc., 5) Refresh button to regenerate suggestions, 6) Close button to dismiss, 7) Helpful footer text explaining how to get new suggestions. Backend updated to provide more specific refinements based on genre, mood, and age group."
       - working: true
         agent: "testing"
-        comment: "✅ COMPREHENSIVE TESTING COMPLETED: All 7 test scenarios passed successfully. 1) Navigation: Art Studio page loads correctly, Book Art Profile tab accessible and functional. 2) Profile Form: All fields properly filled (Fantasy, Middle Grade, Whimsical, Storybook Illustration, Forest greens and golden highlights). 3) AI Summary Generation: Visual Identity Summary generates successfully with meaningful content. 4) Refinement Suggestions Bubble: Appears correctly with purple accent styling (data-testid='refinement-suggestions-card'), Lightbulb icon header, Refresh button (data-testid='regenerate-refinements-btn'), Close button (data-testid='close-refinements-btn'), and 3 numbered suggestions (data-testid='refinement-suggestion-0/1/2') with specific content about line-texture approach, character stylization, and lighting/color contrast. 5) Refresh Functionality: Works correctly, reloads suggestions. 6) Close Functionality: Successfully closes bubble while preserving Visual Identity Summary card. 7) Regenerate After Close: Bubble reappears correctly after clicking Generate Summary again. Feature is fully functional and meets all requirements."
+        comment: "✅ COMPREHENSIVE TESTING COMPLETED: All 7 test scenarios passed successfully. 1) Navigate and Setup: Successfully navigated to Art Studio, clicked Book Art Profile tab, filled all profile fields. 2) Generate Summary and Refinements: Visual Identity Summary generated and displayed correctly, Refinement Suggestions bubble appeared (data-testid='refinement-suggestions-card'). 3) Refinement Suggestions Content: Bubble has purple accent styling, 'Refinement Suggestions' header with Lightbulb icon, Refresh and Close buttons present, 3 numbered suggestions displayed targeting line-texture approach ('softer watercolor washes vs. crisp storybook linework'), character stylization ('rounder, simplified character shapes'), and age-appropriate framing. 4) Refresh Suggestions: Refresh button works, suggestions update with new AI-generated content. 5) Close Bubble: Close button dismisses bubble, Visual Identity Summary remains visible. 6) Regenerate After Close: Clicking Generate Summary again shows the refinement bubble. 7) All interactions smooth with proper loading states. Feature is fully functional and production-ready."
+
+  - task: "Scene-to-Art Prompt Generation in Art Studio"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/ArtStudio.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Enhanced Generate Art tab with scene extraction and structured output: 1) Auto-extracts visually rich moment when chapter selected, 2) Shows 'Extracted Scene' card with scene text, 3) Edit manually/Use extracted toggle, 4) Refresh button to re-extract, 5) Manual override via Additional Context textarea, 6) Structured output with Main Art Prompt, Focus Elements (Characters, Setting, Action), Refinement Suggestions, 7) Book Art Profile automatically applied to generation. Backend endpoints: POST /api/ai/extract-scene, POST /api/ai/scene-art-prompt. Screenshot verified all components working."
 
 backend:
   - task: "Workflow Stage Analysis API endpoint"
