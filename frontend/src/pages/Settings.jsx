@@ -54,6 +54,7 @@ const THEME_COLORS = {
 };
 
 export default function Settings() {
+  const navigate = useNavigate();
   const { theme, setTheme, themes } = useTheme();
   const [presets, setPresets] = useState([]);
   const [loading, setLoading] = useState(true);
