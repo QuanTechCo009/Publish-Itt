@@ -369,6 +369,21 @@ export default function ThadOnboarding({ open, onComplete }) {
                             </div>
                           </Button>
                         ))}
+                        
+                        {/* Take a Tour Button */}
+                        <Button
+                          variant="outline"
+                          className="justify-start h-auto py-3 px-4 rounded-sm text-left w-full border-accent/30 bg-accent/5"
+                          onClick={() => handleNextStep("take_tour")}
+                          data-testid="onboarding-take-tour"
+                        >
+                          <div className="flex items-start gap-3 w-full">
+                            <div className="shrink-0 mt-0.5">
+                              <Map className="h-4 w-4 text-accent" />
+                            </div>
+                            <span className="text-sm">Take a quick tour of Publish Itt</span>
+                          </div>
+                        </Button>
                       </div>
                     </div>
                   </ScrollArea>
