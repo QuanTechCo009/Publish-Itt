@@ -461,6 +461,13 @@ export default function Settings() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Guided Tour */}
+      <ThadTour
+        open={showTour}
+        onComplete={handleTourComplete}
+        userName={userName}
+      />
     </div>
   );
 }
