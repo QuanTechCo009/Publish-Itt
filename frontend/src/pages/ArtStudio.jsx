@@ -571,7 +571,7 @@ export default function ArtStudio() {
                     <div className="text-center py-4">
                       <Lightbulb className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
                       <p className="text-sm text-muted-foreground">
-                        Fill in your profile details and click "Generate Visual Identity Summary" to get an AI-crafted description of your book's visual style.
+                        Fill in your profile details and click &ldquo;Generate Visual Identity Summary&rdquo; to get an AI-crafted description of your book&apos;s visual style.
                       </p>
                     </div>
                   )}
