@@ -32,7 +32,13 @@ import {
   ArrowRight,
   Check,
   Lightbulb,
-  Wand2
+  Wand2,
+  Eye,
+  Users,
+  MapPin,
+  Zap,
+  Edit3,
+  RotateCcw
 } from "lucide-react";
 
 // Genre options
