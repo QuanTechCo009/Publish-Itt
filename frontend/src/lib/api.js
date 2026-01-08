@@ -100,14 +100,17 @@ export const aiApi = {
       goals: goals,
       age_group: ageGroup
     }),
-  generateArtPrompts: (projectId, chapterId, stylePreset, promptType, context) =>
+  generateArtPrompts: (projectId, chapterId, stylePreset, promptType, context, artProfile) =>
     api.post('/ai/art-prompts', { 
       project_id: projectId, 
       chapter_id: chapterId, 
       style_preset: stylePreset, 
       prompt_type: promptType,
-      context 
+      context,
+      art_profile: artProfile
     }),
+  generateArtProfileSummary: (profile) =>
+    api.post('/ai/art-profile-summary', profile),
   askThad: (query, context) => api.post('/ai/ask-thad', { query, context }),
   thadWelcome: (userName, bookTitle, ageGroup, theme, deviceType) =>
     api.post('/ai/thad/welcome', {
