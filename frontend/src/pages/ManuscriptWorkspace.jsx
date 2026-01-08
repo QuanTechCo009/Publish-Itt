@@ -964,6 +964,9 @@ export default function ManuscriptWorkspace() {
                       content={editor?.getText() || ""}
                       chapterId={selectedChapter?.id}
                       projectId={selectedProject?.id}
+                      projectTitle={selectedProject?.title}
+                      ageGroup={selectedProject?.age_group}
+                      autoAnalyzeOnMount={true}
                       onApplyChange={(newContent) => {
                         if (editor) {
                           editor.commands.setContent(newContent);
