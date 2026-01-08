@@ -1548,46 +1548,110 @@ Respond ONLY with the JSON object, no other text."""
             progress_percent=50
         )
 
-@api_router.post("/ai/analyze-tone", response_model=AIResponse)
+@api_router.post("/ai/analyze-tone", response_model=ToneStyleAnalysisResponse)
 async def analyze_tone(request: ToneAnalysisRequest):
-    prompt = f"""Target reader: 3rd–5th grade.
+    """Enhanced Tone & Style Analysis with structured output"""
+    
+    # Build context from request
+    context_parts = []
+    
+    if request.content:
+        # Truncate content for analysis (first 4000 chars for efficiency)
+        content_preview = request.content[:4000]
+        if len(request.content) > 4000:
+            content_preview += "... [truncated for analysis]"
+        context_parts.append(f"Manuscript text:\n{content_preview}")
+    
+    if request.section_info:
+        context_parts.append(f"Section metadata: {request.section_info}")
+    
+    if request.intended_tone:
+        context_parts.append(f"Intended tone: {request.intended_tone}")
+    
+    if request.goals:
+        context_parts.append(f"Writing goals: {request.goals}")
+    
+    if request.age_group:
+        context_parts.append(f"Target age group: {request.age_group}")
+    
+    user_context = "\n".join(context_parts) if context_parts else "No content provided."
+    
+    prompt = f"""USER CONTEXT:
+{user_context}
 
-Task:
-- Analyze the tone, reading level, and pacing of the following text.
-- Provide:
-  1) A short description of the current tone.
-  2) A reading level impression (simple, not technical).
-  3) Notes on pacing (fast, slow, dense, airy).
-  4) Any noticeable shifts in voice or formality.
-  5) 2–3 suggestions to better align with the target reader and the author's brand.
+TASK:
+Analyze the tone and style of the provided text. 
+Identify the tone, describe the style, and offer 1–2 supportive suggestions.
 
-Text:
-{request.content}"""
+IMPORTANT: You must respond with a JSON object in this exact format:
+{{
+    "tone_analysis": "<2-3 sentences describing the tone>",
+    "style_analysis": "<2-3 sentences describing the writing style>",
+    "suggestions": ["<suggestion 1>", "<suggestion 2>"],
+    "reading_level": "<estimated reading level>"
+}}
+
+Respond ONLY with the JSON object, no other text."""
     
-    response = await get_ai_response(TONE_STYLE_SYSTEM_PROMPT, prompt)
-    
-    # Save tone profile
-    tone_profile = ToneProfile(
-        project_id=request.project_id,
-        chapter_id=request.chapter_id,
-        detected_tone="See analysis",
-        reading_level="See analysis",
-        pacing_notes="See analysis",
-        voice_notes="See analysis",
-        suggestions=["See full analysis for suggestions"]
-    )
-    
-    # Update or insert tone profile
-    if request.chapter_id:
-        await db.tone_profiles.update_one(
-            {"chapter_id": request.chapter_id},
-            {"$set": tone_profile.model_dump()},
-            upsert=True
+    try:
+        response = await get_ai_response(TONE_STYLE_ANALYSIS_SYSTEM_PROMPT, prompt)
+        
+        # Parse JSON from response
+        import json
+        import re
+        
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[^{}]*\}', response, re.DOTALL)
+        if json_match:
+            parsed = json.loads(json_match.group())
+            tone_analysis = parsed.get("tone_analysis", "Unable to analyze tone.")
+            style_analysis = parsed.get("style_analysis", "Unable to analyze style.")
+            suggestions = parsed.get("suggestions", ["Continue writing", "Review your content"])
+            reading_level = parsed.get("reading_level", "Not determined")
+        else:
+            # Fallback if JSON parsing fails
+            tone_analysis = response[:500] if response else "Unable to analyze tone."
+            style_analysis = "See tone analysis for style notes."
+            suggestions = ["Continue developing your voice", "Consider your target reader"]
+            reading_level = "Not determined"
+        
+        # Save tone profile to database
+        tone_profile = ToneProfile(
+            project_id=request.project_id,
+            chapter_id=request.chapter_id,
+            detected_tone=tone_analysis,
+            reading_level=reading_level,
+            pacing_notes=style_analysis,
+            voice_notes="",
+            suggestions=suggestions
         )
-    else:
-        await db.tone_profiles.insert_one(tone_profile.model_dump())
-    
-    return AIResponse(response=response, module="tone")
+        
+        # Update or insert tone profile
+        if request.chapter_id:
+            await db.tone_profiles.update_one(
+                {"chapter_id": request.chapter_id},
+                {"$set": tone_profile.model_dump()},
+                upsert=True
+            )
+        else:
+            await db.tone_profiles.insert_one(tone_profile.model_dump())
+        
+        return ToneStyleAnalysisResponse(
+            tone_analysis=tone_analysis,
+            style_analysis=style_analysis,
+            suggestions=suggestions[:2],  # Limit to 2 suggestions
+            reading_level=reading_level
+        )
+        
+    except Exception as e:
+        logger.error(f"Tone & Style analysis failed: {e}")
+        # Return sensible defaults
+        return ToneStyleAnalysisResponse(
+            tone_analysis="I'm ready to analyze your writing! Add some content and I'll help you understand its tone.",
+            style_analysis="Once you have content to analyze, I'll describe your writing style and voice.",
+            suggestions=["Start writing to see tone analysis", "Share your manuscript for style insights"],
+            reading_level="Not yet determined"
+        )
 
 @api_router.post("/ai/art-prompts", response_model=AIResponse)
 async def generate_art_prompts(request: ArtPromptRequest):
