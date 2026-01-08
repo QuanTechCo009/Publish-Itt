@@ -30,6 +30,7 @@ import { GENRES, AGE_GROUPS, WRITING_STYLES, getGenresByCategory } from "@/lib/c
 import { cn, statusColors, formatDate, formatWordCount, calculateProgress } from "@/lib/utils";
 import { toast } from "sonner";
 import ImportAnalysisDialog from "@/components/ImportAnalysisDialog";
+import ThadOnboarding from "@/components/ThadOnboarding";
 import { 
   Plus, 
   FileText, 
