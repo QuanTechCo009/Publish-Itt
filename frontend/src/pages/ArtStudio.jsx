@@ -342,24 +342,36 @@ export default function ArtStudio() {
     }
 
     setAiLoading(true);
+    setArtPromptResult(null);
+    
     try {
-      const contextText = context || selectedProject.summary || selectedProject.title;
+      // Determine scene text: use extracted scene if enabled, otherwise use manual context
+      const sceneText = useExtractedScene && extractedScene ? extractedScene : context;
       
-      // Include art profile in the generation
-      const profileContext = artProfile.ai_summary 
-        ? `\n\nBook Art Profile:\n${artProfile.ai_summary}\nMood: ${artProfile.mood}\nStyle: ${artProfile.art_style_preferences}\nColors: ${artProfile.color_palette}`
-        : "";
+      if (!sceneText && promptType !== "cover") {
+        toast.error("Please provide scene context or select a chapter");
+        setAiLoading(false);
+        return;
+      }
       
-      const res = await aiApi.generateArtPrompts(
+      const res = await aiApi.generateSceneArtPrompt(
         selectedProject.id,
         selectedChapter?.id,
-        selectedPreset,
+        sceneText || selectedProject.summary || selectedProject.title,
         promptType,
-        contextText + profileContext,
+        selectedPreset,
         artProfile
       );
-      setAiResponse(res.data.response);
+      
+      // Store structured result
+      setArtPromptResult(res.data);
+      
+      // Keep legacy response for saving
+      setAiResponse(res.data.main_prompt || res.data.response);
+      
+      toast.success("Art prompt generated!");
     } catch (error) {
+      console.error("Generation failed:", error);
       toast.error("Failed to generate art prompts");
     } finally {
       setAiLoading(false);
@@ -367,7 +379,8 @@ export default function ArtStudio() {
   };
 
   const handleSaveAsset = async () => {
-    if (!aiResponse || !selectedProject) return;
+    const promptToSave = artPromptResult?.main_prompt || aiResponse;
+    if (!promptToSave || !selectedProject) return;
     
     try {
       await artAssetApi.create({
@@ -375,7 +388,7 @@ export default function ArtStudio() {
         chapter_id: selectedChapter?.id,
         type: promptType,
         style_preset: selectedPreset,
-        prompt_used: aiResponse,
+        prompt_used: promptToSave,
         status: "generated"
       });
       loadArtAssets(selectedProject.id);
