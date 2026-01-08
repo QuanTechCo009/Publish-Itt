@@ -44,6 +44,7 @@ import VersionsPanel from "@/components/VersionsPanel";
 import NotesPanel from "@/components/NotesPanel";
 import WritingStatsPanel from "@/components/WritingStatsPanel";
 import AnalyzerPanel from "@/components/AnalyzerPanel";
+import WorkflowPanel from "@/components/WorkflowPanel";
 import { 
   Plus, 
   Save,
@@ -77,7 +78,8 @@ import {
   GitBranch,
   BarChart3,
   Zap,
-  Check
+  Check,
+  Workflow
 } from "lucide-react";
 
 // Auto-save interval in milliseconds (10 minutes)
