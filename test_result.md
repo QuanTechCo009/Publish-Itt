@@ -120,6 +120,18 @@ frontend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: All test scenarios passed successfully. 1) Button visibility: Reset Onboarding button (data-testid='reset-onboarding-btn') is visible in General section near Guided Tour button. 2) Reset flow: Button click successfully clears all localStorage keys (thad_onboarding_complete, thad_user_name, thad_tour_complete) and redirects to Dashboard. 3) Welcome Experience: Onboarding dialog appears correctly with 'Let's Get Started' button (data-testid='onboarding-get-started') and skip option. 4) localStorage verification: All onboarding keys properly cleared after reset. Feature works exactly as specified in requirements."
 
+  - task: "Workflow Tab in Manuscript Workspace"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/WorkflowPanel.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented Workflow Tab with: 1) WorkflowPanel component showing current stage (Idea Drop, Outline, Draft, Revise, Polish, Complete), 2) Auto-analyze on tab open, 3) Manual Refresh button, 4) AI-powered stage detection using new /api/ai/workflow-stage endpoint, 5) Progress bar and percentage, 6) Thad's personalized message, 7) Suggested next steps, 8) Stage timeline visualization. Screenshot verified all components working."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
