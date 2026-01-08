@@ -8,72 +8,82 @@
     - CRUD for books (manuscripts), chapters, versions, and notes.
     - Rich text editor for chapter content.
     - Version control system with side-by-side diff comparison and auto-saving.
-    - A Writing Statistics panel to track user activity (word count, streaks, time).
+    - A Writing Statistics panel to track user activity.
     - A global theming system for UI customization.
     - An enhanced Magic Import Wizard that automatically analyzes imported files and offers a Fix Everything Automatically option.
-    - Removal of all Bigfoot branding and a UI polish to be more sleek and modern.
+    - A multi-step, personalized onboarding flow and guided tour led by the AI assistant, Thad.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application (FastAPI + React) rebranded as Publish Itt. The backend uses MongoDB and includes all necessary models and API endpoints for managing manuscripts, chapters, versions, notes, and writing statistics. The frontend features a multi-pane  with a rich text editor, sidebars for data management (Chapters, Versions, Notes, Analyzer) and AI tools (AI Assistant, Writing Stats). A global theme system is in place, and all previous Bigfoot branding has been removed. Scrolling issues in the sidebars have been resolved.
+A full-stack application (FastAPI + React) named Publish Itt. The backend uses MongoDB and includes all necessary models and API endpoints for managing manuscripts, chapters, versions, notes, and writing statistics. The frontend features a multi-pane  with a rich text editor, sidebars for data management, and AI tools. A global theme system is in place.
 
-**Last working item**: The agent was preparing to implement the Magic Import Wizard, an enhancement to the manuscript import process. This involves automatically running an AI analysis on imported files and providing the user with powerful, one-click fix options.
+Key implemented features include:
+- A fully functional and tested Magic Import Wizard for analyzing and cleaning manuscripts.
+- A Rewrite for Tone feature with Apply/Deny functionality.
+- An Import Manuscript option integrated into the Start New Book dialog on the Dashboard.
+- A feature to rename manuscripts directly from the Dashboard.
+- A complete, AI-powered, multi-step onboarding and guided tour experience led by the AI assistant Thad.
 
-- **Last item agent was working:** Enhancing the  component to automatically trigger analysis upon opening and to include a Fix Everything Automatically button, as specified by the user's THADDAEUS persona.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** both. The backend will need  tests for the new Fix Everything endpoint. The frontend requires the testing agent to validate the complete import-analyze-fix workflow.
+**Last working item**: The agent implemented the user's request to add a button on the Settings page that allows any user to restart the guided tour.
+
+- **Last item agent was working:** Adding a Guided Tour button to the  page and wiring it to trigger the  component.
+- **Status:** USER VERIFICATION PENDING
+- **Agent Testing Done:** Y
+- **Which testing method agent to use?** Frontend testing agent to confirm clicking the Start Tour button on the settings page correctly initiates the full guided tour from step 1.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-There are no outstanding bugs. The primary data model conflict from the previous session has been successfully resolved.
+There are no outstanding bugs or issues. All recent user requests have been addressed.
 
 **In progress Task List**:
-- **Task 1: Implement the Magic Import Wizard (P0)**
-  - **Where to resume:** The agent has viewed . The next step is to modify this file to add the new UI elements and logic for auto-analysis and the Fix Everything button. This will also involve adding a new function to  and a corresponding endpoint in .
-  - **What will be achieved with this?** A streamlined import process where the AI (THADDAEUS) automatically analyzes new manuscripts and provides the user with powerful, one-click options to structure and clean their document, fulfilling a core requirement of the THADDAEUS persona.
-  - **Status:** IN PROGRESS
-  - **Should Test frontend/backend/both after fix?** both
-  - **Blocked on something:** None.
+- None.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-  - **Task 1 (P1): Fully implement individual Implement Changes actions.** The backend logic for the  endpoint needs to be completed for each specific analysis finding (e.g., apply formatting, split chapter).
-  - **Task 2 (P2): Implement a generic Style Conversion feature.** Based on the user's Bigfoot Style Conversion request (but without the Bigfoot branding). This requires user clarification on which styles to support.
+    - **Task 1 (P1): Fully implement individual Implement Changes actions.** The backend logic for the  endpoint needs to be completed for each specific analysis finding (e.g., applying formatting changes directly to the editor content).
+    - **Task 2 (P2): Implement a Style Conversion feature.** Based on the user's earlier Bigfoot Style Conversion request, but without the Bigfoot branding. This requires clarification on which styles to support.
 - **Future Tasks:**
-  - **Task 1 (P2): Implement the Workflow tab** in the Manuscript Workspace, with features for stage detection and next-step recommendations.
-  - **Task 2 (P2): Enhance the Art Studio** with the planned cover, chapter, and spot illustration generators.
-  - **Task 3 (P3): Add custom notifications/nudges** for writing goals to motivate the user.
-  - **Task 4 (P3): Implement Lantern Path mapping** and analysis, as mentioned in the THADDAEUS persona.
+    - **Task 1 (P2): Implement the Workflow tab** in the Manuscript Workspace, with features for stage detection and next-step recommendations.
+    - **Task 2 (P2): Enhance the Art Studio** with cover, chapter, and spot illustration generators.
+    - **Task 3 (P3): Add custom notifications/nudges** for writing goals to motivate the user.
+    - **Task 4 (P3): Implement Lantern Path mapping** and analysis, as mentioned in the THADDAEUS persona.
+    - **Task 5 (P3): Add a style selection dropdown** to the Rewrite for Tone feature (e.g., Professional, Playful).
+    - **Task 6 (P3): Add a Merge Chapters feature** to combine multiple chapters into one.
 
 **Completed work in this session**
-- **Data Model Migration:** Migrated the data structure from / to // and resolved the data model conflict.
-- **Version Control System:** Implemented a full versioning system, including manual creation, side-by-side diff comparison, and an auto-save feature (snapshots after 10 minutes of editing).
-- **Writing Statistics Dashboard:** Created a new feature to track and display daily word counts, writing streaks, and weekly activity via a dedicated panel.
-- **THADDAEUS Persona Integration (Phase 1 & 2):**
-  - Implemented a global UI theme system with five selectable themes.
-  - Created and integrated a new Analyzer panel into the manuscript workspace.
-  - Enforced descending sort order for version and note lists.
-- **Rebranding and UI Polish:** Renamed the app to Publish Itt, removed all Bigfoot references, added comprehensive genre/age group options, and applied a more modern UI style.
-- **Bug Fix:** Fixed all scrolling issues in the left and right sidebars of the .
+- **Magic Import Wizard (Phase 1):** Completed the UI and backend logic for auto-analysis and the Fix Everything Automatically button. This was thoroughly tested and confirmed working.
+- **Chapter Splitting Feature:** Implemented and repeatedly refined a robust chapter splitting feature that works on import (especially from DOCX) and correctly handles various chapter heading formats.
+- **Analyzer Panel Fix:** Fixed a bug where the Analyze button was unresponsive due to an incorrect API call.
+- **Rewrite for Tone Apply/Deny Buttons:** Implemented UI to allow users to accept or reject AI-generated text rewrites.
+- **Dashboard UI/UX Enhancements:**
+    - Relocated the Import Manuscript button into the Start New Book dialog for a cleaner interface.
+    - Added a feature to rename manuscripts directly from the project cards on the Dashboard.
+- **Thad Onboarding & Guided Tour:**
+    - Created backend endpoints to dynamically generate personalized welcome messages and tour steps using AI.
+    - Built a multi-step onboarding flow () for new users that collects context and provides a personalized AI welcome.
+    - Fixed a UI bug where the AI's welcome message overflowed its container.
+    - Built a 6-step guided tour () of the application's key features, which can be triggered after onboarding.
+    - Added a Guided Tour button to the Settings page to allow any user to re-take the tour.
 
 **Earlier issues found/mentioned but not fixed**
-- None.
+- **Issue 1:** The Writing Style options (e.g., Narrative First Person, Academic) are hardcoded in .
+    - **Debug checklist:** Move the array of writing styles from  to the  file and import it back into the Dashboard.
+    - **Why to solve this issue and what will be achieved with this?** This is a code quality improvement that centralizes constants, making the application easier to maintain and update.
+    - **Should Test frontend/backend/both after fix:** frontend
+    - **Is recurring issue?** N
 
 **Known issue recurrence from previous fork**
-- **Issue:** The previous agent did not act on test results.
-- **Recurrence count:** 1
-- **Status:** RESOLVED. The current agent ran comprehensive tests using the testing agent and reviewed the results before proceeding.
+- None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, Pydantic, Motor (async MongoDB).
-- **Frontend:** React, Tailwind CSS, shadcn/ui, TipTap editor, , .
-- **AI Integration:** Backend-driven AI logic using the  library.
-- **State Management:** React Hooks (, , ).
+- **Backend:** FastAPI, Pydantic, Motor (async MongoDB), .
+- **Frontend:** React, Tailwind CSS, shadcn/ui, TipTap editor, .
+- **AI Integration:** Backend-driven AI logic using the  library to call OpenAI models.
+- **State Management:** React Hooks (, , ),  for onboarding status.
 
 **key DB schema**
 - : {title, raw_content, processed_content, version_id_current}
@@ -87,47 +97,56 @@ There are no outstanding bugs. The primary data model conflict from the previous
 - None.
 
 **All files of reference**
-- : The single source of truth for all backend logic.
-- : The core and most complex UI component.
-- : The application's entry point.
-- : All client-side API call functions.
-- : The component for the current import workflow task.
-- : Manages the global UI theme.
-- : The Product Requirements Document, updated throughout the session.
+- : Heavily modified to add new endpoints (, , ) and fix chapter detection logic.
+- : Modified to fix the analyzer panel and implement the Rewrite for Tone apply/deny feature.
+- : Modified to move the import button, add the rename feature, and integrate the new onboarding flow.
+- : Modified to add the Guided Tour button.
+- : Modified to integrate the  call into the Fix Everything flow.
+- : New component for the user onboarding experience.
+- : New component for the guided product tour.
+- : Updated with new functions for the new backend endpoints.
+- : Updated to reflect completed work.
+
+**Areas that need refactoring**:
+- **Hardcoded Constants:** The Writing Style options should be moved from  to  to centralize configuration.
+
+**key api endpoints**
+- : Takes manuscript content and returns a list of created chapter objects.
+- : Takes user context (name, book title, etc.) and generates a personalized welcome message.
+- : Takes user context and the current tour step to generate the text for the next step of the guided tour.
+- : Updates the title of a manuscript.
 
 **Critical Info for New Agent**
-- **THADDAEUS Persona is Law:** A detailed user message outlines the THADDAEUS AI persona. This document is the primary source of truth for all future features, UI behavior, and automated workflows. Adhere to it strictly.
-- **App is Publish Itt:** The app has been rebranded. Ensure all new UI and text reflects the Publish Itt name.
-- **No Bigfoot:** The user has explicitly forbidden any mention of Bigfoot. Do not re-introduce this branding in any form.
-- **Current Task:** The immediate focus is implementing the Magic Import Wizard, starting with the  component.
+- **THADDAEUS Persona is Law:** All AI-generated text and feature behavior must strictly adhere to the detailed persona provided by the user. The prompts are now integrated into the backend for the onboarding and tour features.
+- **Onboarding Flow:** The onboarding flow is controlled by a  flag in . To re-test it as a new user, this flag must be cleared.
+- **Chapter Splitting Nuances:** The chapter splitting logic went through many iterations. The final robust version is in  and relies on a flexible regex pattern to handle various chapter heading formats, especially those found in DOCX files. The import analysis () uses truncated content for performance, while the actual splitting () uses the full content.
 
 **documents and test reports created in this job**
+-  (Updated)
 - 
 - 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1. **User:** Not yet, Thank you. Continue (Gives go-ahead to work on next planned item)
-2. **User:** Keep Bigfoot out of this completely. (Final confirmation to remove all Bigfoot references)
-3. **User:** Can you please remove anything related to the Bigfoot Financial Adventures? [..] rename the app to Publish Itt. Thank you! (Major request for rebranding and UI polish)
-4. **User:** Can you please analyze and fix all scrolling issues attributed to the AI side panel? (Bug fix request for UI scrolling)
-5. **User:** (Approves THADDAEUS plan) 1. a, 2. b, 3. b, 4. In order of answers
-6. **User:** (Provides the full THADDAEUS persona as a large block of text defining app behavior)
-7. **User:** I love it! Let's add it. (Approves adding the Writing Statistics feature)
-8. **User:** Let's do that. Save a version snapshot after 10 minutes of editing, please! (Approves adding the auto-save version feature)
-9. **User:** Yes please! (Approves adding the version comparison feature)
-10. **User:** 1. Migrate, 2. b, 3. Proceed (Initial plan approval for data model migration)
-
-**Pending Human Messages:** None.
+1. **Request:** Add a Guided Tour button to the Settings page to re-trigger the tour. (IN PROGRESS at end of session)
+2. **Approval:** Confirmed the simulated onboarding and tour flow is working correctly.
+3. **Request:** Please reload the preview as a new user and trigger the Guided Tour flow...so I can verify.
+4. **Approval:** Confirmed the guided tour implementation is working.
+5. **Request:** Thad’s welcome message is rendering outside the intended message container. Please ensure the generated text is visually contained... (FIXED)
+6. **Approval:** The Thad onboarding welcome message prompt is good.
+7. **Request:** Implement the Thad onboarding as a flow (Option #4) with dynamic AI-generated messages.
+8. **Info:** Provided the system prompt for Thad's welcome message.
+9. **Approval:** The manuscript rename feature is working beautifully.
+10. **Request:** Can you create a way to rename the manuscript in the panel on the Dashboard? (IMPLEMENTED)
 
 **Project Health Check:**
 - **Broken:** None.
 - **Mocked:** None.
 
 **3rd Party Integrations**
-- **OpenAI** (model not specified) — uses Emergent LLM Key for all AI-powered text generation.
+- **OpenAI** (model not specified) — uses Emergent LLM Key for all AI-powered text generation via the  library.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES.
+- **Testing agent used after significant changes:** YES. The agent used the testing agent to validate the Magic Import Wizard and the chapter splitting functionality.
 - **Troubleshoot agent used after agent stuck in loop:** NO.
 - **Test files created:** None.
 - **Known regressions:** None.
@@ -136,4 +155,4 @@ There are no outstanding bugs. The primary data model conflict from the previous
 No authentication is required for this application.
 
 **What agent forgot to execute**
-- The agent created a  file for genres and age groups but did not move the Writing Style options into it; they remain hardcoded in . This is a minor cleanup task.</analysis>
+- The agent did not address the minor refactoring task mentioned in the previous handoff: moving the hardcoded Writing Style options from  to .</analysis>
