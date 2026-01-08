@@ -171,6 +171,31 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Styled suggestion box with label "Suggested Rewrite"
 - [x] Dismiss button for non-rewrite AI responses
 
+### Phase 14: Thad Onboarding & Tour (Jan 6-8, 2026) ✅
+- [x] Multi-step onboarding flow with Thad persona
+- [x] Guided tour with highlight targets
+- [x] "Reset Onboarding" button in Settings
+- [x] Tour can be restarted from Settings
+
+### Phase 15: Advanced Modules (Jan 6-8, 2026) ✅
+- [x] Workflow Tab - AI-powered workflow stage analysis (Idea Drop → Outline → Draft → Revise → Polish → Complete)
+- [x] Enhanced Tone & Style Analysis - Structured analysis cards for Tone, Style, and Suggestions
+- [x] Writing Momentum Summary - AI-generated summary based on writing statistics
+- [x] Daily Goals System - User-set word/time goals with auto-reset at midnight
+- [x] Book Art Profile - Visual identity definition (genre, mood, art style, color palette)
+- [x] Scene-to-Art Prompt Generation - Extract visually rich scenes and generate structured art prompts
+
+### Phase 16: Implement Changes Backend Logic (Jan 8, 2026) ✅
+- [x] POST /api/ai/import/implement endpoint for applying Magic Import Wizard actions
+- [x] autoformat action - AI cleans content and updates chapter in database
+- [x] remove_notes action - AI removes inline notes and updates chapter
+- [x] store_notes action - Creates Note records from extracted_notes array
+- [x] convert_notes action - Categorizes notes into chapter_notes/revision_notes/author_intent
+- [x] Version snapshots created before content changes
+- [x] Word count recalculated after content updates
+- [x] Frontend ImportAnalysisDialog updated to call implement endpoint
+- [x] Full test coverage (16 additional tests passing)
+
 ## API Endpoints
 
 ### Projects
