@@ -163,6 +163,18 @@ backend:
         agent: "testing"
         comment: "✅ BACKEND API ENDPOINT VERIFIED: POST /api/ai/workflow-stage endpoint working correctly. API successfully analyzes manuscript content and returns proper JSON response with stage='Draft', progress_percent=50, personalized message from Thad, and actionable next_steps array. Integration with frontend WorkflowPanel confirmed - auto-analysis triggers on tab open and manual refresh works. AI analysis is contextual and provides meaningful workflow guidance."
 
+  - task: "Enhanced Tone & Style Analysis API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Updated POST /api/ai/analyze-tone endpoint with ToneStyleAnalysisResponse model. Returns structured JSON with tone_analysis, style_analysis, suggestions[], and reading_level. Uses TONE_STYLE_ANALYSIS_SYSTEM_PROMPT for AI analysis."
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
