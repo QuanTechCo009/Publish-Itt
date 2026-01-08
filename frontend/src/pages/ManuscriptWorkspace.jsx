@@ -763,10 +763,14 @@ export default function ManuscriptWorkspace() {
             data-testid="manuscript-panel"
           >
             <Tabs defaultValue="chapters" className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="w-full grid grid-cols-4 mx-3 mt-3 rounded-sm" data-testid="sidebar-tabs">
+              <TabsList className="w-full grid grid-cols-5 mx-3 mt-3 rounded-sm" data-testid="sidebar-tabs">
                 <TabsTrigger value="chapters" className="text-xs rounded-sm" data-testid="chapters-tab">
                   <BookOpen className="h-3.5 w-3.5 mr-1" />
                   Chapters
+                </TabsTrigger>
+                <TabsTrigger value="workflow" className="text-xs rounded-sm" data-testid="workflow-tab">
+                  <Workflow className="h-3.5 w-3.5 mr-1" />
+                  Workflow
                 </TabsTrigger>
                 <TabsTrigger value="versions" className="text-xs rounded-sm" data-testid="versions-tab">
                   <History className="h-3.5 w-3.5 mr-1" />
