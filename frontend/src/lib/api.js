@@ -98,6 +98,15 @@ export const aiApi = {
       age_group: ageGroup,
       theme: theme,
       device_type: deviceType
+    }),
+  thadTour: (userName, bookTitle, ageGroup, theme, deviceType, currentStep) =>
+    api.post('/ai/thad/tour', {
+      user_name: userName,
+      book_title: bookTitle,
+      age_group: ageGroup,
+      theme: theme,
+      device_type: deviceType,
+      current_step: currentStep
     })
 }
 
