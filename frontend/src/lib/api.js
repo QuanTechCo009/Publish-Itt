@@ -210,7 +210,18 @@ export const statsApi = {
   getDailyStats: (date) => api.get(`/stats/daily/${date}`),
   getStreak: () => api.get('/stats/streak'),
   getOverview: () => api.get('/stats/overview'),
-  getWeekly: () => api.get('/stats/weekly')
+  getWeekly: () => api.get('/stats/weekly'),
+  getMomentum: (dailyWords, weeklyWords, streak, totalWords, sessionMinutes, timeAway, goals, ageGroup) =>
+    api.post('/ai/writing-momentum', {
+      daily_words: dailyWords,
+      weekly_words: weeklyWords,
+      streak: streak,
+      total_words: totalWords,
+      session_minutes: sessionMinutes,
+      time_away: timeAway,
+      goals: goals,
+      age_group: ageGroup
+    })
 }
 
 // Import Manuscript Action
