@@ -63,6 +63,9 @@ export default function Dashboard() {
   });
   const [creating, setCreating] = useState(false);
   
+  // Onboarding state
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  
   // Upload state
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
