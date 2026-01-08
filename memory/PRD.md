@@ -233,6 +233,7 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - `POST /api/ai/ask-thad` - General AI query
 - `POST /api/ai/import/analyze` - Import analysis
 - `POST /api/ai/import/action` - Execute import action
+- `POST /api/ai/import/implement` - Implement changes to chapter content
 - `POST /api/ai/market/*` - Market intelligence endpoints
 
 ### Upload
