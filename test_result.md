@@ -165,6 +165,18 @@ frontend:
         agent: "testing"
         comment: "✅ COMPREHENSIVE TESTING COMPLETED: All test scenarios passed successfully. 1) Tab visibility: Stats tab (data-testid='stats-tab') is visible and clickable in Manuscript Workspace right panel. 2) Stats Panel Content: WritingStatsPanel (data-testid='writing-stats-panel') loads correctly. 3) Thad's Momentum Card: 'Your Momentum' card (data-testid='momentum-card') appears at top with Sparkles icon and Refresh button (data-testid='refresh-momentum-btn'). Auto-analysis works perfectly - momentum message displays: 'You stepped into the story-road for the first time and still summoned 18,588 words in a single 144-minute session...' with 2 supportive suggestions. 4) Numerical Stats: All preserved - streak count (1), today's words (18,588), daily progress bar, weekly chart with 7 day bars, and all 4 summary stats (Total Time: 2h 24m, Avg Words: 32600, Total Words: 228,199, Days Active: 7). Longest streak badge also present. 5) Refresh functionality: Works perfectly with loading states and message refresh. Backend /api/ai/writing-momentum endpoint integration confirmed working. Feature is fully functional and meets all requirements."
 
+  - task: "Daily Goals Auto-Reset System"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/WritingStatsPanel.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented Daily Goals auto-reset system: 1) Reset at midnight in user's local timezone, 2) Reset after 24 hours of inactivity, 3) Reset when app opened on new day, 4) Clears word-count goals, time-based goals, and saved preferences, 5) Shows 'Daily Goals Refreshed' notification with Set Goals and Dismiss buttons, 6) Set Goals dialog with Word Count and Time Goal inputs, 7) Auto-Reset Info shown in dialog explaining reset behavior. Screenshot verified goal dialog and edit functionality working."
+
 backend:
   - task: "Workflow Stage Analysis API endpoint"
     implemented: true
