@@ -88,7 +88,29 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadProjects();
+    
+    // Check if onboarding should be shown
+    const onboardingComplete = localStorage.getItem("thad_onboarding_complete");
+    if (!onboardingComplete) {
+      setShowOnboarding(true);
+    }
+    
+    // Handle URL action params (from onboarding)
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("action");
+    if (action === "new_project") {
+      setDialogOpen(true);
+      // Clean up URL
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (action === "import") {
+      fileInputRef.current?.click();
+      window.history.replaceState({}, "", window.location.pathname);
+    }
   }, []);
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+  };
 
   const loadProjects = async () => {
     try {
