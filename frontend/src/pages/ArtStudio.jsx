@@ -94,6 +94,11 @@ export default function ArtStudio() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSummaryLoading, setProfileSummaryLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Refinement Suggestions State
+  const [refinementSuggestions, setRefinementSuggestions] = useState([]);
+  const [showRefinements, setShowRefinements] = useState(false);
+  const [refinementsLoading, setRefinementsLoading] = useState(false);
 
   useEffect(() => {
     loadInitialData();
