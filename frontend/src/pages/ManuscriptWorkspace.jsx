@@ -1337,7 +1337,10 @@ export default function ManuscriptWorkspace() {
               <TabsContent value="stats" className="flex-1 mt-0 overflow-hidden">
                 <ScrollArea className="h-full">
                   <div className="p-3">
-                    <WritingStatsPanel />
+                    <WritingStatsPanel 
+                      ageGroup={selectedProject?.age_group}
+                      autoAnalyzeOnMount={true}
+                    />
                   </div>
                 </ScrollArea>
               </TabsContent>
