@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,8 @@ import {
   Flame,
   Check,
   Map,
-  Sparkles
+  Sparkles,
+  RotateCcw
 } from "lucide-react";
 import ThadTour from "@/components/ThadTour";
 
