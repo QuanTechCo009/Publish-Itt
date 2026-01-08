@@ -104,19 +104,26 @@ export default function ThadOnboarding({ open, onComplete }) {
     localStorage.setItem("thad_onboarding_complete", "true");
     localStorage.setItem("thad_user_name", userName);
     
-    if (onComplete) {
-      onComplete();
-    }
-    
     // Navigate based on action
-    if (action === "start_writing") {
-      // Will trigger the new project dialog
+    if (action === "take_tour") {
+      // Show the guided tour
+      setShowTour(true);
+    } else if (action === "start_writing") {
+      if (onComplete) onComplete();
       navigate("/?action=new_project");
     } else if (action === "import") {
+      if (onComplete) onComplete();
       navigate("/?action=import");
     } else {
-      // Just close and explore
+      if (onComplete) onComplete();
       navigate("/");
+    }
+  };
+
+  const handleTourComplete = () => {
+    setShowTour(false);
+    if (onComplete) {
+      onComplete();
     }
   };
 
@@ -126,6 +133,20 @@ export default function ThadOnboarding({ open, onComplete }) {
       onComplete();
     }
   };
+
+  // If showing tour, render tour instead
+  if (showTour) {
+    return (
+      <ThadTour
+        open={true}
+        onComplete={handleTourComplete}
+        userName={userName}
+        bookTitle={bookTitle}
+        ageGroup={ageGroup}
+        theme={theme}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
