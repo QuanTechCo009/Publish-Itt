@@ -179,6 +179,15 @@ export const importAnalysisApi = {
       project_id: projectId, 
       chapter_id: chapterId 
     }),
+  implementAction: (action, originalContent, chapterId, projectId, extractedNotes = null) =>
+    api.post('/ai/import/implement', {
+      action,
+      original_content: originalContent,
+      chapter_id: chapterId,
+      project_id: projectId,
+      apply_content: true,
+      extracted_notes: extractedNotes
+    }),
   splitAndCreateChapters: (content, projectId, manuscriptId) =>
     api.post('/ai/import/split-chapters', {
       content,
