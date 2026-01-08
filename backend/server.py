@@ -1580,6 +1580,85 @@ Respond ONLY with the JSON object, no other text."""
             progress_percent=50
         )
 
+@api_router.post("/ai/writing-momentum", response_model=WritingMomentumResponse)
+async def analyze_writing_momentum(request: WritingMomentumRequest):
+    """Analyze writing momentum and provide encouragement"""
+    
+    # Build context from request
+    context_parts = []
+    context_parts.append(f"Daily word count: {request.daily_words}")
+    context_parts.append(f"Weekly word count: {request.weekly_words}")
+    context_parts.append(f"Streak length: {request.streak} days")
+    context_parts.append(f"Total manuscript words: {request.total_words}")
+    context_parts.append(f"Session duration: {request.session_minutes} minutes")
+    
+    if request.time_away:
+        context_parts.append(f"Time since last session: {request.time_away}")
+    
+    if request.goals:
+        context_parts.append(f"Writing goals: {request.goals}")
+    
+    if request.age_group:
+        context_parts.append(f"Target age group: {request.age_group}")
+    
+    user_context = "\n".join(context_parts)
+    
+    prompt = f"""USER CONTEXT:
+{user_context}
+
+TASK:
+Summarize the user's recent writing momentum and offer 1–2 supportive suggestions.
+Highlight any noteworthy progress, streaks, or milestones.
+Be warm and encouraging without being pressuring.
+
+IMPORTANT: You must respond with a JSON object in this exact format:
+{{
+    "message": "<2-3 sentences summarizing their writing momentum in a warm, encouraging way>",
+    "suggestions": ["<suggestion 1>", "<suggestion 2>"]
+}}
+
+Respond ONLY with the JSON object, no other text."""
+    
+    try:
+        response = await get_ai_response(WRITING_MOMENTUM_SYSTEM_PROMPT, prompt)
+        
+        # Parse JSON from response
+        import json
+        import re
+        
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[^{}]*\}', response, re.DOTALL)
+        if json_match:
+            parsed = json.loads(json_match.group())
+            message = parsed.get("message", response)
+            suggestions = parsed.get("suggestions", ["Keep writing!", "Take a short break if needed"])
+        else:
+            # Fallback if JSON parsing fails
+            message = response
+            suggestions = ["Keep writing!", "Take a short break if needed"]
+        
+        return WritingMomentumResponse(
+            message=message,
+            suggestions=suggestions[:2]  # Limit to 2 suggestions
+        )
+        
+    except Exception as e:
+        logger.error(f"Writing momentum analysis failed: {e}")
+        # Return sensible defaults based on stats
+        if request.streak >= 7:
+            message = f"Incredible! A {request.streak}-day streak shows remarkable dedication. Your story is growing stronger with each session."
+        elif request.streak >= 3:
+            message = f"You're building momentum with a {request.streak}-day streak. Keep this rhythm going—the words are flowing."
+        elif request.daily_words > 0:
+            message = f"You've added {request.daily_words} words today. Every word brings your story closer to life."
+        else:
+            message = "Ready to write? Your manuscript awaits. Even a few words keep the creative flame alive."
+        
+        return WritingMomentumResponse(
+            message=message,
+            suggestions=["Write for just 10 minutes today", "Review your last paragraph to get back in the flow"]
+        )
+
 @api_router.post("/ai/analyze-tone", response_model=ToneStyleAnalysisResponse)
 async def analyze_tone(request: ToneAnalysisRequest):
     """Enhanced Tone & Style Analysis with structured output"""
