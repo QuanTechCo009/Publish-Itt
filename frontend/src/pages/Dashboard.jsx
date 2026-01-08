@@ -926,6 +926,12 @@ export default function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Thad Onboarding */}
+      <ThadOnboarding 
+        open={showOnboarding} 
+        onComplete={handleOnboardingComplete}
+      />
     </div>
   );
 }
