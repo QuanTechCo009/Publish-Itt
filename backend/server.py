@@ -3065,9 +3065,6 @@ Cleaned text:"""
                     chapter = await db.chapters.find_one({"id": request.chapter_id}, {"_id": 0})
                     if chapter and chapter.get("project_id"):
                         import re
-                        # Strip HTML tags for word count
-                        text_only = re.sub(r'<[^>]+>', '', cleaned_content)
-                        new_word_count = len(text_only.split())
                         
                         # Get all chapters for this project to recalculate total
                         all_chapters = await db.chapters.find(
