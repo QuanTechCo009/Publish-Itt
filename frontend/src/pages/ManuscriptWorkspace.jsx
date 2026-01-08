@@ -909,6 +909,22 @@ export default function ManuscriptWorkspace() {
                 </div>
               </TabsContent>
 
+              {/* Workflow Tab */}
+              <TabsContent value="workflow" className="flex-1 mt-0 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <WorkflowPanel
+                      manuscriptContent={editor?.getText() || ""}
+                      chapterCount={chapters.length}
+                      projectId={selectedProject?.id}
+                      projectTitle={selectedProject?.title}
+                      ageGroup={selectedProject?.age_group}
+                      autoAnalyzeOnMount={true}
+                    />
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+
               {/* Versions Tab */}
               <TabsContent value="versions" className="flex-1 mt-0 overflow-hidden">
                 <ScrollArea className="h-full">
