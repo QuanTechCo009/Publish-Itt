@@ -101,3 +101,35 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Add a Reset Onboarding button to the Settings page that clears all onboarding state and triggers the Welcome Experience"
+
+frontend:
+  - task: "Reset Onboarding button in Settings page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Settings.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added Reset Onboarding button in the General section near Guided Tour button. Button clears localStorage keys (thad_onboarding_complete, thad_user_name, thad_tour_complete) and redirects to Dashboard to trigger onboarding. Screenshot verified the button appears and clicking it triggers the Welcome Experience."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Reset Onboarding button functionality"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implemented Reset Onboarding button on Settings page. The button clears all onboarding-related localStorage keys and redirects to Dashboard where the Welcome Experience is triggered. Manual screenshot testing confirmed the flow works. Please verify: 1) Button appears in Settings > General section, 2) Clicking Reset clears localStorage and triggers onboarding flow on Dashboard."
