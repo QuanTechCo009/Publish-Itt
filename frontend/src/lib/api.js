@@ -90,7 +90,15 @@ export const aiApi = {
       prompt_type: promptType,
       context 
     }),
-  askThad: (query, context) => api.post('/ai/ask-thad', { query, context })
+  askThad: (query, context) => api.post('/ai/ask-thad', { query, context }),
+  thadWelcome: (userName, bookTitle, ageGroup, theme, deviceType) =>
+    api.post('/ai/thad/welcome', {
+      user_name: userName,
+      book_title: bookTitle,
+      age_group: ageGroup,
+      theme: theme,
+      device_type: deviceType
+    })
 }
 
 // Market Intelligence APIs
