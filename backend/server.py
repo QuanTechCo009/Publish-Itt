@@ -1450,6 +1450,118 @@ async def delete_art_asset(asset_id: str):
         raise HTTPException(status_code=404, detail="Art asset not found")
     return {"message": "Art asset deleted successfully"}
 
+# ============== BOOK ART PROFILE ENDPOINTS ==============
+
+@api_router.post("/art-profiles", response_model=BookArtProfile)
+async def create_or_update_art_profile(profile: BookArtProfileCreate):
+    """Create or update a book art profile for a project"""
+    existing = await db.book_art_profiles.find_one({"project_id": profile.project_id})
+    
+    if existing:
+        # Update existing profile
+        update_data = profile.model_dump()
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db.book_art_profiles.update_one(
+            {"project_id": profile.project_id},
+            {"$set": update_data}
+        )
+        updated = await db.book_art_profiles.find_one({"project_id": profile.project_id}, {"_id": 0})
+        return updated
+    else:
+        # Create new profile
+        profile_obj = BookArtProfile(**profile.model_dump())
+        doc = profile_obj.model_dump()
+        await db.book_art_profiles.insert_one(doc)
+        return profile_obj
+
+@api_router.get("/art-profiles/project/{project_id}", response_model=BookArtProfile)
+async def get_art_profile_by_project(project_id: str):
+    """Get the art profile for a project"""
+    profile = await db.book_art_profiles.find_one({"project_id": project_id}, {"_id": 0})
+    if not profile:
+        raise HTTPException(status_code=404, detail="Art profile not found")
+    return profile
+
+@api_router.put("/art-profiles/project/{project_id}", response_model=BookArtProfile)
+async def update_art_profile(project_id: str, update: BookArtProfileUpdate):
+    """Update an existing art profile"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.book_art_profiles.update_one(
+        {"project_id": project_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Art profile not found")
+    
+    profile = await db.book_art_profiles.find_one({"project_id": project_id}, {"_id": 0})
+    return profile
+
+@api_router.post("/ai/art-profile-summary")
+async def generate_art_profile_summary(profile: BookArtProfileCreate):
+    """Generate AI summary for a book art profile"""
+    
+    context_parts = []
+    if profile.genre:
+        context_parts.append(f"Genre: {profile.genre}")
+    if profile.age_group:
+        context_parts.append(f"Age group: {profile.age_group}")
+    if profile.mood:
+        context_parts.append(f"Mood: {profile.mood}")
+    if profile.art_style_preferences:
+        context_parts.append(f"Art style preferences: {profile.art_style_preferences}")
+    if profile.color_palette:
+        context_parts.append(f"Color palette: {profile.color_palette}")
+    if profile.reference_notes:
+        context_parts.append(f"Reference notes: {profile.reference_notes}")
+    
+    user_context = "\n".join(context_parts) if context_parts else "No details provided yet."
+    
+    prompt = f"""USER CONTEXT:
+{user_context}
+
+TASK:
+Create a concise Book Art Profile summarizing the visual identity.
+Offer 1–2 optional refinements to help the user clarify their style.
+
+IMPORTANT: You must respond with a JSON object in this exact format:
+{{
+    "summary": "<2-3 sentences describing the visual identity>",
+    "refinements": ["<refinement suggestion 1>", "<refinement suggestion 2>"]
+}}
+
+Respond ONLY with the JSON object, no other text."""
+    
+    try:
+        response = await get_ai_response(BOOK_ART_PROFILE_SYSTEM_PROMPT, prompt)
+        
+        # Parse JSON from response
+        import json
+        import re
+        
+        json_match = re.search(r'\{[^{}]*\}', response, re.DOTALL)
+        if json_match:
+            parsed = json.loads(json_match.group())
+            summary = parsed.get("summary", response)
+            refinements = parsed.get("refinements", [])
+        else:
+            summary = response
+            refinements = []
+        
+        return {
+            "summary": summary,
+            "refinements": refinements[:2]
+        }
+        
+    except Exception as e:
+        logger.error(f"Art profile summary generation failed: {e}")
+        return {
+            "summary": "Your book's visual identity is taking shape. Add more details to help define the perfect artistic direction.",
+            "refinements": ["Consider specifying a dominant color scheme", "Add reference artists or styles you admire"]
+        }
+
 # ============== TONE PROFILE ENDPOINTS ==============
 
 @api_router.get("/tone-profiles/project/{project_id}", response_model=List[ToneProfile])
