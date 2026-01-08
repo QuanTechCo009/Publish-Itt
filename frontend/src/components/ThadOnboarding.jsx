@@ -26,8 +26,10 @@ import {
   BookOpen, 
   Wand2,
   User,
-  Palette
+  Palette,
+  Map
 } from "lucide-react";
+import ThadTour from "./ThadTour";
 
 const THEMES = [
   { value: "adventure", label: "Adventure & Discovery" },
@@ -47,6 +49,7 @@ export default function ThadOnboarding({ open, onComplete }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [welcomeData, setWelcomeData] = useState(null);
+  const [showTour, setShowTour] = useState(false);
   
   // User context
   const [userName, setUserName] = useState("");
