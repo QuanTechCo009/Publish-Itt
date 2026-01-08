@@ -247,15 +247,20 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 ## Outstanding Tasks
 
 ### P1 - High Priority
-- [ ] Implement "Implement Changes" backend logic for full content transformation (apply autoformat changes to editor content, actually split chapters into DB records)
 - [ ] Complete data model unification (deprecate old project endpoints)
 
 ### P2 - Medium Priority
+- [ ] Enhance Art Studio with actual image generation (DALL-E via emergentintegrations)
 - [ ] Add export functionality (PDF, DOCX)
 - [ ] Implement collaborative editing support
 - [ ] Add analytics dashboard for writing progress
 
 ### P3 - Low Priority
+- [ ] Custom notifications/nudges for writing goals
+- [ ] Lantern Path mapping and analysis
+- [ ] Style selection dropdown for "Rewrite for Tone" (e.g., Professional, Playful)
+- [ ] Merge Chapters feature
+- [ ] Style Conversion feature (deferred by user)
 - [ ] Dark/light theme toggle
 - [ ] Keyboard shortcuts
 - [ ] Mobile responsive improvements
