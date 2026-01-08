@@ -842,16 +842,16 @@ export default function ArtStudio() {
 
                   {/* Chapter (optional) */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Chapter (optional)</label>
+                    <label className="text-sm font-medium">Chapter</label>
                     <Select 
                       value={selectedChapter?.id || "none"} 
-                      onValueChange={(v) => setSelectedChapter(v === "none" ? null : chapters.find(c => c.id === v))}
+                      onValueChange={handleChapterChange}
                     >
                       <SelectTrigger className="rounded-sm" data-testid="art-chapter-select">
-                        <SelectValue placeholder="All chapters" />
+                        <SelectValue placeholder="Select chapter" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">All chapters</SelectItem>
+                        <SelectItem value="none">No chapter selected</SelectItem>
                         {chapters.map(c => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.chapter_number}. {c.title}
@@ -862,13 +862,82 @@ export default function ArtStudio() {
                   </div>
                 </div>
 
+                {/* Extracted Scene Section */}
+                {selectedChapter && (
+                  <Card className="border-dashed bg-muted/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-accent" />
+                          <span className="text-sm font-medium">Extracted Scene</span>
+                          {sceneExtracting && (
+                            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setUseExtractedScene(!useExtractedScene)}
+                            className="h-7 text-xs"
+                            data-testid="toggle-extracted-scene"
+                          >
+                            {useExtractedScene ? (
+                              <>
+                                <Edit3 className="h-3 w-3 mr-1" />
+                                Edit manually
+                              </>
+                            ) : (
+                              <>
+                                <RotateCcw className="h-3 w-3 mr-1" />
+                                Use extracted
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => extractSceneFromChapter(selectedChapter)}
+                            disabled={sceneExtracting}
+                            className="h-7 text-xs"
+                            data-testid="re-extract-scene"
+                          >
+                            <RefreshCw className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      {sceneExtracting ? (
+                        <p className="text-sm text-muted-foreground italic">
+                          Analyzing chapter for visually rich moments...
+                        </p>
+                      ) : extractedScene ? (
+                        <p className="text-sm text-muted-foreground leading-relaxed" data-testid="extracted-scene-text">
+                          {extractedScene}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">
+                          No scene extracted yet. Click refresh to analyze the chapter.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Manual Context Input */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Additional Context</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      {selectedChapter && useExtractedScene ? "Additional Context (optional)" : "Scene Context"}
+                    </label>
+                  </div>
                   <Textarea
-                    placeholder="Describe the scene, mood, or specific elements you want in the artwork..."
+                    placeholder={selectedChapter && useExtractedScene 
+                      ? "Add any additional details or override the extracted scene..."
+                      : "Describe the scene, mood, or specific elements you want in the artwork..."
+                    }
                     value={context}
                     onChange={(e) => setContext(e.target.value)}
-                    className="min-h-[100px] rounded-sm resize-none"
+                    className="min-h-[80px] rounded-sm resize-none"
                     data-testid="art-context-input"
                   />
                 </div>
@@ -888,11 +957,11 @@ export default function ArtStudio() {
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4 mr-2" />
-                        Generate {promptTypeOptions.find(o => o.value === promptType)?.label} Ideas
+                        Generate {promptTypeOptions.find(o => o.value === promptType)?.label} Prompt
                       </>
                     )}
                   </Button>
-                  {aiResponse && (
+                  {(artPromptResult || aiResponse) && (
                     <Button
                       variant="outline"
                       onClick={handleSaveAsset}
@@ -900,13 +969,105 @@ export default function ArtStudio() {
                       data-testid="save-art-asset-btn"
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      Save as Asset
+                      Save
                     </Button>
                   )}
                 </div>
 
-                {/* AI Response */}
-                {aiResponse && (
+                {/* Structured Art Prompt Result */}
+                {artPromptResult && (
+                  <div className="space-y-4 mt-4">
+                    {/* Main Art Prompt */}
+                    <Card className="border-l-4 border-l-accent">
+                      <CardHeader className="pb-2 pt-3">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-accent" />
+                          Art Prompt
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ScrollArea className="max-h-[200px]">
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap" data-testid="main-art-prompt">
+                            {artPromptResult.main_prompt}
+                          </p>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+
+                    {/* Focus Elements */}
+                    {artPromptResult.focus_elements && (
+                      <Card>
+                        <CardHeader className="pb-2 pt-3">
+                          <CardTitle className="text-sm font-medium">Focus Elements</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {artPromptResult.focus_elements.characters?.length > 0 && (
+                            <div className="flex items-start gap-2">
+                              <Users className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">Characters</p>
+                                <p className="text-sm" data-testid="focus-characters">
+                                  {artPromptResult.focus_elements.characters.join(", ")}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {artPromptResult.focus_elements.setting && (
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">Setting</p>
+                                <p className="text-sm" data-testid="focus-setting">
+                                  {artPromptResult.focus_elements.setting}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          {artPromptResult.focus_elements.action && (
+                            <div className="flex items-start gap-2">
+                              <Zap className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground">Action</p>
+                                <p className="text-sm" data-testid="focus-action">
+                                  {artPromptResult.focus_elements.action}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Refinement Suggestions */}
+                    {artPromptResult.refinement_suggestions?.length > 0 && (
+                      <Card className="border-l-4 border-l-purple-500">
+                        <CardHeader className="pb-2 pt-3">
+                          <CardTitle className="text-sm font-medium flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4 text-purple-500" />
+                            Refinement Suggestions
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {artPromptResult.refinement_suggestions.map((suggestion, index) => (
+                              <div 
+                                key={index}
+                                className="flex items-start gap-2 text-sm"
+                                data-testid={`art-refinement-${index}`}
+                              >
+                                <ArrowRight className="h-3.5 w-3.5 text-purple-500 mt-0.5 shrink-0" />
+                                <span className="text-muted-foreground">{suggestion}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                {/* Legacy AI Response (fallback) */}
+                {!artPromptResult && aiResponse && (
                   <div className="mt-4 p-4 bg-muted rounded-sm">
                     <ScrollArea className="max-h-[300px]">
                       <div className="ai-response text-sm whitespace-pre-wrap" data-testid="art-ai-response">
