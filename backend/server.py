@@ -2998,9 +2998,6 @@ async def implement_import_action(request: ImplementActionRequest):
     # Actions that modify content and need AI processing
     content_modifying_actions = ["autoformat", "remove_notes"]
     
-    # Actions that extract data but don't modify content directly
-    extraction_actions = ["store_notes", "convert_notes", "extract_summaries", "extract_characters", "extract_glossary"]
-    
     # Analysis actions that don't modify content
     analysis_actions = ["full_qa", "lantern_path", "split_chapters"]
     
