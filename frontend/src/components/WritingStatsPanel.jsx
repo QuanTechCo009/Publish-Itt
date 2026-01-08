@@ -3,8 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { statsApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { 
   Flame, 
   Clock, 
@@ -17,23 +27,170 @@ import {
   Zap,
   Sparkles,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  RotateCcw,
+  Edit2,
+  Bell
 } from "lucide-react";
+
+// Constants for localStorage keys
+const DAILY_GOALS_KEY = "publish_itt_daily_goals";
+const LAST_ACTIVE_KEY = "publish_itt_last_active";
+
+// Default goals structure
+const DEFAULT_GOALS = {
+  wordCountGoal: 500,
+  timeGoal: 30, // minutes
+  customTargets: [],
+  lastResetDate: null,
+  lastActiveTimestamp: null
+};
+
+// Helper to get today's date string in user's local timezone
+const getTodayDateString = () => {
+  return new Date().toLocaleDateString('en-CA'); // Returns YYYY-MM-DD format
+};
+
+// Helper to check if 24 hours have passed since last activity
+const hasBeenInactiveFor24Hours = (lastActiveTimestamp) => {
+  if (!lastActiveTimestamp) return true;
+  const now = Date.now();
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  return (now - lastActiveTimestamp) >= twentyFourHours;
+};
 
 export default function WritingStatsPanel({ className, ageGroup, autoAnalyzeOnMount = true }) {
   const [stats, setStats] = useState(null);
   const [weeklyData, setWeeklyData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dailyGoal] = useState(500); // Default daily goal
+  
+  // Daily goals state
+  const [dailyGoals, setDailyGoals] = useState(DEFAULT_GOALS);
+  const [showGoalResetNotification, setShowGoalResetNotification] = useState(false);
+  const [showGoalDialog, setShowGoalDialog] = useState(false);
+  const [editWordGoal, setEditWordGoal] = useState(500);
+  const [editTimeGoal, setEditTimeGoal] = useState(30);
   
   // Momentum state
   const [momentumData, setMomentumData] = useState(null);
   const [momentumLoading, setMomentumLoading] = useState(false);
   const [lastMomentumCheck, setLastMomentumCheck] = useState(null);
 
+  // Load and check daily goals on mount
   useEffect(() => {
+    const savedGoals = localStorage.getItem(DAILY_GOALS_KEY);
+    const today = getTodayDateString();
+    
+    if (savedGoals) {
+      const parsed = JSON.parse(savedGoals);
+      const lastResetDate = parsed.lastResetDate;
+      const lastActiveTimestamp = parsed.lastActiveTimestamp;
+      
+      // Check if reset is needed
+      const isNewDay = lastResetDate !== today;
+      const isInactive24Hours = hasBeenInactiveFor24Hours(lastActiveTimestamp);
+      
+      if (isNewDay || isInactive24Hours) {
+        // Reset goals
+        performGoalReset(isNewDay ? "new_day" : "inactivity");
+      } else {
+        // Load existing goals
+        setDailyGoals(parsed);
+      }
+    } else {
+      // First time user - initialize with defaults
+      const initialGoals = {
+        ...DEFAULT_GOALS,
+        lastResetDate: today,
+        lastActiveTimestamp: Date.now()
+      };
+      setDailyGoals(initialGoals);
+      localStorage.setItem(DAILY_GOALS_KEY, JSON.stringify(initialGoals));
+    }
+    
+    // Update last active timestamp
+    updateLastActive();
+    
+    // Load stats
     loadStats();
   }, []);
+
+  // Update last active timestamp periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateLastActive();
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check for midnight reset
+  useEffect(() => {
+    const checkMidnight = () => {
+      const today = getTodayDateString();
+      if (dailyGoals.lastResetDate && dailyGoals.lastResetDate !== today) {
+        performGoalReset("new_day");
+      }
+    };
+    
+    // Check every minute for midnight crossing
+    const interval = setInterval(checkMidnight, 60000);
+    
+    return () => clearInterval(interval);
+  }, [dailyGoals.lastResetDate]);
+
+  const updateLastActive = () => {
+    const today = getTodayDateString();
+    setDailyGoals(prev => {
+      const updated = {
+        ...prev,
+        lastActiveTimestamp: Date.now(),
+        lastResetDate: prev.lastResetDate || today
+      };
+      localStorage.setItem(DAILY_GOALS_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const performGoalReset = (reason) => {
+    const today = getTodayDateString();
+    const resetGoals = {
+      wordCountGoal: DEFAULT_GOALS.wordCountGoal,
+      timeGoal: DEFAULT_GOALS.timeGoal,
+      customTargets: [],
+      lastResetDate: today,
+      lastActiveTimestamp: Date.now()
+    };
+    
+    setDailyGoals(resetGoals);
+    localStorage.setItem(DAILY_GOALS_KEY, JSON.stringify(resetGoals));
+    setShowGoalResetNotification(true);
+    
+    // Log reset reason for debugging
+    console.log(`Daily goals reset due to: ${reason}`);
+  };
+
+  const saveGoals = () => {
+    const today = getTodayDateString();
+    const updated = {
+      ...dailyGoals,
+      wordCountGoal: editWordGoal,
+      timeGoal: editTimeGoal,
+      lastResetDate: today,
+      lastActiveTimestamp: Date.now()
+    };
+    
+    setDailyGoals(updated);
+    localStorage.setItem(DAILY_GOALS_KEY, JSON.stringify(updated));
+    setShowGoalDialog(false);
+    toast.success("Daily goals updated!");
+  };
+
+  const openGoalDialog = () => {
+    setEditWordGoal(dailyGoals.wordCountGoal);
+    setEditTimeGoal(dailyGoals.timeGoal);
+    setShowGoalDialog(true);
+  };
 
   const loadStats = async () => {
     try {
@@ -115,8 +272,8 @@ export default function WritingStatsPanel({ className, ageGroup, autoAnalyzeOnMo
   };
 
   const getMaxWeeklyWords = () => {
-    if (!weeklyData.length) return dailyGoal;
-    return Math.max(...weeklyData.map(d => d.words), dailyGoal);
+    if (!weeklyData.length) return dailyGoals.wordCountGoal;
+    return Math.max(...weeklyData.map(d => d.words), dailyGoals.wordCountGoal);
   };
 
   if (loading) {
@@ -128,11 +285,51 @@ export default function WritingStatsPanel({ className, ageGroup, autoAnalyzeOnMo
   }
 
   const todayWords = getTodayWords();
-  const dailyProgress = Math.min((todayWords / dailyGoal) * 100, 100);
+  const dailyProgress = Math.min((todayWords / dailyGoals.wordCountGoal) * 100, 100);
   const maxWords = getMaxWeeklyWords();
 
   return (
     <div className={cn("space-y-4", className)} data-testid="writing-stats-panel">
+      {/* Goal Reset Notification */}
+      {showGoalResetNotification && (
+        <Card className="border-l-4 border-l-blue-500 bg-blue-500/5" data-testid="goal-reset-notification">
+          <CardContent className="p-3">
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 rounded-sm bg-blue-500/20 shrink-0">
+                <RotateCcw className="h-4 w-4 text-blue-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium mb-1">Daily Goals Refreshed</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Your daily writing goals have been reset for a fresh start. Ready to set new targets?
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="h-7 text-xs rounded-sm"
+                    onClick={openGoalDialog}
+                    data-testid="set-new-goal-btn"
+                  >
+                    <Target className="h-3 w-3 mr-1" />
+                    Set Goals
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs rounded-sm"
+                    onClick={() => setShowGoalResetNotification(false)}
+                    data-testid="dismiss-notification-btn"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Thad's Momentum Message */}
       <Card className="border-l-4 border-l-accent bg-gradient-to-br from-accent/5 to-transparent" data-testid="momentum-card">
         <CardHeader className="pb-2 pt-3 px-4">
@@ -243,9 +440,20 @@ export default function WritingStatsPanel({ className, ageGroup, autoAnalyzeOnMo
               <Target className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Daily Goal</span>
             </div>
-            <span className="text-xs text-muted-foreground">
-              {todayWords} / {dailyGoal} words
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {todayWords} / {dailyGoals.wordCountGoal} words
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={openGoalDialog}
+                data-testid="edit-goal-btn"
+              >
+                <Edit2 className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            </div>
           </div>
           <Progress value={dailyProgress} className="h-2" data-testid="daily-progress" />
           {dailyProgress >= 100 && (
@@ -344,6 +552,89 @@ export default function WritingStatsPanel({ className, ageGroup, autoAnalyzeOnMo
           </Badge>
         </div>
       )}
+
+      {/* Set Goals Dialog */}
+      <Dialog open={showGoalDialog} onOpenChange={setShowGoalDialog}>
+        <DialogContent className="sm:max-w-[400px]" data-testid="goal-dialog">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-accent" />
+              Set Daily Goals
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="word-goal" className="text-sm font-medium">
+                Word Count Goal
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="word-goal"
+                  type="number"
+                  min="50"
+                  max="10000"
+                  step="50"
+                  value={editWordGoal}
+                  onChange={(e) => setEditWordGoal(parseInt(e.target.value) || 500)}
+                  className="rounded-sm"
+                  data-testid="word-goal-input"
+                />
+                <span className="text-sm text-muted-foreground">words</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                How many words do you want to write today?
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="time-goal" className="text-sm font-medium">
+                Time Goal
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="time-goal"
+                  type="number"
+                  min="5"
+                  max="480"
+                  step="5"
+                  value={editTimeGoal}
+                  onChange={(e) => setEditTimeGoal(parseInt(e.target.value) || 30)}
+                  className="rounded-sm"
+                  data-testid="time-goal-input"
+                />
+                <span className="text-sm text-muted-foreground">minutes</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                How long do you want to write today?
+              </p>
+            </div>
+
+            <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-sm">
+              <p className="font-medium mb-1 flex items-center gap-1">
+                <Bell className="h-3 w-3" />
+                Auto-Reset Info
+              </p>
+              <p>Goals reset automatically at midnight or after 24 hours of inactivity.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowGoalDialog(false)}
+              className="rounded-sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveGoals}
+              className="rounded-sm"
+              data-testid="save-goals-btn"
+            >
+              Save Goals
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
