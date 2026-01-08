@@ -286,6 +286,16 @@ class ToneAnalysisRequest(BaseModel):
     content: str
     project_id: str
     chapter_id: Optional[str] = None
+    section_info: Optional[str] = None
+    intended_tone: Optional[str] = None
+    goals: Optional[str] = None
+    age_group: Optional[str] = None
+
+class ToneStyleAnalysisResponse(BaseModel):
+    tone_analysis: str
+    style_analysis: str
+    suggestions: List[str]
+    reading_level: Optional[str] = None
 
 class ArtPromptRequest(BaseModel):
     project_id: str
