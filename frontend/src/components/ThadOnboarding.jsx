@@ -273,7 +273,7 @@ export default function ThadOnboarding({ open, onComplete }) {
 
         {/* Step 3: Thad's Welcome */}
         {step === 3 && (
-          <div className="py-4">
+          <div className="py-4 overflow-hidden">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="relative">
@@ -286,63 +286,72 @@ export default function ThadOnboarding({ open, onComplete }) {
                 </p>
               </div>
             ) : welcomeData && (
-              <>
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shrink-0">
-                    <Sparkles className="h-6 w-6 text-white" />
+              <div className="flex flex-col h-full overflow-hidden">
+                {/* Thad Avatar Header */}
+                <div className="flex items-start gap-3 mb-4 shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent to-accent/70 flex items-center justify-center shrink-0">
+                    <Sparkles className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-serif text-lg font-medium mb-1">Thad</h3>
+                    <h3 className="font-serif text-base font-medium">Thad</h3>
                     <p className="text-xs text-muted-foreground">Your Creative Companion</p>
                   </div>
                 </div>
                 
-                <ScrollArea className="max-h-[40vh] pr-2">
-                  <div className="prose prose-sm dark:prose-invert mb-6">
-                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                      {welcomeData.message}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground mb-3">
-                      Ready to begin? Here's what you can do:
-                    </p>
-                    
-                    <div className="grid gap-2">
-                      {welcomeData.next_steps.map((step, index) => (
-                        <Button
-                          key={index}
-                          variant="outline"
-                          className="justify-start h-auto py-3 px-4 rounded-sm text-left"
-                          onClick={() => {
-                            if (step.toLowerCase().includes("write") || step.toLowerCase().includes("chapter")) {
-                              handleNextStep("start_writing");
-                            } else if (step.toLowerCase().includes("import")) {
-                              handleNextStep("import");
-                            } else {
-                              handleNextStep("explore");
-                            }
-                          }}
-                          data-testid={`onboarding-action-${index}`}
-                        >
-                          <div className="flex items-center gap-3">
-                            {step.toLowerCase().includes("write") || step.toLowerCase().includes("chapter") ? (
-                              <BookOpen className="h-4 w-4 text-accent shrink-0" />
-                            ) : step.toLowerCase().includes("import") ? (
-                              <Wand2 className="h-4 w-4 text-accent shrink-0" />
-                            ) : (
-                              <Palette className="h-4 w-4 text-accent shrink-0" />
-                            )}
-                            <span className="text-sm">{step}</span>
-                          </div>
-                        </Button>
-                      ))}
+                {/* Message Container */}
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <ScrollArea className="h-full max-h-[45vh]">
+                    {/* Welcome Message Box */}
+                    <div className="bg-muted/30 border rounded-lg p-4 mb-4">
+                      <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed break-words">
+                        {welcomeData.message}
+                      </p>
                     </div>
-                  </div>
-                </ScrollArea>
+                    
+                    {/* Next Steps */}
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Ready to begin? Here's what you can do:
+                      </p>
+                      
+                      <div className="grid gap-2">
+                        {welcomeData.next_steps.map((step, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            className="justify-start h-auto py-3 px-4 rounded-sm text-left w-full"
+                            onClick={() => {
+                              if (step.toLowerCase().includes("write") || step.toLowerCase().includes("chapter")) {
+                                handleNextStep("start_writing");
+                              } else if (step.toLowerCase().includes("import")) {
+                                handleNextStep("import");
+                              } else {
+                                handleNextStep("explore");
+                              }
+                            }}
+                            data-testid={`onboarding-action-${index}`}
+                          >
+                            <div className="flex items-start gap-3 w-full">
+                              <div className="shrink-0 mt-0.5">
+                                {step.toLowerCase().includes("write") || step.toLowerCase().includes("chapter") ? (
+                                  <BookOpen className="h-4 w-4 text-accent" />
+                                ) : step.toLowerCase().includes("import") ? (
+                                  <Wand2 className="h-4 w-4 text-accent" />
+                                ) : (
+                                  <Palette className="h-4 w-4 text-accent" />
+                                )}
+                              </div>
+                              <span className="text-sm break-words whitespace-normal">{step}</span>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </div>
                 
-                <div className="mt-6 pt-4 border-t">
+                {/* Footer */}
+                <div className="mt-4 pt-4 border-t shrink-0">
                   <Button
                     variant="ghost"
                     onClick={() => handleNextStep("explore")}
@@ -352,7 +361,7 @@ export default function ThadOnboarding({ open, onComplete }) {
                     I'll explore on my own
                   </Button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}
