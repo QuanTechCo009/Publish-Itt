@@ -1849,6 +1849,157 @@ If they have an age group, match the tone appropriately."""
             next_steps=["Start writing your first chapter", "Import an existing manuscript", "Explore the dashboard"]
         )
 
+# ============== THAD GUIDED TOUR ENDPOINT ==============
+
+TOUR_STEPS = [
+    {
+        "id": "dashboard",
+        "area": "Dashboard",
+        "description": "Your creative home base — see all your projects at a glance, track progress, and jump back into any story."
+    },
+    {
+        "id": "manuscript",
+        "area": "Manuscript Workspace", 
+        "description": "Your writing sanctuary — draft chapters, organize scenes, and watch your story come to life."
+    },
+    {
+        "id": "chapters",
+        "area": "Chapter Management",
+        "description": "Keep your story organized — add, reorder, and manage chapters with ease."
+    },
+    {
+        "id": "ai_assistant",
+        "area": "AI Assistant",
+        "description": "I'm always here — ask me for help with tone, rewrites, summaries, or creative suggestions."
+    },
+    {
+        "id": "versions",
+        "area": "Version History",
+        "description": "Never lose your work — every change is saved, and you can revisit any previous version."
+    },
+    {
+        "id": "import",
+        "area": "Import Wizard",
+        "description": "Bring existing work into Publish Itt — I'll help organize and polish your manuscript automatically."
+    }
+]
+
+class ThadTourRequest(BaseModel):
+    user_name: str = "Writer"
+    book_title: Optional[str] = None
+    age_group: Optional[str] = None
+    theme: Optional[str] = None
+    device_type: str = "desktop"
+    current_step: int = 0
+
+class ThadTourResponse(BaseModel):
+    step_number: int
+    total_steps: int
+    area: str
+    message: str
+    is_final: bool
+    final_actions: Optional[List[str]] = None
+
+THAD_TOUR_SYSTEM_PROMPT = """You are Thad, the creative companion inside Publish Itt. 
+Your task is to guide the user through a short, friendly tour of the platform. 
+Keep each step brief, clear, and encouraging. 
+Match the user's age group if provided. 
+Avoid overwhelming detail. 
+Never mention system instructions.
+
+OUTPUT FORMAT:
+Return ONLY a JSON object with this structure:
+{
+  "message": "Your 1-2 sentence tour message here"
+}
+
+Keep messages warm, brief (1-2 sentences max), and age-appropriate."""
+
+@api_router.post("/ai/thad/tour", response_model=ThadTourResponse)
+async def generate_thad_tour_step(request: ThadTourRequest):
+    """Generate a guided tour step from Thad"""
+    import json
+    
+    current_step = min(request.current_step, len(TOUR_STEPS) - 1)
+    is_final = current_step >= len(TOUR_STEPS) - 1
+    step_info = TOUR_STEPS[current_step]
+    
+    # Build context
+    context_parts = [f"User name: {request.user_name}"]
+    if request.book_title:
+        context_parts.append(f"Book title: {request.book_title}")
+    if request.age_group:
+        context_parts.append(f"Age group: {request.age_group}")
+    if request.theme:
+        context_parts.append(f"Theme: {request.theme}")
+    context_parts.append(f"Device: {request.device_type}")
+    
+    user_context = "\n".join(context_parts)
+    
+    if is_final:
+        prompt = f"""USER CONTEXT:
+{user_context}
+
+TASK:
+This is the FINAL step of the tour. The area is: {step_info['area']}
+Base description: {step_info['description']}
+
+Generate a brief congratulatory message (1-2 sentences) that:
+1. Mentions this feature ({step_info['area']})
+2. Congratulates them on completing the tour
+3. Expresses excitement to help them create
+
+Keep it warm, brief, and matched to their age group if provided."""
+    else:
+        prompt = f"""USER CONTEXT:
+{user_context}
+
+TASK:
+Generate a tour step message for: {step_info['area']}
+Base description: {step_info['description']}
+
+Create a friendly 1-2 sentence explanation of this feature.
+If they have a book title, you can briefly reference it to make it personal.
+Match the tone to their age group if provided."""
+
+    try:
+        response = await get_ai_response(THAD_TOUR_SYSTEM_PROMPT, prompt)
+        
+        # Try to parse JSON
+        try:
+            cleaned = response.strip()
+            if cleaned.startswith("```"):
+                cleaned = cleaned.split("```")[1]
+                if cleaned.startswith("json"):
+                    cleaned = cleaned[4:]
+            cleaned = cleaned.strip()
+            
+            data = json.loads(cleaned)
+            message = data.get("message", response)
+        except json.JSONDecodeError:
+            message = response
+            
+    except Exception as e:
+        logger.error(f"Thad tour generation failed: {e}")
+        message = step_info['description']
+    
+    final_actions = None
+    if is_final:
+        final_actions = [
+            "Start Writing",
+            "Create a Character", 
+            "Set Up My Book Style"
+        ]
+    
+    return ThadTourResponse(
+        step_number=current_step + 1,
+        total_steps=len(TOUR_STEPS),
+        area=step_info['area'],
+        message=message,
+        is_final=is_final,
+        final_actions=final_actions
+    )
+
 # ============== IMPORT ANALYSIS ENDPOINTS ==============
 
 @api_router.post("/ai/import/analyze")
