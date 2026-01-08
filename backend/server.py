@@ -379,6 +379,21 @@ class WorkflowStageAnalysisResponse(BaseModel):
     next_steps: List[str]
     progress_percent: int
 
+# Writing Momentum Analysis Models
+class WritingMomentumRequest(BaseModel):
+    daily_words: int = 0
+    weekly_words: int = 0
+    streak: int = 0
+    total_words: int = 0
+    session_minutes: int = 0
+    time_away: Optional[str] = None
+    goals: Optional[str] = None
+    age_group: Optional[str] = None
+
+class WritingMomentumResponse(BaseModel):
+    message: str
+    suggestions: List[str]
+
 # ============== SYSTEM PROMPTS ==============
 
 GLOBAL_SYSTEM_PROMPT = """You are Thaddaeus ("Thad"), the creative intelligence powering Publish Itt. 
