@@ -111,6 +111,20 @@ export const aiApi = {
     }),
   generateArtProfileSummary: (profile) =>
     api.post('/ai/art-profile-summary', profile),
+  extractScene: (chapterContent, artProfile) =>
+    api.post('/ai/extract-scene', {
+      chapter_content: chapterContent,
+      art_profile: artProfile
+    }),
+  generateSceneArtPrompt: (projectId, chapterId, sceneText, promptType, stylePreset, artProfile) =>
+    api.post('/ai/scene-art-prompt', {
+      project_id: projectId,
+      chapter_id: chapterId,
+      scene_text: sceneText,
+      prompt_type: promptType,
+      style_preset: stylePreset,
+      art_profile: artProfile
+    }),
   askThad: (query, context) => api.post('/ai/ask-thad', { query, context }),
   thadWelcome: (userName, bookTitle, ageGroup, theme, deviceType) =>
     api.post('/ai/thad/welcome', {
