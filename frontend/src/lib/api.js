@@ -90,8 +90,16 @@ export const aiApi = {
       age_group: ageGroup,
       project_id: projectId
     }),
-  analyzeTone: (content, projectId, chapterId) => 
-    api.post('/ai/analyze-tone', { content, project_id: projectId, chapter_id: chapterId }),
+  analyzeTone: (content, projectId, chapterId, sectionInfo, intendedTone, goals, ageGroup) => 
+    api.post('/ai/analyze-tone', { 
+      content, 
+      project_id: projectId, 
+      chapter_id: chapterId,
+      section_info: sectionInfo,
+      intended_tone: intendedTone,
+      goals: goals,
+      age_group: ageGroup
+    }),
   generateArtPrompts: (projectId, chapterId, stylePreset, promptType, context) =>
     api.post('/ai/art-prompts', { 
       project_id: projectId, 
