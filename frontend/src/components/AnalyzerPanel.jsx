@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { aiApi, notesApi, versionsApi, importAnalysisApi } from "@/lib/api";
+import { aiApi, notesApi, importAnalysisApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { 
@@ -25,7 +26,10 @@ import {
   Zap,
   BookOpen,
   Palette,
-  ListChecks
+  ListChecks,
+  MessageSquare,
+  Lightbulb,
+  GraduationCap
 } from "lucide-react";
 
 const CATEGORY_CONFIG = {
@@ -65,14 +69,23 @@ export default function AnalyzerPanel({
   content,
   chapterId,
   projectId,
+  projectTitle,
+  ageGroup,
   onApplyChange,
-  onCreateVersion 
+  onCreateVersion,
+  autoAnalyzeOnMount = true
 }) {
+  // Tone & Style Analysis State
+  const [toneStyleData, setToneStyleData] = useState(null);
+  const [toneStyleLoading, setToneStyleLoading] = useState(false);
+  const [lastAnalyzed, setLastAnalyzed] = useState(null);
+  
+  // Import Analysis State (existing functionality)
   const [findings, setFindings] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [dismissedIds, setDismissedIds] = useState(new Set());
   const [expandedCategories, setExpandedCategories] = useState(new Set(['structure', 'formatting', 'issues']));
+  const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(false);
 
   // Group findings by category
   const groupedFindings = findings.reduce((acc, finding) => {
@@ -83,9 +96,61 @@ export default function AnalyzerPanel({
     return acc;
   }, {});
 
-  const runAnalysis = async () => {
+  // Tone & Style Analysis Function
+  const runToneStyleAnalysis = useCallback(async () => {
+    if (!content || content.trim().length < 30) {
+      setToneStyleData({
+        tone_analysis: "Add more content to see tone analysis. I need at least a few sentences to work with.",
+        style_analysis: "Style analysis will appear once you have enough content to analyze.",
+        suggestions: ["Start writing or paste your content", "Share at least a paragraph for meaningful analysis"],
+        reading_level: "Not yet determined"
+      });
+      return;
+    }
+
+    setToneStyleLoading(true);
+    try {
+      const sectionInfo = projectTitle ? `Project: ${projectTitle}` : null;
+      
+      const response = await aiApi.analyzeTone(
+        content,
+        projectId,
+        chapterId,
+        sectionInfo,
+        null, // intended tone
+        null, // goals
+        ageGroup
+      );
+
+      setToneStyleData(response.data);
+      setLastAnalyzed(Date.now());
+      toast.success("Tone & Style analysis complete");
+    } catch (error) {
+      console.error("Tone analysis failed:", error);
+      toast.error("Failed to analyze tone & style");
+      // Set fallback data
+      setToneStyleData({
+        tone_analysis: "Unable to complete analysis at this time. Please try again.",
+        style_analysis: "Style analysis unavailable.",
+        suggestions: ["Try refreshing the analysis", "Check your content and try again"],
+        reading_level: "Not determined"
+      });
+    } finally {
+      setToneStyleLoading(false);
+    }
+  }, [content, projectId, chapterId, projectTitle, ageGroup]);
+
+  // Auto-analyze on mount if enabled
+  useEffect(() => {
+    if (autoAnalyzeOnMount && content && content.trim().length >= 30) {
+      runToneStyleAnalysis();
+    }
+  }, [autoAnalyzeOnMount]); // Only run on mount
+
+  // Detailed Import Analysis (existing functionality)
+  const runDetailedAnalysis = async () => {
     if (!content || content.trim().length < 50) {
-      toast.error("Not enough content to analyze");
+      toast.error("Not enough content for detailed analysis");
       return;
     }
 
@@ -102,11 +167,10 @@ export default function AnalyzerPanel({
       const analysisFindings = [];
       let findingId = 0;
 
-      // Parse the analysis response
       if (res.data) {
         const data = res.data;
         
-        // Structure findings from structure_issues array
+        // Structure findings
         if (data.structure_issues?.length) {
           data.structure_issues.forEach(issue => {
             analysisFindings.push({
@@ -121,7 +185,7 @@ export default function AnalyzerPanel({
           });
         }
 
-        // Formatting findings from formatting_issues array
+        // Formatting findings
         if (data.formatting_issues?.length) {
           data.formatting_issues.forEach(issue => {
             analysisFindings.push({
@@ -136,7 +200,7 @@ export default function AnalyzerPanel({
           });
         }
 
-        // Notes detected from notes_detected array
+        // Notes detected
         if (data.notes_detected?.length) {
           data.notes_detected.forEach(note => {
             analysisFindings.push({
@@ -151,7 +215,7 @@ export default function AnalyzerPanel({
           });
         }
 
-        // Style issues from style_issues array
+        // Style issues
         if (data.style_issues?.length) {
           data.style_issues.forEach(issue => {
             analysisFindings.push({
@@ -179,18 +243,7 @@ export default function AnalyzerPanel({
           });
         }
 
-        // Add reading level info as a finding
-        if (data.estimated_reading_level) {
-          analysisFindings.push({
-            id: `finding-${findingId++}`,
-            category: 'tone',
-            title: 'Reading Level',
-            description: `Estimated reading level: ${data.estimated_reading_level}`,
-            severity: 'info'
-          });
-        }
-
-        // Add word count info
+        // Word count info
         if (data.word_count) {
           analysisFindings.push({
             id: `finding-${findingId++}`,
@@ -200,31 +253,20 @@ export default function AnalyzerPanel({
             severity: 'info'
           });
         }
-
-        // Parse the main analysis text for additional insights
-        if (data.analysis && analysisFindings.length < 3) {
-          // If we didn't get structured findings, add the main analysis as a general finding
-          analysisFindings.push({
-            id: `finding-${findingId++}`,
-            category: 'structure',
-            title: 'Analysis Summary',
-            description: data.analysis.substring(0, 500) + (data.analysis.length > 500 ? '...' : ''),
-            severity: 'info'
-          });
-        }
       }
 
       setFindings(analysisFindings);
       setDismissedIds(new Set());
+      setShowDetailedAnalysis(true);
       
       if (analysisFindings.length > 0) {
         toast.success(`Found ${analysisFindings.length} items to review`);
       } else {
-        toast.success("Analysis complete - no issues found!");
+        toast.success("Detailed analysis complete - no issues found!");
       }
     } catch (error) {
-      console.error("Analysis failed:", error);
-      toast.error("Failed to analyze content");
+      console.error("Detailed analysis failed:", error);
+      toast.error("Failed to run detailed analysis");
     } finally {
       setAnalyzing(false);
     }
@@ -232,7 +274,6 @@ export default function AnalyzerPanel({
 
   const handleApplyChange = async (finding) => {
     if (finding.applyAction && onApplyChange) {
-      // Create version snapshot first
       if (onCreateVersion) {
         await onCreateVersion(`Before applying: ${finding.title}`);
       }
@@ -283,197 +324,290 @@ export default function AnalyzerPanel({
 
   return (
     <div className="space-y-4" data-testid="analyzer-panel">
-      {/* Header */}
+      {/* Header with Refresh */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-accent" />
-          <span className="text-sm font-medium">THADDAEUS Analyzer</span>
-          {totalFindings > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {totalFindings}
-            </Badge>
-          )}
+          <span className="text-sm font-medium">Tone & Style</span>
         </div>
-        <Button 
-          size="sm" 
-          onClick={runAnalysis}
-          disabled={analyzing || !content}
-          className="rounded-sm h-8"
-          data-testid="run-analysis-btn"
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={runToneStyleAnalysis}
+          disabled={toneStyleLoading}
+          className="h-7 px-2 text-xs"
+          data-testid="refresh-tone-btn"
         >
-          {analyzing ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-              Analyzing...
-            </>
+          {toneStyleLoading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <>
               <RefreshCw className="h-3.5 w-3.5 mr-1" />
-              Analyze
+              Refresh
             </>
           )}
         </Button>
       </div>
 
-      {/* Findings List */}
-      {analyzing ? (
-        <div className="flex flex-col items-center justify-center h-32">
-          <Loader2 className="h-6 w-6 animate-spin text-accent mb-2" />
-          <p className="text-sm text-muted-foreground">THADDAEUS is analyzing...</p>
+      {/* Loading State */}
+      {toneStyleLoading && !toneStyleData && (
+        <div className="flex flex-col items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 text-accent animate-spin mb-3" />
+          <p className="text-sm text-muted-foreground">Analyzing tone & style...</p>
         </div>
-      ) : totalFindings === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-            <Sparkles className="h-10 w-10 text-muted-foreground mb-3 opacity-50" />
-            <p className="text-sm text-muted-foreground mb-1">No findings yet</p>
-            <p className="text-xs text-muted-foreground">
-              Click "Analyze" to scan your manuscript
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <ScrollArea className="h-[350px]">
+      )}
+
+      {/* Tone & Style Analysis Results */}
+      {toneStyleData && !toneStyleLoading && (
+        <ScrollArea className="h-[400px]">
           <div className="space-y-3 pr-2">
-            {Object.entries(CATEGORY_CONFIG).map(([categoryKey, config]) => {
-              const categoryFindings = groupedFindings[categoryKey];
-              if (!categoryFindings?.length) return null;
-              
-              const CategoryIcon = config.icon;
-              const isExpanded = expandedCategories.has(categoryKey);
-              
-              return (
-                <Collapsible 
-                  key={categoryKey} 
-                  open={isExpanded}
-                  onOpenChange={() => toggleCategory(categoryKey)}
-                >
-                  <CollapsibleTrigger asChild>
-                    <button
-                      className={cn(
-                        "w-full flex items-center justify-between p-3 rounded-sm transition-colors",
-                        config.color
-                      )}
-                      data-testid={`category-${categoryKey}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <CategoryIcon className="h-4 w-4" />
-                        <span className="font-medium text-sm">{config.label}</span>
-                        <Badge variant="secondary" className="text-xs">
-                          {categoryFindings.length}
-                        </Badge>
+            {/* Tone Analysis Card */}
+            <Card className="border-l-4 border-l-amber-500" data-testid="tone-analysis-card">
+              <CardHeader className="pb-2 pt-3 px-4">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-amber-500" />
+                  Tone Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-3">
+                <p className="text-sm text-muted-foreground leading-relaxed" data-testid="tone-analysis-text">
+                  {toneStyleData.tone_analysis}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Style Analysis Card */}
+            <Card className="border-l-4 border-l-purple-500" data-testid="style-analysis-card">
+              <CardHeader className="pb-2 pt-3 px-4">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-purple-500" />
+                  Style Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-3">
+                <p className="text-sm text-muted-foreground leading-relaxed" data-testid="style-analysis-text">
+                  {toneStyleData.style_analysis}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Reading Level Badge */}
+            {toneStyleData.reading_level && (
+              <div className="flex items-center gap-2 px-1">
+                <GraduationCap className="h-4 w-4 text-blue-500" />
+                <span className="text-xs text-muted-foreground">Reading Level:</span>
+                <Badge variant="secondary" className="text-xs" data-testid="reading-level-badge">
+                  {toneStyleData.reading_level}
+                </Badge>
+              </div>
+            )}
+
+            {/* Suggestions Card */}
+            {toneStyleData.suggestions && toneStyleData.suggestions.length > 0 && (
+              <Card className="border-l-4 border-l-green-500" data-testid="suggestions-card">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-green-500" />
+                    Suggestions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3">
+                  <div className="space-y-2">
+                    {toneStyleData.suggestions.map((suggestion, index) => (
+                      <div 
+                        key={index}
+                        className="flex items-start gap-2 text-sm"
+                        data-testid={`suggestion-${index}`}
+                      >
+                        <span className="text-green-500 font-medium shrink-0">{index + 1}.</span>
+                        <span className="text-muted-foreground">{suggestion}</span>
                       </div>
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="space-y-2 mt-2 pl-2">
-                      {categoryFindings.map((finding) => (
-                        <Card 
-                          key={finding.id} 
-                          className="border-l-2 border-l-accent"
-                          data-testid={`finding-${finding.id}`}
-                        >
-                          <CardContent className="p-3">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <h4 className="font-medium text-sm">{finding.title}</h4>
-                              <Badge 
-                                variant="outline" 
-                                className={cn(
-                                  "text-[10px] shrink-0",
-                                  finding.severity === 'high' && "border-red-500 text-red-600",
-                                  finding.severity === 'medium' && "border-amber-500 text-amber-600",
-                                  finding.severity === 'low' && "border-blue-500 text-blue-600",
-                                  finding.severity === 'info' && "border-gray-400 text-gray-600"
-                                )}
-                              >
-                                {finding.severity}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Last Analyzed */}
+            {lastAnalyzed && (
+              <div className="text-[10px] text-muted-foreground text-center pt-2">
+                Last analyzed: {new Date(lastAnalyzed).toLocaleTimeString()}
+              </div>
+            )}
+
+            <Separator className="my-4" />
+
+            {/* Detailed Analysis Toggle */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Detailed Analysis
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={runDetailedAnalysis}
+                  disabled={analyzing || !content}
+                  className="h-7 text-xs rounded-sm"
+                  data-testid="run-detailed-analysis-btn"
+                >
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-3 w-3 mr-1" />
+                      Run Deep Analysis
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Detailed Findings */}
+              {showDetailedAnalysis && totalFindings > 0 && (
+                <div className="space-y-2">
+                  {Object.entries(CATEGORY_CONFIG).map(([categoryKey, config]) => {
+                    const categoryFindings = groupedFindings[categoryKey];
+                    if (!categoryFindings?.length) return null;
+                    
+                    const CategoryIcon = config.icon;
+                    const isExpanded = expandedCategories.has(categoryKey);
+                    
+                    return (
+                      <Collapsible 
+                        key={categoryKey} 
+                        open={isExpanded}
+                        onOpenChange={() => toggleCategory(categoryKey)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <button
+                            className={cn(
+                              "w-full flex items-center justify-between p-2 rounded-sm transition-colors text-xs",
+                              config.color
+                            )}
+                            data-testid={`category-${categoryKey}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <CategoryIcon className="h-3.5 w-3.5" />
+                              <span className="font-medium">{config.label}</span>
+                              <Badge variant="secondary" className="text-[10px] h-4">
+                                {categoryFindings.length}
                               </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground mb-3 line-clamp-3">
-                              {finding.description}
-                            </p>
-                            {finding.suggestion && (
-                              <p className="text-xs text-accent mb-3 italic">
-                                💡 {finding.suggestion}
-                              </p>
+                            {isExpanded ? (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5" />
                             )}
-                            
-                            {/* Action Buttons */}
-                            <div className="flex flex-wrap gap-1.5">
-                              {finding.applyAction && (
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  className="h-7 text-xs rounded-sm"
-                                  onClick={() => handleApplyChange(finding)}
-                                  data-testid={`apply-${finding.id}`}
-                                >
-                                  <Check className="h-3 w-3 mr-1" />
-                                  Apply
-                                </Button>
-                              )}
-                              {(finding.category === 'notes' || finding.noteText) && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs rounded-sm"
-                                  onClick={() => handleSaveToNotes(finding)}
-                                  data-testid={`save-note-${finding.id}`}
-                                >
-                                  <StickyNote className="h-3 w-3 mr-1" />
-                                  Save to Notes
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs rounded-sm"
-                                onClick={() => handleDismiss(finding.id)}
-                                data-testid={`dismiss-${finding.id}`}
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="space-y-1.5 mt-1.5 pl-2">
+                            {categoryFindings.map((finding) => (
+                              <Card 
+                                key={finding.id} 
+                                className="border-l-2 border-l-accent"
+                                data-testid={`finding-${finding.id}`}
                               >
-                                <X className="h-3 w-3 mr-1" />
-                                Dismiss
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })}
+                                <CardContent className="p-2">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <h4 className="font-medium text-xs">{finding.title}</h4>
+                                    <Badge 
+                                      variant="outline" 
+                                      className={cn(
+                                        "text-[9px] shrink-0 h-4",
+                                        finding.severity === 'high' && "border-red-500 text-red-600",
+                                        finding.severity === 'medium' && "border-amber-500 text-amber-600",
+                                        finding.severity === 'low' && "border-blue-500 text-blue-600",
+                                        finding.severity === 'info' && "border-gray-400 text-gray-600"
+                                      )}
+                                    >
+                                      {finding.severity}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground mb-2 line-clamp-2">
+                                    {finding.description}
+                                  </p>
+                                  
+                                  {/* Action Buttons */}
+                                  <div className="flex flex-wrap gap-1">
+                                    {finding.applyAction && (
+                                      <Button
+                                        size="sm"
+                                        variant="default"
+                                        className="h-6 text-[10px] rounded-sm"
+                                        onClick={() => handleApplyChange(finding)}
+                                        data-testid={`apply-${finding.id}`}
+                                      >
+                                        <Check className="h-3 w-3 mr-1" />
+                                        Apply
+                                      </Button>
+                                    )}
+                                    {(finding.category === 'notes' || finding.noteText) && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 text-[10px] rounded-sm"
+                                        onClick={() => handleSaveToNotes(finding)}
+                                        data-testid={`save-note-${finding.id}`}
+                                      >
+                                        <StickyNote className="h-3 w-3 mr-1" />
+                                        Save
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 text-[10px] rounded-sm"
+                                      onClick={() => handleDismiss(finding.id)}
+                                      data-testid={`dismiss-${finding.id}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              )}
+
+              {showDetailedAnalysis && totalFindings === 0 && !analyzing && (
+                <p className="text-xs text-muted-foreground text-center py-2">
+                  No detailed findings. Your content looks good!
+                </p>
+              )}
+            </div>
           </div>
         </ScrollArea>
       )}
 
-      {/* Quick Actions */}
-      {totalFindings > 0 && (
-        <div className="flex gap-2 pt-2 border-t border-border">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 rounded-sm text-xs"
-            onClick={() => setDismissedIds(new Set(findings.map(f => f.id)))}
-            data-testid="dismiss-all-btn"
-          >
-            Dismiss All
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="flex-1 rounded-sm text-xs"
-            onClick={runAnalysis}
-            data-testid="reanalyze-btn"
-          >
-            <RefreshCw className="h-3 w-3 mr-1" />
-            Re-analyze
-          </Button>
-        </div>
+      {/* Initial State - No Analysis Yet */}
+      {!toneStyleData && !toneStyleLoading && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+            <Sparkles className="h-10 w-10 text-muted-foreground mb-3 opacity-50" />
+            <p className="text-sm text-muted-foreground mb-1">Ready to analyze</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Click refresh to analyze your tone & style
+            </p>
+            <Button
+              size="sm"
+              onClick={runToneStyleAnalysis}
+              className="rounded-sm"
+              data-testid="initial-analyze-btn"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              Analyze Now
+            </Button>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
