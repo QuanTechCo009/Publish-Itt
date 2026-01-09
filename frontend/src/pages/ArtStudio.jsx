@@ -380,12 +380,54 @@ export default function ArtStudio() {
       // Keep legacy response for saving
       setAiResponse(res.data.main_prompt || res.data.response);
       
+      // Clear any previous generated image
+      setGeneratedImage(null);
+      
       toast.success("Art prompt generated!");
     } catch (error) {
       console.error("Generation failed:", error);
       toast.error("Failed to generate art prompts");
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  // Generate actual image from the prompt
+  const handleGenerateImage = async () => {
+    const prompt = artPromptResult?.main_prompt || aiResponse;
+    if (!prompt) {
+      toast.error("Please generate an art prompt first");
+      return;
+    }
+
+    setImageGenerating(true);
+    setGeneratedImage(null);
+
+    try {
+      const res = await aiApi.generateImage(
+        prompt,
+        imageSize,
+        selectedProject?.id,
+        selectedChapter?.id,
+        promptType
+      );
+
+      if (res.data.success && res.data.image_base64) {
+        setGeneratedImage(res.data.image_base64);
+        toast.success("Image generated successfully!");
+        
+        // Reload assets if a new one was created
+        if (res.data.asset_id && selectedProject) {
+          loadArtAssets(selectedProject.id);
+        }
+      } else {
+        toast.error(res.data.message || "Failed to generate image");
+      }
+    } catch (error) {
+      console.error("Image generation failed:", error);
+      toast.error("Failed to generate image: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setImageGenerating(false);
     }
   };
 
