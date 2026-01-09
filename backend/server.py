@@ -3513,6 +3513,30 @@ def strip_html_tags(html_content: str) -> str:
     text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)
     return text.strip()
 
+def sanitize_for_pdf(text: str) -> str:
+    """Sanitize text for PDF output with standard fonts"""
+    if not text:
+        return ""
+    # Replace common Unicode characters with ASCII equivalents
+    replacements = {
+        '\u2018': "'",  # Left single quotation mark
+        '\u2019': "'",  # Right single quotation mark  
+        '\u201c': '"',  # Left double quotation mark
+        '\u201d': '"',  # Right double quotation mark
+        '\u2013': '-',  # En dash
+        '\u2014': '--', # Em dash
+        '\u2026': '...', # Ellipsis
+        '\u00a0': ' ',  # Non-breaking space
+        '\u2022': '*',  # Bullet
+        '\u00b7': '*',  # Middle dot
+    }
+    for unicode_char, ascii_char in replacements.items():
+        text = text.replace(unicode_char, ascii_char)
+    
+    # Encode to latin-1, replacing unsupported characters
+    text = text.encode('latin-1', errors='replace').decode('latin-1')
+    return text
+
 @api_router.post("/export/docx")
 async def export_to_docx(request: ExportRequest):
     """Export a project (all chapters) to DOCX format"""
