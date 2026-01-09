@@ -113,6 +113,11 @@ export default function ArtStudio() {
   
   // Structured Art Prompt Output
   const [artPromptResult, setArtPromptResult] = useState(null);
+  
+  // Image Generation State
+  const [generatedImage, setGeneratedImage] = useState(null);
+  const [imageGenerating, setImageGenerating] = useState(false);
+  const [imageSize, setImageSize] = useState("1024x1024");
 
   useEffect(() => {
     loadInitialData();
