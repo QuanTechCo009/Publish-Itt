@@ -1112,6 +1112,94 @@ export default function ArtStudio() {
                         </CardContent>
                       </Card>
                     )}
+
+                    {/* Generate Image Section */}
+                    <Card className="border-2 border-dashed border-accent/50 bg-accent/5">
+                      <CardHeader className="pb-2 pt-3">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <ImagePlus className="h-4 w-4 text-accent" />
+                          Generate Actual Image
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Image Size</label>
+                            <Select value={imageSize} onValueChange={setImageSize}>
+                              <SelectTrigger className="rounded-sm h-9" data-testid="image-size-select">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
+                                <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
+                                <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            onClick={handleGenerateImage}
+                            disabled={imageGenerating || !artPromptResult?.main_prompt}
+                            className="rounded-sm bg-gradient-to-r from-accent to-purple-500 hover:from-accent/90 hover:to-purple-500/90"
+                            data-testid="generate-image-btn"
+                          >
+                            {imageGenerating ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <ImagePlus className="h-4 w-4 mr-2" />
+                                Generate Image
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Generated Image Display */}
+                        {generatedImage && (
+                          <div className="relative">
+                            <img 
+                              src={`data:image/png;base64,${generatedImage}`}
+                              alt="Generated artwork"
+                              className="w-full rounded-lg border border-border shadow-lg"
+                              data-testid="generated-image"
+                            />
+                            <div className="absolute bottom-3 right-3 flex gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = `data:image/png;base64,${generatedImage}`;
+                                  link.download = `${selectedProject?.title || 'artwork'}_${promptType}_${Date.now()}.png`;
+                                  link.click();
+                                }}
+                                className="rounded-sm shadow-md"
+                                data-testid="download-image-btn"
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {imageGenerating && (
+                          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                            <Loader2 className="h-12 w-12 animate-spin text-accent mb-4" />
+                            <p className="text-sm">Creating your artwork...</p>
+                            <p className="text-xs mt-1">This may take up to a minute</p>
+                          </div>
+                        )}
+
+                        {!generatedImage && !imageGenerating && (
+                          <p className="text-xs text-muted-foreground text-center py-4">
+                            Click &ldquo;Generate Image&rdquo; to create actual artwork from the prompt above
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
 
