@@ -1554,7 +1554,7 @@ export default function ManuscriptWorkspace() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this manuscript?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The manuscript "{selectedProject?.title}" and all its chapters will be permanently deleted.
+              This action cannot be undone. The manuscript &ldquo;{selectedProject?.title}&rdquo; and all its chapters will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
