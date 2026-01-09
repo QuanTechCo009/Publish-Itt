@@ -38,7 +38,9 @@ import {
   MapPin,
   Zap,
   Edit3,
-  RotateCcw
+  RotateCcw,
+  ImagePlus,
+  Download
 } from "lucide-react";
 
 // Genre options
