@@ -1785,6 +1785,87 @@ Respond ONLY with the JSON object, no other text."""
             "response": "A vivid scene illustration capturing the essence of the moment."
         }
 
+# ============== AI IMAGE GENERATION ENDPOINT ==============
+
+class ImageGenerationRequest(BaseModel):
+    prompt: str
+    size: str = "1024x1024"  # 1024x1024, 1024x1536 (portrait), 1536x1024 (landscape)
+    project_id: Optional[str] = None
+    chapter_id: Optional[str] = None
+    image_type: str = "cover"  # cover, chapter_header, spot_illustration
+
+class ImageGenerationResponse(BaseModel):
+    success: bool
+    image_base64: Optional[str] = None
+    message: str
+    asset_id: Optional[str] = None
+
+@api_router.post("/ai/generate-image", response_model=ImageGenerationResponse)
+async def generate_image_from_prompt(request: ImageGenerationRequest):
+    """Generate an image from a text prompt using OpenAI's image generation."""
+    
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="AI service not configured")
+    
+    if not request.prompt or len(request.prompt.strip()) < 10:
+        raise HTTPException(status_code=400, detail="Prompt must be at least 10 characters")
+    
+    try:
+        logger.info(f"Generating image with prompt: {request.prompt[:100]}...")
+        
+        # Initialize the image generator
+        image_gen = OpenAIImageGeneration(api_key=EMERGENT_LLM_KEY)
+        
+        # Generate image
+        images = await image_gen.generate_images(
+            prompt=request.prompt,
+            model="gpt-image-1",
+            number_of_images=1
+        )
+        
+        if not images or len(images) == 0:
+            return ImageGenerationResponse(
+                success=False,
+                message="No image was generated",
+                image_base64=None
+            )
+        
+        # Convert to base64
+        image_base64 = base64.b64encode(images[0]).decode('utf-8')
+        
+        # Optionally save as art asset
+        asset_id = None
+        if request.project_id:
+            asset_obj = ArtAsset(
+                project_id=request.project_id,
+                chapter_id=request.chapter_id,
+                type=request.image_type,
+                style_preset="ai_generated",
+                prompt_used=request.prompt,
+                status="generated",
+                image_reference=f"data:image/png;base64,{image_base64[:100]}..."  # Store truncated reference
+            )
+            doc = asset_obj.model_dump()
+            await db.art_assets.insert_one(doc)
+            asset_id = asset_obj.id
+        
+        logger.info(f"Image generated successfully, asset_id={asset_id}")
+        
+        return ImageGenerationResponse(
+            success=True,
+            image_base64=image_base64,
+            message="Image generated successfully",
+            asset_id=asset_id
+        )
+        
+    except Exception as e:
+        logger.error(f"Image generation failed: {e}")
+        return ImageGenerationResponse(
+            success=False,
+            message=f"Image generation failed: {str(e)}",
+            image_base64=None
+        )
+
 # ============== TONE PROFILE ENDPOINTS ==============
 
 @api_router.get("/tone-profiles/project/{project_id}", response_model=List[ToneProfile])
