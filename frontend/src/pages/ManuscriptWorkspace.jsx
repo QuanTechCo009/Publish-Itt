@@ -1579,7 +1579,7 @@ export default function ManuscriptWorkspace() {
               Export Manuscript
             </DialogTitle>
             <DialogDescription>
-              Export "{selectedProject?.title}" as a document file.
+              Export &ldquo;{selectedProject?.title}&rdquo; as a document file.
             </DialogDescription>
           </DialogHeader>
           
