@@ -249,6 +249,7 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - `POST /api/ai/workflow-analysis` - Analyze workflow
 - `POST /api/ai/analyze-tone` - Tone analysis
 - `POST /api/ai/art-prompts` - Generate art prompts
+- `POST /api/ai/generate-image` - Generate image from prompt (OpenAI)
 - `POST /api/ai/ask-thad` - General AI query
 - `POST /api/ai/import/analyze` - Import analysis
 - `POST /api/ai/import/action` - Execute import action
