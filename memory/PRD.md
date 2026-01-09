@@ -196,6 +196,21 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - [x] Frontend ImportAnalysisDialog updated to call implement endpoint
 - [x] Full test coverage (16 additional tests passing)
 
+### Phase 17: Data Model Unification, Image Generation & Export (Jan 9, 2026) ✅
+- [x] Data Model Unification - Deprecated manuscripts_collection endpoints with warning logs
+- [x] Added genre, age_group, writing_style fields to Project model
+- [x] Frontend API deprecation warnings with console.warn()
+- [x] AI Image Generation - POST /api/ai/generate-image using OpenAI gpt-image-1
+- [x] Image size options: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait)
+- [x] Art Studio UI for generating actual images from prompts
+- [x] Image download functionality with proper filename
+- [x] Export to DOCX - POST /api/export/docx with python-docx
+- [x] Export to PDF - POST /api/export/pdf with fpdf2
+- [x] Export options: include title page, include chapter numbers
+- [x] Export dialog in ManuscriptWorkspace with format selection
+- [x] Unicode character sanitization for PDF generation
+- [x] Full test coverage (20 additional tests passing, 100% success)
+
 ## API Endpoints
 
 ### Projects
