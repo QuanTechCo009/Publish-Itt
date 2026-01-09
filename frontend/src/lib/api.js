@@ -125,6 +125,14 @@ export const aiApi = {
       style_preset: stylePreset,
       art_profile: artProfile
     }),
+  generateImage: (prompt, size = "1024x1024", projectId = null, chapterId = null, imageType = "cover") =>
+    api.post('/ai/generate-image', {
+      prompt,
+      size,
+      project_id: projectId,
+      chapter_id: chapterId,
+      image_type: imageType
+    }, { timeout: 120000 }),  // 2 minute timeout for image generation
   askThad: (query, context) => api.post('/ai/ask-thad', { query, context }),
   thadWelcome: (userName, bookTitle, ageGroup, theme, deviceType) =>
     api.post('/ai/thad/welcome', {
