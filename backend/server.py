@@ -3644,7 +3644,7 @@ async def export_to_pdf(request: ExportRequest):
     ).sort("chapter_number", 1).to_list(1000)
     
     # Create PDF
-    title = project.get("title", "Untitled")
+    title = sanitize_for_pdf(project.get("title", "Untitled"))
     pdf = CustomPDF(title)
     pdf.set_auto_page_break(auto=True, margin=25)
     
@@ -3658,12 +3658,14 @@ async def export_to_pdf(request: ExportRequest):
         if project.get("series_name"):
             pdf.set_font('Helvetica', 'I', 14)
             pdf.ln(10)
-            pdf.multi_cell(0, 8, f"Part of: {project['series_name']}", align='C')
+            series_text = sanitize_for_pdf(f"Part of: {project['series_name']}")
+            pdf.multi_cell(0, 8, series_text, align='C')
         
         if project.get("summary"):
             pdf.set_font('Helvetica', '', 11)
             pdf.ln(20)
-            pdf.multi_cell(0, 6, project["summary"], align='C')
+            summary_text = sanitize_for_pdf(project["summary"])
+            pdf.multi_cell(0, 6, summary_text, align='C')
     
     # Add chapters
     for chapter in chapters:
@@ -3676,12 +3678,14 @@ async def export_to_pdf(request: ExportRequest):
         else:
             heading_text = chapter_title
         
+        heading_text = sanitize_for_pdf(heading_text)
         pdf.set_font('Helvetica', 'B', 18)
         pdf.multi_cell(0, 10, heading_text)
         pdf.ln(5)
         
         # Chapter content
         content = strip_html_tags(chapter.get("content", ""))
+        content = sanitize_for_pdf(content)
         
         pdf.set_font('Helvetica', '', 11)
         
@@ -3689,15 +3693,8 @@ async def export_to_pdf(request: ExportRequest):
         paragraphs = content.split('\n\n')
         for para_text in paragraphs:
             if para_text.strip():
-                # Encode to handle special characters
-                try:
-                    pdf.multi_cell(0, 6, para_text.strip())
-                    pdf.ln(3)
-                except Exception:
-                    # Fallback: remove problematic characters
-                    clean_text = para_text.encode('latin-1', errors='replace').decode('latin-1')
-                    pdf.multi_cell(0, 6, clean_text.strip())
-                    pdf.ln(3)
+                pdf.multi_cell(0, 6, para_text.strip())
+                pdf.ln(3)
     
     # Output to bytes
     pdf_bytes = pdf.output()
