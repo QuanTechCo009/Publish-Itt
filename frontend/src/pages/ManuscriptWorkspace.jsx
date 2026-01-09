@@ -1570,6 +1570,93 @@ export default function ManuscriptWorkspace() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Export Manuscript Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="sm:max-w-md" data-testid="export-manuscript-dialog">
+          <DialogHeader>
+            <DialogTitle className="font-serif flex items-center gap-2">
+              <FileDown className="h-5 w-5" />
+              Export Manuscript
+            </DialogTitle>
+            <DialogDescription>
+              Export "{selectedProject?.title}" as a document file.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Format Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Export Format</Label>
+              <Select value={exportFormat} onValueChange={setExportFormat}>
+                <SelectTrigger className="rounded-sm" data-testid="export-format-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="docx">Microsoft Word (.docx)</SelectItem>
+                  <SelectItem value="pdf">PDF Document (.pdf)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Options */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="include-title" className="text-sm">Include title page</Label>
+                <Switch
+                  id="include-title"
+                  checked={exportIncludeTitlePage}
+                  onCheckedChange={setExportIncludeTitlePage}
+                  data-testid="export-title-page-switch"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="include-numbers" className="text-sm">Include chapter numbers</Label>
+                <Switch
+                  id="include-numbers"
+                  checked={exportIncludeChapterNumbers}
+                  onCheckedChange={setExportIncludeChapterNumbers}
+                  data-testid="export-chapter-numbers-switch"
+                />
+              </div>
+            </div>
+            
+            {/* Info */}
+            <div className="text-xs text-muted-foreground bg-muted p-3 rounded-sm">
+              <p><strong>{chapters.length}</strong> chapter{chapters.length !== 1 ? "s" : ""} will be exported</p>
+              <p className="mt-1">Total words: <strong>{selectedProject?.word_count?.toLocaleString() || 0}</strong></p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setExportDialogOpen(false)}
+              className="rounded-sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleExport}
+              disabled={exporting}
+              className="rounded-sm"
+              data-testid="confirm-export-btn"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export {exportFormat.toUpperCase()}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Upload/Import Manuscript Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={handleUploadClose}>
         <DialogContent className="sm:max-w-2xl" data-testid="upload-manuscript-dialog">
