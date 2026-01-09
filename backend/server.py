@@ -883,11 +883,16 @@ async def delete_version(version_id: str):
         raise HTTPException(status_code=404, detail="Version not found")
     return {"message": "Version deleted successfully"}
 
-# ============== DATA MIGRATION ENDPOINT ==============
+# ============== DATA MIGRATION ENDPOINT (DEPRECATED) ==============
 
-@api_router.post("/migrate/projects-to-manuscripts")
+@api_router.post("/migrate/projects-to-manuscripts", deprecated=True)
 async def migrate_projects_to_manuscripts():
-    """Migrate existing projects to manuscripts collection"""
+    """[DEPRECATED] Migrate existing projects to manuscripts collection.
+    
+    Note: The manuscripts_collection is deprecated. Projects + Chapters is the recommended pattern.
+    This endpoint is kept for backward compatibility only.
+    """
+    logger.warning("Deprecated migration endpoint called.")
     projects = await db.projects.find({}, {"_id": 0}).to_list(1000)
     migrated_count = 0
     
@@ -930,9 +935,10 @@ async def migrate_projects_to_manuscripts():
         "migrated": migrated_count
     }
 
-@api_router.get("/manuscripts-collection/{manuscript_id}/chapters", response_model=List[Chapter])
+@api_router.get("/manuscripts-collection/{manuscript_id}/chapters", response_model=List[Chapter], deprecated=True)
 async def get_chapters_by_manuscript(manuscript_id: str):
-    """Get all chapters for a specific manuscript"""
+    """[DEPRECATED] Get all chapters for a specific manuscript. Use GET /api/chapters/project/{project_id} instead."""
+    logger.warning("Deprecated endpoint /manuscripts-collection/.../chapters called. Use /chapters/project/{project_id} instead.")
     chapters = await db.chapters.find(
         {"manuscript_id": manuscript_id}, 
         {"_id": 0}
