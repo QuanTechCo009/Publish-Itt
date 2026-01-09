@@ -79,7 +79,9 @@ import {
   BarChart3,
   Zap,
   Check,
-  Workflow
+  Workflow,
+  Download,
+  FileDown
 } from "lucide-react";
 
 // Auto-save interval in milliseconds (10 minutes)
