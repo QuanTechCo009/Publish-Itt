@@ -958,6 +958,21 @@ export default function ManuscriptWorkspace() {
                     Delete Chapter
                   </Button>
                   
+                  {/* Export Section */}
+                  <div className="border-t border-border pt-2 mt-1 w-full space-y-1">
+                    <Button 
+                      variant="outline" 
+                      className="w-full rounded-sm justify-start bg-accent/10 hover:bg-accent/20" 
+                      size="sm"
+                      onClick={() => setExportDialogOpen(true)}
+                      disabled={!selectedProject || chapters.length === 0}
+                      data-testid="export-manuscript-btn"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Export Manuscript
+                    </Button>
+                  </div>
+                  
                   {/* Delete Manuscript Button */}
                   <div className="border-t border-border pt-2 mt-1 w-full">
                     <Button 
