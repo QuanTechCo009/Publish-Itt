@@ -198,14 +198,43 @@ export const importAnalysisApi = {
 
 // ============== DATA COLLECTIONS APIs ==============
 
-// Manuscripts Collection
+// ============== DEPRECATED APIs ==============
+// NOTE: manuscriptsApi and migrationApi are deprecated.
+// Use projectApi for all project/manuscript operations.
+// These are kept for backward compatibility only.
+
+// Manuscripts Collection (DEPRECATED - use projectApi instead)
 export const manuscriptsApi = {
-  getAll: () => api.get('/manuscripts-collection'),
-  getById: (id) => api.get(`/manuscripts-collection/${id}`),
-  create: (data) => api.post('/manuscripts-collection', data),
-  update: (id, data) => api.put(`/manuscripts-collection/${id}`, data),
-  delete: (id) => api.delete(`/manuscripts-collection/${id}`),
-  getChapters: (id) => api.get(`/manuscripts-collection/${id}/chapters`)
+  /** @deprecated Use projectApi.getAll() instead */
+  getAll: () => {
+    console.warn('[DEPRECATED] manuscriptsApi.getAll() - use projectApi.getAll() instead')
+    return api.get('/manuscripts-collection')
+  },
+  /** @deprecated Use projectApi.getById() instead */
+  getById: (id) => {
+    console.warn('[DEPRECATED] manuscriptsApi.getById() - use projectApi.getById() instead')
+    return api.get(`/manuscripts-collection/${id}`)
+  },
+  /** @deprecated Use projectApi.create() instead */
+  create: (data) => {
+    console.warn('[DEPRECATED] manuscriptsApi.create() - use projectApi.create() instead')
+    return api.post('/manuscripts-collection', data)
+  },
+  /** @deprecated Use projectApi.update() instead */
+  update: (id, data) => {
+    console.warn('[DEPRECATED] manuscriptsApi.update() - use projectApi.update() instead')
+    return api.put(`/manuscripts-collection/${id}`, data)
+  },
+  /** @deprecated Use projectApi.delete() instead */
+  delete: (id) => {
+    console.warn('[DEPRECATED] manuscriptsApi.delete() - use projectApi.delete() instead')
+    return api.delete(`/manuscripts-collection/${id}`)
+  },
+  /** @deprecated Use chapterApi.getByProject() instead */
+  getChapters: (id) => {
+    console.warn('[DEPRECATED] manuscriptsApi.getChapters() - use chapterApi.getByProject() instead')
+    return api.get(`/manuscripts-collection/${id}/chapters`)
+  }
 }
 
 // Versions Collection
@@ -225,9 +254,13 @@ export const notesApi = {
   delete: (id) => api.delete(`/notes/${id}`)
 }
 
-// Migration API
+// Migration API (DEPRECATED)
 export const migrationApi = {
-  migrateProjectsToManuscripts: () => api.post('/migrate/projects-to-manuscripts')
+  /** @deprecated The manuscripts_collection pattern is deprecated */
+  migrateProjectsToManuscripts: () => {
+    console.warn('[DEPRECATED] migrationApi.migrateProjectsToManuscripts() - manuscripts_collection is deprecated')
+    return api.post('/migrate/projects-to-manuscripts')
+  }
 }
 
 // Book Art Profile API
