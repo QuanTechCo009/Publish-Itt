@@ -143,6 +143,13 @@ export default function ManuscriptWorkspace() {
   const [showStatsPanel, setShowStatsPanel] = useState(true);
   const lastWordCountRef = useRef(0);
   const statsIntervalRef = useRef(null);
+  
+  // Export state
+  const [exporting, setExporting] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState("docx");
+  const [exportIncludeTitlePage, setExportIncludeTitlePage] = useState(true);
+  const [exportIncludeChapterNumbers, setExportIncludeChapterNumbers] = useState(true);
 
   // Editor setup
   const editor = useEditor({
