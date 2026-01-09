@@ -1532,7 +1532,7 @@ export default function ManuscriptWorkspace() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this chapter?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The chapter "{selectedChapter?.title}" will be permanently deleted.
+              This action cannot be undone. The chapter &ldquo;{selectedChapter?.title}&rdquo; will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
