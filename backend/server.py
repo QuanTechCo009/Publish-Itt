@@ -3487,6 +3487,209 @@ async def split_and_create_chapters(request: SplitChaptersRequest):
         message=f"Successfully created {len(created_chapters)} chapters"
     )
 
+# ============== EXPORT ENDPOINTS ==============
+
+class ExportRequest(BaseModel):
+    project_id: str
+    include_title_page: bool = True
+    include_chapter_numbers: bool = True
+
+def strip_html_tags(html_content: str) -> str:
+    """Remove HTML tags and decode entities"""
+    if not html_content:
+        return ""
+    # Remove HTML tags
+    text = re.sub(r'<br\s*/?>', '\n', html_content)
+    text = re.sub(r'</p>', '\n\n', text)
+    text = re.sub(r'<[^>]+>', '', text)
+    # Decode common entities
+    text = text.replace('&nbsp;', ' ')
+    text = text.replace('&amp;', '&')
+    text = text.replace('&lt;', '<')
+    text = text.replace('&gt;', '>')
+    text = text.replace('&quot;', '"')
+    text = text.replace('&#39;', "'")
+    # Clean up extra whitespace
+    text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)
+    return text.strip()
+
+@api_router.post("/export/docx")
+async def export_to_docx(request: ExportRequest):
+    """Export a project (all chapters) to DOCX format"""
+    
+    # Get project
+    project = await db.projects.find_one({"id": request.project_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get all chapters sorted by chapter number
+    chapters = await db.chapters.find(
+        {"project_id": request.project_id},
+        {"_id": 0}
+    ).sort("chapter_number", 1).to_list(1000)
+    
+    # Create document
+    doc = DocxDocument()
+    
+    # Add title page
+    if request.include_title_page:
+        title = doc.add_heading(project.get("title", "Untitled"), 0)
+        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        if project.get("series_name"):
+            series = doc.add_paragraph(f"Part of: {project['series_name']}")
+            series.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        if project.get("summary"):
+            doc.add_paragraph()
+            summary = doc.add_paragraph(project["summary"])
+            summary.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        doc.add_page_break()
+    
+    # Add chapters
+    for chapter in chapters:
+        # Chapter heading
+        chapter_title = chapter.get("title", f"Chapter {chapter.get('chapter_number', '?')}")
+        if request.include_chapter_numbers:
+            heading_text = f"Chapter {chapter.get('chapter_number', '?')}: {chapter_title}"
+        else:
+            heading_text = chapter_title
+        
+        doc.add_heading(heading_text, 1)
+        
+        # Chapter content
+        content = strip_html_tags(chapter.get("content", ""))
+        
+        # Split into paragraphs and add
+        paragraphs = content.split('\n\n')
+        for para_text in paragraphs:
+            if para_text.strip():
+                doc.add_paragraph(para_text.strip())
+        
+        doc.add_page_break()
+    
+    # Save to bytes
+    file_stream = io.BytesIO()
+    doc.save(file_stream)
+    file_stream.seek(0)
+    
+    # Generate filename
+    safe_title = re.sub(r'[^\w\s-]', '', project.get("title", "export")).strip()[:50]
+    filename = f"{safe_title}.docx"
+    
+    return StreamingResponse(
+        file_stream,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+class CustomPDF(FPDF):
+    """Custom PDF class with header/footer support"""
+    
+    def __init__(self, title=""):
+        super().__init__()
+        self.document_title = title
+    
+    def header(self):
+        if self.page_no() > 1:  # Skip header on title page
+            self.set_font('Helvetica', 'I', 9)
+            self.set_text_color(128, 128, 128)
+            self.cell(0, 10, self.document_title, 0, 0, 'C')
+            self.ln(15)
+    
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('Helvetica', 'I', 9)
+        self.set_text_color(128, 128, 128)
+        self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
+
+@api_router.post("/export/pdf")
+async def export_to_pdf(request: ExportRequest):
+    """Export a project (all chapters) to PDF format"""
+    
+    # Get project
+    project = await db.projects.find_one({"id": request.project_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get all chapters sorted by chapter number
+    chapters = await db.chapters.find(
+        {"project_id": request.project_id},
+        {"_id": 0}
+    ).sort("chapter_number", 1).to_list(1000)
+    
+    # Create PDF
+    title = project.get("title", "Untitled")
+    pdf = CustomPDF(title)
+    pdf.set_auto_page_break(auto=True, margin=25)
+    
+    # Add title page
+    if request.include_title_page:
+        pdf.add_page()
+        pdf.set_font('Helvetica', 'B', 28)
+        pdf.ln(60)
+        pdf.multi_cell(0, 12, title, align='C')
+        
+        if project.get("series_name"):
+            pdf.set_font('Helvetica', 'I', 14)
+            pdf.ln(10)
+            pdf.multi_cell(0, 8, f"Part of: {project['series_name']}", align='C')
+        
+        if project.get("summary"):
+            pdf.set_font('Helvetica', '', 11)
+            pdf.ln(20)
+            pdf.multi_cell(0, 6, project["summary"], align='C')
+    
+    # Add chapters
+    for chapter in chapters:
+        pdf.add_page()
+        
+        # Chapter heading
+        chapter_title = chapter.get("title", f"Chapter {chapter.get('chapter_number', '?')}")
+        if request.include_chapter_numbers:
+            heading_text = f"Chapter {chapter.get('chapter_number', '?')}: {chapter_title}"
+        else:
+            heading_text = chapter_title
+        
+        pdf.set_font('Helvetica', 'B', 18)
+        pdf.multi_cell(0, 10, heading_text)
+        pdf.ln(5)
+        
+        # Chapter content
+        content = strip_html_tags(chapter.get("content", ""))
+        
+        pdf.set_font('Helvetica', '', 11)
+        
+        # Split into paragraphs
+        paragraphs = content.split('\n\n')
+        for para_text in paragraphs:
+            if para_text.strip():
+                # Encode to handle special characters
+                try:
+                    pdf.multi_cell(0, 6, para_text.strip())
+                    pdf.ln(3)
+                except Exception:
+                    # Fallback: remove problematic characters
+                    clean_text = para_text.encode('latin-1', errors='replace').decode('latin-1')
+                    pdf.multi_cell(0, 6, clean_text.strip())
+                    pdf.ln(3)
+    
+    # Output to bytes
+    pdf_bytes = pdf.output()
+    file_stream = io.BytesIO(pdf_bytes)
+    file_stream.seek(0)
+    
+    # Generate filename
+    safe_title = re.sub(r'[^\w\s-]', '', project.get("title", "export")).strip()[:50]
+    filename = f"{safe_title}.pdf"
+    
+    return StreamingResponse(
+        file_stream,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 # ============== STATUS ENDPOINTS ==============
 
 @api_router.get("/")
