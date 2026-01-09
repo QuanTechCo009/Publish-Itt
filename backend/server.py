@@ -792,33 +792,40 @@ async def delete_chapter(chapter_id: str):
     await db.chapters.delete_one({"id": chapter_id})
     return {"message": "Chapter deleted successfully"}
 
-# ============== MANUSCRIPTS COLLECTION ENDPOINTS ==============
+# ============== MANUSCRIPTS COLLECTION ENDPOINTS (DEPRECATED) ==============
+# NOTE: These endpoints are deprecated. Use /api/projects endpoints instead.
+# The projects + chapters pattern is the recommended approach.
+# These endpoints will be removed in a future version.
 
-@api_router.post("/manuscripts-collection", response_model=Manuscript)
+@api_router.post("/manuscripts-collection", response_model=Manuscript, deprecated=True)
 async def create_manuscript_record(manuscript: ManuscriptCreate):
-    """Create a new manuscript record in the Manuscripts collection"""
+    """[DEPRECATED] Create a new manuscript record. Use POST /api/projects instead."""
+    logger.warning("Deprecated endpoint /manuscripts-collection called. Use /projects instead.")
     manuscript_obj = Manuscript(**manuscript.model_dump())
     doc = manuscript_obj.model_dump()
     await db.manuscripts_collection.insert_one(doc)
     return manuscript_obj
 
-@api_router.get("/manuscripts-collection", response_model=List[Manuscript])
+@api_router.get("/manuscripts-collection", response_model=List[Manuscript], deprecated=True)
 async def get_all_manuscripts():
-    """Get all manuscripts from the collection"""
+    """[DEPRECATED] Get all manuscripts. Use GET /api/projects instead."""
+    logger.warning("Deprecated endpoint /manuscripts-collection called. Use /projects instead.")
     manuscripts = await db.manuscripts_collection.find({}, {"_id": 0}).to_list(1000)
     return manuscripts
 
-@api_router.get("/manuscripts-collection/{manuscript_id}", response_model=Manuscript)
+@api_router.get("/manuscripts-collection/{manuscript_id}", response_model=Manuscript, deprecated=True)
 async def get_manuscript_record(manuscript_id: str):
-    """Get a specific manuscript by ID"""
+    """[DEPRECATED] Get a specific manuscript. Use GET /api/projects/{id} instead."""
+    logger.warning("Deprecated endpoint /manuscripts-collection called. Use /projects instead.")
     manuscript = await db.manuscripts_collection.find_one({"id": manuscript_id}, {"_id": 0})
     if not manuscript:
         raise HTTPException(status_code=404, detail="Manuscript not found")
     return manuscript
 
-@api_router.put("/manuscripts-collection/{manuscript_id}", response_model=Manuscript)
+@api_router.put("/manuscripts-collection/{manuscript_id}", response_model=Manuscript, deprecated=True)
 async def update_manuscript_record(manuscript_id: str, update: ManuscriptUpdate):
-    """Update a manuscript record"""
+    """[DEPRECATED] Update a manuscript. Use PUT /api/projects/{id} instead."""
+    logger.warning("Deprecated endpoint /manuscripts-collection called. Use /projects instead.")
     update_data = {k: v for k, v in update.model_dump().items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     
@@ -832,9 +839,10 @@ async def update_manuscript_record(manuscript_id: str, update: ManuscriptUpdate)
     manuscript = await db.manuscripts_collection.find_one({"id": manuscript_id}, {"_id": 0})
     return manuscript
 
-@api_router.delete("/manuscripts-collection/{manuscript_id}")
+@api_router.delete("/manuscripts-collection/{manuscript_id}", deprecated=True)
 async def delete_manuscript_record(manuscript_id: str):
-    """Delete a manuscript record"""
+    """[DEPRECATED] Delete a manuscript. Use DELETE /api/projects/{id} instead."""
+    logger.warning("Deprecated endpoint /manuscripts-collection called. Use /projects instead.")
     result = await db.manuscripts_collection.delete_one({"id": manuscript_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Manuscript not found")
