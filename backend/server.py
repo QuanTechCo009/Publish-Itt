@@ -41,6 +41,9 @@ class ProjectBase(BaseModel):
     series_name: Optional[str] = None
     universe: Optional[str] = None
     type: Optional[str] = "novel"
+    genre: Optional[str] = None
+    age_group: Optional[str] = None
+    writing_style: Optional[str] = None
     status: str = "concept"
     word_count: int = 0
     summary: Optional[str] = None
@@ -53,6 +56,9 @@ class ProjectUpdate(BaseModel):
     series_name: Optional[str] = None
     universe: Optional[str] = None
     type: Optional[str] = None
+    genre: Optional[str] = None
+    age_group: Optional[str] = None
+    writing_style: Optional[str] = None
     status: Optional[str] = None
     word_count: Optional[int] = None
     summary: Optional[str] = None
