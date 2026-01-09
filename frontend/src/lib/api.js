@@ -16,7 +16,19 @@ export const projectApi = {
   getById: (id) => api.get(`/projects/${id}`),
   create: (data) => api.post('/projects', data),
   update: (id, data) => api.put(`/projects/${id}`, data),
-  delete: (id) => api.delete(`/projects/${id}`)
+  delete: (id) => api.delete(`/projects/${id}`),
+  exportDocx: (projectId, includeTitlePage = true, includeChapterNumbers = true) => 
+    api.post('/export/docx', {
+      project_id: projectId,
+      include_title_page: includeTitlePage,
+      include_chapter_numbers: includeChapterNumbers
+    }, { responseType: 'blob' }),
+  exportPdf: (projectId, includeTitlePage = true, includeChapterNumbers = true) =>
+    api.post('/export/pdf', {
+      project_id: projectId,
+      include_title_page: includeTitlePage,
+      include_chapter_numbers: includeChapterNumbers
+    }, { responseType: 'blob' })
 }
 
 // Chapter APIs
