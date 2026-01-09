@@ -222,10 +222,14 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - `GET/POST /api/chapters` - Chapter CRUD
 - `PUT/DELETE /api/chapters/{id}` - Update/Delete chapter
 
-### Manuscripts Collection
-- `GET/POST /api/manuscripts-collection` - List/Create
-- `GET/PUT/DELETE /api/manuscripts-collection/{id}` - Single manuscript
-- `GET /api/manuscripts-collection/{id}/chapters` - Chapters by manuscript
+### Manuscripts Collection (DEPRECATED - Use Projects)
+- `GET/POST /api/manuscripts-collection` - List/Create (deprecated)
+- `GET/PUT/DELETE /api/manuscripts-collection/{id}` - Single manuscript (deprecated)
+- `GET /api/manuscripts-collection/{id}/chapters` - Chapters by manuscript (deprecated)
+
+### Export
+- `POST /api/export/docx` - Export project to Microsoft Word format
+- `POST /api/export/pdf` - Export project to PDF format
 
 ### Versions
 - `POST /api/versions` - Create version snapshot
