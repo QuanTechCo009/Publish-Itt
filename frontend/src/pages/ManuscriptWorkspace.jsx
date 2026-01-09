@@ -513,6 +513,63 @@ export default function ManuscriptWorkspace() {
     }
   };
 
+  // Export Functions
+  const handleExport = async () => {
+    if (!selectedProject) {
+      toast.error("No project selected");
+      return;
+    }
+    
+    if (chapters.length === 0) {
+      toast.error("No chapters to export");
+      return;
+    }
+    
+    setExporting(true);
+    try {
+      let response;
+      if (exportFormat === "docx") {
+        response = await projectApi.exportDocx(
+          selectedProject.id,
+          exportIncludeTitlePage,
+          exportIncludeChapterNumbers
+        );
+      } else {
+        response = await projectApi.exportPdf(
+          selectedProject.id,
+          exportIncludeTitlePage,
+          exportIncludeChapterNumbers
+        );
+      }
+      
+      // Create download link
+      const blob = new Blob([response.data], {
+        type: exportFormat === "docx" 
+          ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          : "application/pdf"
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      
+      const safeTitle = selectedProject.title.replace(/[^\w\s-]/g, "").trim().substring(0, 50);
+      link.download = `${safeTitle || "manuscript"}.${exportFormat}`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Exported as ${exportFormat.toUpperCase()} successfully!`);
+      setExportDialogOpen(false);
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export: " + (error.response?.data?.detail || error.message));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // AI Functions
   const handleRewriteForTone = async () => {
     if (!editor || !editor.getText().trim()) {
