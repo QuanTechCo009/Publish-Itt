@@ -267,11 +267,9 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 ## Outstanding Tasks
 
 ### P1 - High Priority
-- [ ] Complete data model unification (deprecate old project endpoints)
+- All P1 tasks completed!
 
 ### P2 - Medium Priority
-- [ ] Enhance Art Studio with actual image generation (DALL-E via emergentintegrations)
-- [ ] Add export functionality (PDF, DOCX)
 - [ ] Implement collaborative editing support
 - [ ] Add analytics dashboard for writing progress
 
@@ -291,11 +289,12 @@ Build a private, in-house "Author OS" web app for managing books, chapters, publ
 - ESLint warnings for useEffect dependencies (code quality)
 
 ## Test Coverage
-- Backend: 66+ tests passing (100%) - includes 16 new Implement Action tests
+- Backend: 86+ tests passing (100%) - includes export, image gen, and deprecated endpoint tests
 - Frontend: All core features tested and working
 
 ## 3rd Party Integrations
-- **OpenAI GPT-5.2** - Text generation via Emergent LLM Key
+- **OpenAI GPT** - Text generation via Emergent LLM Key
+- **OpenAI Image Generation** - gpt-image-1 via Emergent LLM Key
 
 ---
-*Last Updated: January 8, 2026*
+*Last Updated: January 9, 2026*
