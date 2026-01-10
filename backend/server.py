@@ -1816,20 +1816,34 @@ async def generate_image_from_prompt(request: ImageGenerationRequest):
         raise HTTPException(status_code=400, detail="Prompt must be at least 10 characters")
     
     try:
-        logger.info(f"Generating image with prompt: {request.prompt[:100]}...")
+        logger.info(f"Generating image with prompt: {request.prompt[:100]}... size={request.size}")
         
-        # Initialize the image generator
-        image_gen = OpenAIImageGeneration(api_key=EMERGENT_LLM_KEY)
+        # Use LiteLLM directly to support size parameter
+        from litellm import image_generation
+        import requests as http_requests
         
-        # Generate image with specified size
-        images = await image_gen.generate_images(
-            prompt=request.prompt,
-            model="gpt-image-1",
-            number_of_images=1,
-            size=request.size
-        )
+        params = {
+            "model": "openai/gpt-image-1",
+            "prompt": request.prompt,
+            "n": 1,
+            "size": request.size,
+            "api_key": EMERGENT_LLM_KEY,
+            "api_base": "https://llm.emergent.sh"
+        }
         
-        if not images or len(images) == 0:
+        response = image_generation(**params)
+        
+        # Convert response to bytes
+        image_bytes = None
+        if response.data and len(response.data) > 0:
+            img = response.data[0]
+            if hasattr(img, 'b64_json') and img.b64_json:
+                image_bytes = base64.b64decode(img.b64_json)
+            elif hasattr(img, 'url') and img.url:
+                img_response = http_requests.get(img.url)
+                image_bytes = img_response.content
+        
+        if not image_bytes:
             return ImageGenerationResponse(
                 success=False,
                 message="No image was generated",
@@ -1837,7 +1851,7 @@ async def generate_image_from_prompt(request: ImageGenerationRequest):
             )
         
         # Convert to base64
-        image_base64 = base64.b64encode(images[0]).decode('utf-8')
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
         
         # Optionally save as art asset
         asset_id = None
