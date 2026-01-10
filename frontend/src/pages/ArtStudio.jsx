@@ -107,6 +107,7 @@ export default function ArtStudio() {
   const [refinementSuggestions, setRefinementSuggestions] = useState([]);
   const [showRefinements, setShowRefinements] = useState(false);
   const [refinementsLoading, setRefinementsLoading] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Scene Extraction State
   const [extractedScene, setExtractedScene] = useState("");
