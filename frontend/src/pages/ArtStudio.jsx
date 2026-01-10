@@ -181,10 +181,12 @@ export default function ArtStudio() {
 
   const loadArtProfile = async (projId, project) => {
     setProfileLoading(true);
+    setProfileLoaded(false);
     try {
       const res = await artProfileApi.getByProject(projId);
       setArtProfile(res.data);
       setHasUnsavedChanges(false);
+      setProfileLoaded(true);
     } catch (error) {
       // Profile doesn't exist yet - auto-suggest based on project metadata
       const suggestedProfile = {
@@ -199,6 +201,7 @@ export default function ArtStudio() {
       };
       setArtProfile(suggestedProfile);
       setHasUnsavedChanges(false);
+      setProfileLoaded(true);
     } finally {
       setProfileLoading(false);
     }
