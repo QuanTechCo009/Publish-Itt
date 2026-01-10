@@ -207,6 +207,35 @@ export default function ArtStudio() {
     }
   };
 
+  // Auto-generate suggestions when profile has existing summary
+  const generateSuggestions = useCallback(async (profileData) => {
+    if (!profileData?.ai_summary || !selectedProject) return;
+    
+    setRefinementsLoading(true);
+    try {
+      const res = await aiApi.generateArtProfileSummary({
+        ...profileData,
+        project_id: selectedProject.id
+      });
+      
+      if (res.data.refinements && res.data.refinements.length > 0) {
+        setRefinementSuggestions(res.data.refinements);
+        setShowRefinements(true);
+      }
+    } catch (error) {
+      console.error("Failed to auto-generate suggestions:", error);
+    } finally {
+      setRefinementsLoading(false);
+    }
+  }, [selectedProject]);
+
+  // Auto-regenerate suggestions when profile loads with existing summary
+  useEffect(() => {
+    if (profileLoaded && artProfile?.ai_summary) {
+      generateSuggestions(artProfile);
+    }
+  }, [profileLoaded, artProfile, generateSuggestions]);
+
   const handleProjectChange = (projId) => {
     const project = projects.find(p => p.id === projId);
     setSelectedProject(project);
