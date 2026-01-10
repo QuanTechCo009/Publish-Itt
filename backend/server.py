@@ -1821,11 +1821,12 @@ async def generate_image_from_prompt(request: ImageGenerationRequest):
         # Initialize the image generator
         image_gen = OpenAIImageGeneration(api_key=EMERGENT_LLM_KEY)
         
-        # Generate image
+        # Generate image with specified size
         images = await image_gen.generate_images(
             prompt=request.prompt,
             model="gpt-image-1",
-            number_of_images=1
+            number_of_images=1,
+            size=request.size
         )
         
         if not images or len(images) == 0:
